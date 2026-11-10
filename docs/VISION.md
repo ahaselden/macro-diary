@@ -61,6 +61,7 @@ Current structure, for orientation (details in [ARCHITECTURE.md](ARCHITECTURE.md
 - **Fetching is the hard part.** Browsers cannot read other sites' pages (CORS), so a backend function must fetch the URL (section 5). It needs safeguards: only http/https, no private addresses, size and time limits.
 - **Copyright note.** The app should keep the source URL and treat imported recipes as the user's private copy, not republish them. *(my suggestion)*
 - Imported recipes always open in the recipe editor so the user can review ingredients and link foods before saving.
+- **Built (in PR):** [D29](DECISIONS.md#d29-recipe-import-schemaorg-data-or-pasted-text-one-small-fetch-function-a-private-unsaved-copy-with-a-source-link); spec `docs/specs/recipe-import.md`. Imports are private to the person's account and never shared as full text (matters for households, 4.6).
 
 ### 4.2 Auto-fill a week or month from existing recipes
 - A pure `domain/autoplan.js`: inputs are the recipes, favourites, the calorie goal per day, which meal slots to fill, and rules such as "do not repeat a recipe within N days" and "prefer favourites". Output is a **proposed plan the user can accept, tweak or reroll**; it never overwrites meals already planned without asking.
@@ -101,7 +102,7 @@ Everything else stays static and client-side, and the app keeps working if the b
 1. Go live with sync (owner sets up Supabase), after deciding on households (4.6).
 2. Favourites (small; unlocks 3). **Done (PR #10 merged).**
 3. Auto-fill week/month (pure logic, no backend, fully testable). **Week done (PR #12); month in PR.**
-4. Recipe import from websites (first use of the backend).
+4. Recipe import from websites (first use of the backend). **In PR (feature/recipe-import); function not yet deployed.**
 5. Store integration, starting with the one store that allows it.
 
 ## 7. Proposed non-goals *(edit freely)*

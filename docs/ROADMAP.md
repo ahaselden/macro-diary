@@ -36,7 +36,7 @@ Model (ported in spirit from `MealPlannerPC/Models`): `Recipe{id,name,descriptio
 - Ingredient parsing: `domain/ingredients.js` ports the behaviour of `IngredientParser/IngredientNormalization/IngredientTokens` (quantity fractions, unit aliases, prep notes) with tests, so "1 1/2 cups flour, sifted" becomes `{1.5, cup, flour, "sifted"}`.
 - Nutrition: each ingredient can be linked to a food (same USDA/OFF search + units/density logic the diary uses) → recipe calories/macros per serving, shown live while editing. Unlinked ingredients are flagged ("nutrition incomplete") instead of silently counting as zero.
 - UI: Recipes tab (list/search/add/edit/delete), recipe detail with scaled servings.
-- **Deferred**: importing a recipe from a URL (browsers can't fetch other sites' HTML — CORS — so it needs a small serverless function; MealPlannerPC's Python scraper would be ported there). Pasting a recipe's ingredient text is supported now.
+- **Recipe import** (D29): reads schema.org data from a page fetched by one small Supabase Edge Function (browsers can't fetch other sites: CORS), or from pasted text/page source. In PR; the function needs deploying (KNOWN-ISSUES 42).
 
 ### Stage 4 — Weekly meal plan (part 2b)
 - Plan = `PlanWeek{weekStart, slots:{[date]:{Breakfast..Snacks: [{recipeId|food, servings}]}}}`.
@@ -69,7 +69,7 @@ Model (ported in spirit from `MealPlannerPC/Models`): `Recipe{id,name,descriptio
 | 1 Data foundation | **done** | Schema v3, LWW merge with tombstones (D9-D12). |
 | 2 Sync engine | **done; schema applied to the real project, no real sync yet** | Engine verified against a local mock server (two browser origins). The SQL is in `supabase/migrations/` and was merged to `main` on 2026-11-10 and the owner confirmed the table and `push_record` exist in Supabase. No device has synced through the real project yet; test steps are in SYNC-SETUP.md section 6b (KNOWN-ISSUES #12). |
 | 3a Planner data model | **done** | Schema v4 (D13). |
-| 3 Recipes | **done** | Parser port, nutrition, editor, ingredient→food linking. **Not built:** URL import. |
+| 3 Recipes | **done** | Parser port, nutrition, editor, ingredient→food linking. Import from a page address or pasted text is in PR (D29); the fetch function is not deployed yet. |
 | 4 Meal plan | **done** | Week view, per-day nutrition vs goals, log to diary (idempotent). |
 | 5 Shopping lists | **done** | Derived list, aisles, ticks/extras, share/CSV. |
 | Barcode scan + label OCR | **done, merged (PRs 2, 5)** | Native detector with ZXing fallback; Tesseract.js label reader; separate Take a photo / Choose an image buttons (D24). Unverified on real phones and real packaging (KNOWN-ISSUES #29, #31, #33, #36). |

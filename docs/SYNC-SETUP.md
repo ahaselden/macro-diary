@@ -166,6 +166,13 @@ Purpose: the SQL has been applied (confirmed from the dashboard) but `push_recor
 
 Report back: which step failed, and the message shown. Do not paste your password or the `service_role` key.
 
+## 6c. Optional: recipe import from a web address
+Importing from a pasted web address needs one small function on your project (pasting recipe text works without it). It stores nothing and needs no keys. With the Supabase CLI installed and logged in (`supabase login`, `supabase link --project-ref <your ref>`):
+```
+supabase functions deploy fetch-recipe
+```
+If the app then says the project key was not accepted (the new "publishable" keys are not JWTs), redeploy with `supabase functions deploy fetch-recipe --no-verify-jwt`. The function is public to anyone holding your project's public key, so keep it to your own use for now (see KNOWN-ISSUES 43). Until it is deployed, the Import dialog says "not set up on your project yet" and the paste route still works. This is separate from the database migrations: merging to `main` does NOT deploy it.
+
 ## Troubleshooting
 
 | Symptom | Likely cause / fix |

@@ -44,12 +44,14 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 | `js/domain/recipes.js` `ingredient-parse.js` `ingredient-tokens.js` | Recipes: text → ingredient parsing, grams resolution, nutrition per serving, save/delete/search/scale ([PLANNER.md](PLANNER.md)). |
 | `js/domain/plan.js` | The weekly plan: add/copy/clear, per-day nutrition, idempotent log-to-diary; month calendar helpers (`monthGrid`, `monthSummary`, `autofillDates`, D28). |
 | `js/domain/autoplan.js` | Auto-fill: `proposePlan` (pure, seeded) and `applyProposal` (empty slots only), see D27. |
+| `js/domain/recipe-import.js` | Recipe import: schema.org JSON-LD and pasted text to a result, then `toRecipe` (pure, bounded, never throws), see D29. |
 | `js/domain/shopping.js` | Shopping list derived from plan + recipes; aisles; ticks/extras; text/CSV. |
 | `js/domain/sync-records.js` | State ⇄ sync records (`day:…`, `recipe:…`, `plan:…`, `settings`, …) and record hashing ([SYNC.md](SYNC.md)). |
 | `js/domain/food.js` | `foodKey` — identity of a food across sources. |
 | `js/services/http.js` | `getJSON` with timeout and friendly errors. |
 | `js/services/usda.js` `off.js` `foods.js` | USDA FoodData Central and Open Food Facts lookups, mapping their responses to our food shape, and `searchAll` which queries both and interleaves results. |
 | `js/services/sync/*.js` | Sync: `engine.js` (pull→merge→push), `index.js` (service: config, sign-in, debounce), `config.js`, adapters `supabase-adapter.js` / `memory-adapter.js`. |
+| `js/services/recipe-fetch.js` `sync/connection.js` | Asks the fetch-recipe function for one page (sends only the address and the public key); reads this device's sync settings. The function itself is `supabase/functions/fetch-recipe/` (`guard.js` is pure and Node-tested, `index.ts` runs on Deno). |
 | `js/services/share.js` `files.js` `barcode.js` | Share sheet/clipboard and the day image; file download; camera barcode scanning. |
 | `js/ui/*.js` | One module per screen/dialog (incl. `recipes-view`, `recipe-editor`, `plan-view`, `shop-view`, `sync-view`): `diary`, `add-food`, `custom-food`, `amount-picker`, `export-view`, `settings-view`, `restore-dialog`, `theme`, `tabs`, `share-result`; `ctx.js` holds unsaved UI state. |
 | `sw.js` `manifest.webmanifest` | Offline cache and installability. |

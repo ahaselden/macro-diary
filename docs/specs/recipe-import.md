@@ -116,3 +116,10 @@ Nothing here is verified by any test. The handler's real behaviour is UNVERIFIED
 7. Text paste: sub-headings inside Ingredients ("For the sauce:"), a lone "Makes 12", `Step 1:` prefixes, and Prep/Cook-only times are unspecified.
 8. `verify_jwt` for the function: Supabase's new publishable keys are not JWTs; the owner may need `--no-verify-jwt` if the app key format does not pass the gateway. Deployment/config (`supabase/config.toml`) is not tested and not touched by the test designer.
 9. Whether a result with only a name and no ingredients and no steps should be importable at all (currently allowed with warnings).
+
+## Verification log (implementer, desktop built-in browser only; the deployed function was NOT exercised)
+- Checklist 3 (partly): with the built-in default project the URL field shows; a mocked 404 from the function shows "Recipe import is not set up on your project yet. Paste the recipe instead."; the button re-enables. Not checked: the no-project note (the default project is always present in this build).
+- Checklist 4 (partly): pasted recipe text and pasted page source both open the editor pre-filled, unsaved (saved-recipe count unchanged); a mocked successful function answer fills the name, servings and the Source field with the final URL. Not checked: a real page, View Source of a real site.
+- Checklist 8 (partly): a hostile page source (`<img onerror>`, `<b onmouseover>`, `javascript:` link, `<script>` text) produced plain text in the editor fields and the notes, no injected element and no script run. The recipe list was not re-checked.
+- Checklists 1, 2 (real URL), 5, 6, 7, 9, 10: NOT done (need the deployed function, a phone or offline mode).
+- Decisions on the open questions are recorded in DECISIONS D29 (totalTime falls back to prep + cook; HowToSection names dropped; the guard also checks NAT64 and 6to4 embedded addresses and site-local fec0::/10).
