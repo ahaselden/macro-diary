@@ -73,7 +73,7 @@ Domain tests: `tests/autofill-week.test.js` (ids match titles). UI: `tests/autof
 Empty/one recipe, all favourites, goal exceeded, month crossing, partial plans, duplicate/bad/unsorted dates, 31 dates, prototype-key recipe ids and slot names, NaN/Infinity/huge/negative numbers, wrong types everywhere, frozen state, inherited opts. Recipe names are never put into `why`; escaping of names in the dialog is a manual check.
 
 ## Cannot be tested automatically (manual checklist)
-- [x] Week view shows an "Auto-fill week" button; keyboard focus + Enter/Space opens the preview.
+- [ ] (button seen and opened by click; keyboard Enter/Space not tried) Week view shows an "Auto-fill week" button; keyboard focus + Enter/Space opens the preview.
 - [x] Preview lists every proposed day and slot with recipe name, servings, kcal and the why text; Lunch and Dinner toggles are on by default, Breakfast/Snacks off; toggling regenerates.
 - [x] Nothing is saved until Accept: close the app/Cancel and reload, plan unchanged.
 - [x] Accept adds items, the week view re-renders, state survives reload; Accept twice (or Accept after planning a slot by hand) never overwrites.
