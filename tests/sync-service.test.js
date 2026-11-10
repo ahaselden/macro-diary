@@ -5,6 +5,8 @@ import { createSyncConfig } from '../js/services/sync/config.js';
 import { createMemoryAdapter } from '../js/services/sync/memory-adapter.js';
 import { defaults } from '../js/core/schema.js';
 import { addEntry } from '../js/domain/entries.js';
+// These tests are about a device with nothing configured; the shipped built-in project (defaults.js) must not change that.
+const NO_DEFAULT_PROJECT = { url: '', anonKey: '' };
 
 const store = () => { const m = new Map(); return { getItem: k => m.get(k) ?? null, setItem: (k, v) => m.set(k, v) }; };
 const jwt = role => `h.${Buffer.from(JSON.stringify({ role })).toString('base64url')}.s`;
@@ -24,14 +26,14 @@ function setup({ signedIn = true, server = createMemoryAdapter(), state = defaul
 }
 
 test('status reflects configuration, sign-in and sync state', async () => {
-  const c = createSyncConfig(store()); const mk = () => createSyncService({ config: c, getState: defaults, applyState() {} });
+  const c = createSyncConfig(store()); const mk = () => createSyncService({ config: c, getState: defaults, applyState() {}, defaults: NO_DEFAULT_PROJECT });
   assert.equal(mk().status().state, 'unconfigured');
   c.set({ url: 'https://abc.supabase.co', anonKey: ANON }); assert.equal(mk().status().state, 'signed-out');
   c.set({ session: { refresh_token: 'r' } }); assert.equal(mk().status().state, 'idle');
 });
 
 test('configure rejects http urls, short keys and the service_role key', () => {
-  const svc = createSyncService({ config: createSyncConfig(store()), getState: defaults, applyState() {} });
+  const svc = createSyncService({ config: createSyncConfig(store()), getState: defaults, applyState() {}, defaults: NO_DEFAULT_PROJECT });
   assert.match(svc.configure({ url: 'http://abc.supabase.co', anonKey: ANON }), /https/);
   assert.match(svc.configure({ url: 'https://abc.supabase.co', anonKey: 'short' }), /anon/);
   assert.match(svc.configure({ url: 'https://abc.supabase.co', anonKey: jwt('service_role') + 'x'.repeat(20) }), /service_role/);
@@ -105,6 +107,6 @@ test('signIn stores the session and email', async () => {
   const svc = createSyncService({ config, getState: defaults, applyState() {}, fetchImpl, now: () => 1000 });
   await svc.signIn(' me@x.y ', 'pw');
   assert.equal(config.get().email, 'me@x.y'); assert.equal(config.get().session.refresh_token, 'R');
-  const nokey = createSyncService({ config: createSyncConfig(store()), getState: defaults, applyState() {} });
+  const nokey = createSyncService({ config: createSyncConfig(store()), getState: defaults, applyState() {}, defaults: NO_DEFAULT_PROJECT });
   await assert.rejects(() => nokey.signIn('a', 'b'), /URL and anon key/);
 });

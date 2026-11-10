@@ -72,6 +72,7 @@ Model (ported in spirit from `MealPlannerPC/Models`): `Recipe{id,name,descriptio
 | 4 Meal plan | **done** | Week view, per-day nutrition vs goals, log to diary (idempotent). |
 | 5 Shopping lists | **done** | Derived list, aisles, ticks/extras, share/CSV. |
 | Barcode scan + label OCR | **done, merged (PRs 2, 5)** | Native detector with ZXing fallback; Tesseract.js label reader; separate Take a photo / Choose an image buttons (D24). Unverified on real phones and real packaging (KNOWN-ISSUES #29, #31, #33, #36). |
+| Sync setup defaults + setup link | **in PR #8, not merged** | Built-in default project (set to the owner's project, D25) and an "Add another device" link. QR code not built. |
 | Part 4 store integrations | **not built, by design** | Research notes above; needs a backend + the owner's developer accounts. |
 
 ### What the owner needs to do next (in order)
