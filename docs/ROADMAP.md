@@ -66,7 +66,7 @@ Model (ported in spirit from `MealPlannerPC/Models`): `Recipe{id,name,descriptio
 |-------|-------|-------|
 | 0 Refactor | **done** | Layered ES modules, golden tests, CI, SW drift test. |
 | 1 Data foundation | **done** | Schema v3, LWW merge with tombstones (D9-D12). |
-| 2 Sync engine | **done; schema migration merged (PR 4), first real run not yet confirmed here** | Engine verified against a local mock server (two browser origins). The SQL is in `supabase/migrations/` and was merged to `main` on 2026-11-10, which triggers the Supabase GitHub integration; whether it applied cleanly is not recorded in the repo (KNOWN-ISSUES #12). No device has synced through the real project yet. |
+| 2 Sync engine | **done; schema applied to the real project, no real sync yet** | Engine verified against a local mock server (two browser origins). The SQL is in `supabase/migrations/` and was merged to `main` on 2026-11-10 and the owner confirmed the table and `push_record` exist in Supabase. No device has synced through the real project yet; test steps are in SYNC-SETUP.md section 6b (KNOWN-ISSUES #12). |
 | 3a Planner data model | **done** | Schema v4 (D13). |
 | 3 Recipes | **done** | Parser port, nutrition, editor, ingredient→food linking. **Not built:** URL import. |
 | 4 Meal plan | **done** | Week view, per-day nutrition vs goals, log to diary (idempotent). |
@@ -75,7 +75,7 @@ Model (ported in spirit from `MealPlannerPC/Models`): `Recipe{id,name,descriptio
 | Part 4 store integrations | **not built, by design** | Research notes above; needs a backend + the owner's developer accounts. |
 
 ### What the owner needs to do next (in order)
-1. Check **Supabase dashboard -> Database -> Migrations** and the Table editor (a `records` table) to see whether the PR 4 migration applied; if it failed, paste the error (KNOWN-ISSUES #12). Then follow `docs/SYNC-SETUP.md` to enter the URL + anon key in Settings and try sync between two devices.
+1. Run the real two-device sync test in `docs/SYNC-SETUP.md` section 6b and report any failing step (KNOWN-ISSUES #12).
 2. Try the app on the phone: install, barcode scan, label photo (camera and upload), offline (KNOWN-ISSUES #21, #29, #31, #33, #36).
 3. Answer the open questions at the end of [VISION.md](VISION.md) (households first: it changes the database layout). The suggested order of next features is in its section 6.
 4. Decide on the open design questions in `docs/DECISIONS.md` marked *made without the owner* (D9, D10, D13-D17).
