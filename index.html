@@ -116,9 +116,15 @@ import { esc, rd, r1, r2, fmtW as fmtWu, amtLabel as amtLabelU } from './js/core
 import { fmt, parse, addDays, pretty } from './js/core/dates.js';
 import { foodKey } from './js/domain/food.js';
 import { entryMacros, totals } from './js/domain/nutrition.js';
-import { frac, unitsFor as unitsForM } from './js/domain/units.js';
+import { unitsFor as unitsForM } from './js/domain/units.js';
+import { dayText } from './js/domain/summary.js';
 import { xData as xDataM, rollup, exportFiles } from './js/domain/reports.js';
 import { validEntry, newEntries, mergeBackup } from './js/domain/backup.js';
+import { searchAll } from './js/services/foods.js';
+import { loadPortions } from './js/services/usda.js';
+import { shareText, dayImage } from './js/services/share.js';
+import { download } from './js/services/files.js';
+import { startScan as scanStart, stopScan } from './js/services/barcode.js';
 
 const $ = s => document.querySelector(s);
 // temporary shims until the UI is split into modules (they bind the current weight unit / measures)
@@ -261,79 +267,17 @@ async function doSearch(){
   const q = $('#q').value.trim(); dctx.q = q; if (!q) return;
   if (!S.useUSDA && !S.useOFF) { renderResults('Enable a food database in Settings.'); return; }
   renderResults('Searching…'); dctx.results = [];
-  const jobs = [];
-  if (S.useOFF) jobs.push(searchOFF(q).then(r => ({n:'Open Food Facts', r}), e => ({n:'Open Food Facts', e})));
-  if (S.useUSDA && !/^\d{8,14}$/.test(q)) jobs.push(searchUSDA(q).then(r => ({n:'USDA', r}), e => ({n:'USDA', e})));
-  const out = await Promise.all(jobs);
-  if ($('#q')?.value.trim() !== q) return;
-  const errs = out.filter(o => o.e).map(o => `${o.n}: ${o.e.message}`);
-  // interleave sources so both are visible
-  const lists = out.filter(o => o.r).map(o => o.r); dctx.results = [];
-  for (let i = 0; lists.some(l => i < l.length); i++) lists.forEach(l => l[i] && dctx.results.push(l[i]));
-  renderResults(!dctx.results.length ? (errs.join(' · ') || 'No results found.') : errs.join(' · '));
+  const { results, errors } = await searchAll(q, { useUSDA: S.useUSDA, useOFF: S.useOFF, apiKey: S.apiKey });
+  if ($('#q')?.value.trim() !== q) return;   // a newer search superseded this one
+  dctx.results = results;
+  renderResults(!results.length ? (errors.join(' · ') || 'No results found.') : errors.join(' · '));
 }
 
-/* ---------- food databases ---------- */
-async function getJSON(url){
-  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 15000);
-  try {
-    const r = await fetch(url, {signal: ctl.signal});
-    if (r.status === 429) throw new Error('rate limited – add your own USDA key in Settings');
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    return await r.json();
-  } catch (e) { throw new Error(e.name === 'AbortError' ? 'timed out' : e.message === 'Failed to fetch' ? 'network error' : e.message); }
-  finally { clearTimeout(t); }
-}
-const OFF_FIELDS = 'code,product_name,brands,nutriments,serving_quantity,serving_size';
-function mapOFF(p){
-  const n = p.nutriments || {}; if (!p.product_name) return null;
-  let k = n['energy-kcal_100g']; if (k == null && n.energy_100g != null) k = n.energy_100g / 4.184;
-  if (k == null) return null;
-  return {name:p.product_name, brand:(p.brands||'').split(',')[0].trim(), source:'OFF',
-    per100:{k:+k, p:+n.proteins_100g||0, c:+n.carbohydrates_100g||0, f:+n.fat_100g||0}, servingG:+p.serving_quantity || 0, servingLabel:p.serving_size || ''};
-}
-async function searchOFF(q){
-  if (/^\d{8,14}$/.test(q)) {
-    const j = await getJSON(`https://world.openfoodfacts.org/api/v2/product/${q}.json?fields=${OFF_FIELDS}`);
-    const f = j.status === 1 && mapOFF(j.product); return f ? [f] : [];
-  }
-  const j = await getJSON(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=15&fields=${OFF_FIELDS}`);
-  return (j.products || []).map(mapOFF).filter(Boolean);
-}
-function usdaNut(list, num, unit){ const n = list.find(x => String(x.nutrientNumber) === num && (!unit || (x.unitName||'').toUpperCase() === unit)); return n ? +n.value : null; }
-function mapUSDA(f){
-  const ns = f.foodNutrients || [];
-  let k = usdaNut(ns,'208','KCAL') ?? usdaNut(ns,'957') ?? usdaNut(ns,'958');
-  if (k == null) { const kj = usdaNut(ns,'268'); if (kj != null) k = kj / 4.184; }
-  if (k == null) return null;
-  const sg = f.servingSize && /^g/i.test(f.servingSizeUnit || '') ? +f.servingSize : 0;
-  const name = f.description.toLowerCase() === f.description || f.description === f.description.toUpperCase()
-    ? f.description.charAt(0).toUpperCase() + f.description.slice(1).toLowerCase() : f.description;
-  return {name, brand:f.brandOwner || f.brandName || '', source:'USDA',
-    per100:{k, p:usdaNut(ns,'203')||0, c:usdaNut(ns,'205')||0, f:usdaNut(ns,'204')||0}, servingG:sg,
-    servingLabel:f.householdServingFullText || '', fdcId:f.fdcId};
-}
-async function searchUSDA(q){
-  const key = encodeURIComponent(S.apiKey.trim() || 'DEMO_KEY');
-  const url = t => `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${key}&query=${encodeURIComponent(q)}&pageSize=8&dataType=${t}`;
-  // generic foods (Foundation / SR Legacy) first, then branded products
-  const [g, b] = await Promise.all([getJSON(url('Foundation,SR%20Legacy')), getJSON(url('Branded')).catch(() => ({foods: []}))]);
-  return [...(g.foods || []), ...(b.foods || [])].map(mapUSDA).filter(Boolean);
-}
-
-/* ---------- barcode scan ---------- */
-let scanStream = null, scanTimer = null;
-function stopScan(){ clearInterval(scanTimer); scanTimer = null; if (scanStream) { scanStream.getTracks().forEach(t => t.stop()); scanStream = null; } }
+/* ---------- barcode scan (camera logic lives in services/barcode.js) ---------- */
 async function startScan(){
-  try {
-    scanStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});
-  } catch { toast('Camera unavailable (needs HTTPS and permission)'); return; }
-  const res = $('#results'); res.innerHTML = '<video id="vid" playsinline muted></video><p class="muted">Point at a barcode…</p>';
-  const v = $('#vid'); v.srcObject = scanStream; await v.play();
-  const det = new BarcodeDetector({formats:['ean_13','ean_8','upc_a','upc_e']});
-  scanTimer = setInterval(async () => {
-    try { const codes = await det.detect(v); if (codes.length) { const c = codes[0].rawValue; stopScan(); $('#q').value = c; dctx.q = c; doSearch(); } } catch {}
-  }, 400);
+  $('#results').innerHTML = '<video id="vid" playsinline muted></video><p class="muted">Point at a barcode…</p>';
+  try { await scanStart($('#vid'), code => { $('#q').value = code; dctx.q = code; doSearch(); }); }
+  catch { toast('Camera unavailable (needs HTTPS and permission)'); renderResults(); }
 }
 
 /* ---------- custom food ---------- */
@@ -358,22 +302,6 @@ function renderCustom(){
 
 /* ---------- units & amount picker ---------- */
 const unitsFor = food => unitsForM(food, S.measures);
-// USDA household measures (cups, tbsp, "1 medium" …) live on the food detail record
-async function loadPortions(food){
-  const key = encodeURIComponent(S.apiKey.trim() || 'DEMO_KEY');
-  const j = await getJSON(`https://api.nal.usda.gov/fdc/v1/food/${food.fdcId}?api_key=${key}`);
-  const out = [], seen = new Set();
-  (j.foodPortions || []).forEach(p => {
-    const g = +p.gramWeight, amt = +p.amount || 1; if (!(g > 0)) return;
-    const un = p.measureUnit && p.measureUnit.name && p.measureUnit.name !== 'undetermined' ? p.measureUnit.name : '';
-    let label, per;
-    if (un || p.modifier) { label = [un, p.modifier].filter(Boolean).join(', '); per = g / amt; }
-    else if (p.portionDescription) { const m = p.portionDescription.match(/^\s*(\d+(?:\.\d+)?(?:\s+\d+\/\d+|\/\d+)?)\s*(.*)$/); label = (m ? m[2] : p.portionDescription).trim(); per = g / (m ? frac(m[1]) : 1); }
-    if (!label || /not specified|undetermined|quantity/i.test(label) || seen.has(label)) return;
-    seen.add(label); out.push({label, g:per});
-  });
-  food.portions = out.slice(0, 14);
-}
 function showFood(food, existing){
   head(existing ? 'Edit entry' : 'Amount', !existing);
   let units = unitsFor(food);
@@ -411,7 +339,7 @@ function showFood(food, existing){
     const k = foodKey(food); S.measures[k] = [...(S.measures[k] || []).filter(m => m.label !== label), {label, g}]; save();
     units = unitsFor(food); fill('p:' + label); $('#amt').value = 1; upd(); $('#mName').value = $('#mG').value = ''; toast('Measure saved');
   };
-  if (canLoad) loadPortions(food).then(() => { if (showFood.tok !== tok || !$('#unit')) return;
+  if (canLoad) loadPortions(food, S.apiKey).then(() => { if (showFood.tok !== tok || !$('#unit')) return;
       const keep = $('#unit').value; units = unitsFor(food); fill(keep); upd();
       $('#uMsg').textContent = food.portions.length ? '' : 'No household measures listed for this food.'; },
     err => { if (showFood.tok === tok && $('#uMsg')) $('#uMsg').textContent = "Couldn't load household measures (" + err.message + ')'; });
@@ -444,10 +372,6 @@ function renderExport(){
     : '<p class="muted" style="margin:0">Nothing logged in this period.</p>';
 }
 ['#xKind','#xDate'].forEach(s => $(s).onchange = renderExport);
-function download(name, text, type){
-  const blob = new Blob([text], {type}), url = URL.createObjectURL(blob), a = document.createElement('a');
-  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
 const doExport = which => {
   const f = exportFiles(S, xData(), new Date().toISOString()).find(f => f.name.includes(`-${which}-`));
   f ? download(f.name, f.text, f.type) : toast('Nothing to export');
@@ -458,51 +382,20 @@ $('#xJson').onclick = () => doExport('data');
 $('#xShare').onclick = () => {
   const x = xData(); if (!x.rows.length) return toast('Nothing logged');
   const n = x.rows.length, t = x.rows.reduce((t,r) => (t.k+=r.k,t.p+=r.p,t.c+=r.c,t.f+=r.f,t), {k:0,p:0,c:0,f:0});
-  shareText(`My ${x.kind}ly summary (${x.a}${x.a===x.b?'':' → '+x.b})\n${n} days logged · avg ${rd(t.k/n)} kcal/day\nAvg P ${rd(t.p/n)}g · C ${rd(t.c/n)}g · F ${rd(t.f/n)}g`, 'Macro Diary summary');
+  shareResult(`My ${x.kind}ly summary (${x.a}${x.a===x.b?'':' → '+x.b})\n${n} days logged · avg ${rd(t.k/n)} kcal/day\nAvg P ${rd(t.p/n)}g · C ${rd(t.c/n)}g · F ${rd(t.f/n)}g`, 'Macro Diary summary');
 };
 
-/* ---------- share day ---------- */
-async function shareText(text, title){
-  try { if (navigator.share) { await navigator.share({title, text}); return; } } catch (e) { if (e.name === 'AbortError') return; }
-  try { await navigator.clipboard.writeText(text); toast('Copied to clipboard'); } catch { prompt('Copy this:', text); }
-}
-function dayText(){
-  const list = S.days[cur] || [], t = totals(list);
-  let s = `My day – ${pretty(cur)}\n${rd(t.k)} / ${S.goals.k} kcal\nP ${rd(t.p)}g · C ${rd(t.c)}g · F ${rd(t.f)}g\n`;
-  MEALS.forEach(m => { const es = list.filter(e => e.meal === m); if (!es.length) return;
-    s += `\n${m} (${rd(es.reduce((a,e) => a + entryMacros(e).k, 0))} kcal)\n` + es.map(e => `• ${e.name} – ${amtLabel(e)}, ${rd(entryMacros(e).k)} kcal`).join('\n') + '\n'; });
-  return s.trim();
-}
-function dayImage(){
-  const list = S.days[cur] || [], t = totals(list), W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
-  const x = c.getContext('2d');
-  const bg = cssVar('--bg'), fg = cssVar('--text'), mu = cssVar('--muted'), ln = cssVar('--line');
-  x.fillStyle = bg; x.fillRect(0,0,W,H); x.fillStyle = fg; x.textBaseline = 'alphabetic';
-  x.font = '600 44px system-ui,sans-serif'; x.fillText(pretty(cur), 60, 100);
-  x.font = '700 150px system-ui,sans-serif'; x.fillText(String(rd(t.k)), 60, 280);
-  x.fillStyle = mu; x.font = '40px system-ui,sans-serif'; x.fillText(`of ${S.goals.k} kcal`, 60, 335);
-  const bars = [['Protein','p','#3b82f6'],['Carbs','c','#f59e0b'],['Fat','f','#ef4444']];
-  bars.forEach(([n,k,col],i) => { const bx = 60 + i*320, w = 280;
-    x.fillStyle = mu; x.font = '32px system-ui,sans-serif'; x.fillText(n, bx, 420);
-    x.fillStyle = fg; x.font = '600 40px system-ui,sans-serif'; x.fillText(`${rd(t[k])} / ${S.goals[k]}g`, bx, 470);
-    x.fillStyle = ln; x.fillRect(bx, 490, w, 14); x.fillStyle = col; x.fillRect(bx, 490, w * Math.min(1, t[k]/(S.goals[k]||1)), 14); });
-  let y = 600;
-  MEALS.forEach(m => { const es = list.filter(e => e.meal === m); if (!es.length || y > H - 120) return;
-    x.fillStyle = fg; x.font = '600 38px system-ui,sans-serif'; x.fillText(`${m} · ${rd(es.reduce((a,e) => a + entryMacros(e).k, 0))} kcal`, 60, y); y += 16;
-    es.forEach(e => { if (y > H - 120) return; y += 46; x.fillStyle = mu; x.font = '32px system-ui,sans-serif';
-      let nm = e.name; while (x.measureText(nm).width > 760 && nm.length > 4) nm = nm.slice(0,-2); if (nm !== e.name) nm += '…';
-      x.fillText(nm, 60, y); const k = `${rd(entryMacros(e).k)}`; x.fillText(k, W - 60 - x.measureText(k).width, y); });
-    y += 56; });
-  x.fillStyle = mu; x.font = '28px system-ui,sans-serif'; x.fillText('Macro Diary', 60, H - 50);
-  return new Promise(r => c.toBlob(r, 'image/png'));
-}
+/* ---------- share day (text + image builders live in domain/summary.js and services/share.js) ---------- */
+const shareResult = async (text, title) => { if (await shareText(text, title) === 'copied') toast('Copied to clipboard'); };
 $('#shareBtn').onclick = async () => {
   if (!(S.days[cur] || []).length) return toast('Nothing logged this day');
+  const text = dayText(S, cur, S.weightUnit);
   try {
-    const blob = await dayImage(), file = new File([blob], `macro-diary-${cur}.png`, {type:'image/png'});
-    if (navigator.canShare?.({files:[file]})) { await navigator.share({files:[file], text: dayText(), title:'My day'}); return; }
+    const blob = await dayImage(S, cur, {bg: cssVar('--bg'), fg: cssVar('--text'), mu: cssVar('--muted'), ln: cssVar('--line')});
+    const file = new File([blob], `macro-diary-${cur}.png`, {type: 'image/png'});
+    if (navigator.canShare?.({files: [file]})) { await navigator.share({files: [file], text, title: 'My day'}); return; }
   } catch (e) { if (e.name === 'AbortError') return; }
-  shareText(dayText(), 'My day');
+  shareResult(text, 'My day');
 };
 
 /* ---------- settings ---------- */
