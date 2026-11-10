@@ -42,7 +42,7 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 | `js/domain/reports.js` | Daily/weekly/monthly/yearly ranges, roll-ups, CSV/JSON export contents. |
 | `js/domain/summary.js` | The "share my day" text. |
 | `js/domain/recipes.js` `ingredient-parse.js` `ingredient-tokens.js` | Recipes: text → ingredient parsing, grams resolution, nutrition per serving, save/delete/search/scale ([PLANNER.md](PLANNER.md)). |
-| `js/domain/plan.js` | The weekly plan: add/copy/clear, per-day nutrition, idempotent log-to-diary. |
+| `js/domain/plan.js` | The weekly plan: add/copy/clear, per-day nutrition, idempotent log-to-diary; month calendar helpers (`monthGrid`, `monthSummary`, `autofillDates`, D28). |
 | `js/domain/autoplan.js` | Auto-fill: `proposePlan` (pure, seeded) and `applyProposal` (empty slots only), see D27. |
 | `js/domain/shopping.js` | Shopping list derived from plan + recipes; aisles; ticks/extras; text/CSV. |
 | `js/domain/sync-records.js` | State ⇄ sync records (`day:…`, `recipe:…`, `plan:…`, `settings`, …) and record hashing ([SYNC.md](SYNC.md)). |

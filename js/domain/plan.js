@@ -105,3 +105,60 @@ export function logDay(state, date, now, idGen) {
   for (const m of MEALS) for (const it of [...(state.plan[date]?.slots?.[m] || [])]) if (logItem(state, date, m, it.id, now, idGen)) n++;
   return n;
 }
+
+// ---- month view and auto-fill ranges -------------------------------------------------------------------------
+// Pure calendar helpers for the Plan tab's month view. A date key is valid only if it round-trips through fmt(parse(s)).
+const okDate = s => { if (typeof s !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return false; try { return fmt(parse(s)) === s; } catch { return false; } };
+
+/** The 1st of the month containing `date` ('' if invalid). */
+export const monthStart = date => (okDate(date) ? date.slice(0, 7) + '-01' : '');
+
+/** The 1st of the month `n` months from `date` (n an integer, may be negative); '' if either is invalid. */
+export function addMonths(date, n) {
+  if (!okDate(date) || !Number.isInteger(n)) return '';
+  const [y, m] = date.split('-').map(Number), t = (y * 12 + (m - 1)) + n;
+  if (t < 0) return '';
+  return fmt(new Date(Math.floor(t / 12), t % 12, 1));
+}
+
+/** Every date of the month containing `date`, ascending ([] if invalid). */
+export function monthDates(date) {
+  const first = monthStart(date); if (!first) return [];
+  const out = []; for (let d = first; d.slice(0, 7) === first.slice(0, 7); d = addDays(d, 1)) out.push(d);
+  return out;
+}
+
+/** Monday-first week rows covering the month; padding days from neighbouring months have inMonth:false ([] if invalid). */
+export function monthGrid(date) {
+  const days = monthDates(date); if (!days.length) return [];
+  const start = weekStart(days[0]), end = days[days.length - 1], rows = [];
+  for (let w = start; w <= end; w = addDays(w, 7)) rows.push(weekDates(w).map(d => ({ date: d, inMonth: d.slice(0, 7) === days[0].slice(0, 7) })));
+  return rows;
+}
+
+/** { date: {k, items, complete} } for each date of the month, from the planned items. Never throws or mutates; odd data counts as an empty day. */
+export function monthSummary(state, date) {
+  const out = {};
+  const safe = {
+    plan: state && typeof state.plan === 'object' && state.plan && !Array.isArray(state.plan) ? state.plan : {},
+    recipes: Object.assign(Object.create(null), state && typeof state.recipes === 'object' && state.recipes && !Array.isArray(state.recipes) ? state.recipes : {}),
+    measures: state && state.measures,
+  };
+  for (const d of monthDates(date)) {
+    let r = { k: 0, items: 0, complete: true };
+    try {
+      if (Object.hasOwn(safe.plan, d)) { const n = dayNutrition(safe, d); if (Number.isFinite(n.total.k)) r = { k: n.total.k, items: n.items, complete: n.complete }; }
+    } catch { /* malformed day record: shown as empty */ }
+    out[d] = r;
+  }
+  return out;
+}
+
+/** Dates an auto-fill should consider: the week ('week', default) or calendar month ('month') containing `viewDate`, from `today` on.
+ *  Past days are left out and counted in skippedPast. Invalid dates give nothing. */
+export function autofillDates(range, viewDate, today) {
+  if (!okDate(viewDate) || !okDate(today)) return { dates: [], skippedPast: 0 };
+  const all = range === 'month' ? monthDates(viewDate) : weekDates(weekStart(viewDate));
+  const dates = all.filter(d => d >= today);
+  return { dates, skippedPast: all.length - dates.length };
+}
