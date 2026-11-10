@@ -41,8 +41,32 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
     </div>
   </section>
 
+  <!-- PLAN -->
+  <section class="view" id="v-plan"></section>
+
+  <!-- RECIPES -->
+  <section class="view" id="v-recipes">
+    <div class="row rc-bar">
+      <input id="rcQ" type="search" placeholder="Search recipes" autocomplete="off" aria-label="Search recipes">
+      <button class="primary fit" id="rcNew">+ New recipe</button>
+    </div>
+    <div id="rcList"></div>
+  </section>
+
+  <!-- SHOP -->
+  <section class="view" id="v-shop"></section>
+
+  <!-- MORE (hub for Export and Settings) -->
+  <section class="view" id="v-more">
+    <div class="card">
+      <button class="more-btn" id="moreExport"><span>📤</span>Export data</button>
+      <button class="more-btn" id="moreSettings"><span>⚙️</span>Settings</button>
+    </div>
+  </section>
+
   <!-- EXPORT -->
   <section class="view" id="v-export">
+    <button class="ghost back-more" data-more>‹ More</button>
     <div class="card">
       <h2>Export your data</h2>
       <div class="row">
@@ -63,6 +87,7 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
 
   <!-- SETTINGS -->
   <section class="view" id="v-settings">
+    <button class="ghost back-more" data-more>‹ More</button>
     <div class="card">
       <h2>Appearance</h2>
       <p class="muted" style="margin:4px 0 0">Choose a theme. Auto switches between Light and Dark with your device.</p>
@@ -103,8 +128,10 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
 
 <nav class="tabs">
   <button data-tab="diary" class="on"><span>📖</span>Diary</button>
-  <button data-tab="export"><span>📤</span>Export</button>
-  <button data-tab="settings"><span>⚙️</span>Settings</button>
+  <button data-tab="plan"><span>📅</span>Plan</button>
+  <button data-tab="recipes"><span>🍲</span>Recipes</button>
+  <button data-tab="shop"><span>🛒</span>Shop</button>
+  <button data-tab="more"><span>⋯</span>More</button>
 </nav>
 
 <dialog id="dlg"><div class="dlg-in">

@@ -1,6 +1,6 @@
 // Add/edit-food dialog: tabs (Search / Custom), local + database search, barcode scan.
 import { state } from '../core/store.js';
-import { $, toast, dialog, head } from '../core/dom.js';
+import { $, toast, dialog, head, canClose, setCloseGuard } from '../core/dom.js';
 import { esc, rd, r1 } from '../core/format.js';
 import { foodKey } from '../domain/food.js';
 import { searchAll } from '../services/foods.js';
@@ -11,9 +11,10 @@ import { showFood } from './amount-picker.js';
 
 export function initAddFood() {
   const dlg = dialog();
-  $('#dClose').onclick = () => { stopScan(); dlg.close(); };
-  dlg.addEventListener('close', stopScan);
-  dlg.addEventListener('click', e => { if (e.target === dlg) { stopScan(); dlg.close(); } });
+  $('#dClose').onclick = () => { if (canClose()) { stopScan(); dlg.close(); } };
+  dlg.addEventListener('close', () => { stopScan(); setCloseGuard(null); });
+  dlg.addEventListener('cancel', e => { if (!canClose()) e.preventDefault(); });          // Esc key
+  dlg.addEventListener('click', e => { if (e.target === dlg && canClose()) { stopScan(); dlg.close(); } });
   $('#dBack').onclick = () => { stopScan(); renderSearchTab(); };
 }
 

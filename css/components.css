@@ -59,3 +59,62 @@ th{color:var(--muted);font-weight:600;font-size:12px;border-top:none}
   padding:10px 16px;border-radius:99px;z-index:50;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
 .toast.show{opacity:1}
 video{width:100%;border-radius:12px;background:#000;max-height:50dvh}
+/* More hub + back button */
+.more-btn{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;font-size:17px;margin:6px 0;justify-content:flex-start;padding:0 16px}
+.more-btn span{font-size:22px}
+.back-more{min-height:44px;margin-bottom:8px;padding:0 12px}
+/* Recipes list */
+.rc-bar{margin-bottom:10px}
+.rc-card{cursor:pointer}
+.rc-card h2{margin:0 0 4px;overflow-wrap:anywhere}
+.rc-meta{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+.badge.warn{background:var(--over);color:#fff}
+/* Recipe editor */
+.rc-ed label{display:block;margin-top:10px}
+.rc-ed textarea{width:100%;min-height:72px;box-sizing:border-box}
+.rc-ed h3{margin:16px 0 4px;font-size:15px}
+.ing{padding:8px 0;border-top:1px solid var(--line)}
+.ing .row>input{min-width:0}
+.ing-info{margin-top:4px;overflow-wrap:anywhere}
+.ing-info .row{margin-top:6px}
+.ing-info input.grams{max-width:110px;min-height:44px}
+.ing-info button{min-height:44px}
+.ing .x{flex:0 0 44px;min-height:44px;padding:0;border:none;background:none;color:var(--muted);font-size:20px}
+.rc-sum{margin:14px 0}
+.rc-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.rc-actions button{flex:1;min-height:44px}
+.rc-scale{margin-top:8px}
+.rc-scale ul{margin:6px 0 0;padding-left:18px}
+/* Plan */
+.pl-week{margin-bottom:8px}
+.pl-weekbtns{margin-bottom:6px}
+.pl-day.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.pl-day h2{overflow-wrap:anywhere}
+.pl-meal{margin-top:12px;padding-top:8px;border-top:1px solid var(--line)}
+.pl-item{padding:8px 0;border-top:1px solid var(--line)}
+.pl-nm{min-width:0;overflow-wrap:anywhere}
+.pl-item .x{flex:0 0 44px;min-height:44px;padding:0;border:none;background:none;color:var(--muted);font-size:20px}
+.pl-ctl{margin-top:2px;flex-wrap:wrap}
+.pl-ctl .pl-qty{flex:0 0 84px;width:84px;min-width:0}
+.pl-ctl .pl-unit{flex:0 0 auto}
+.pl-ctl .pl-k{flex:1;font-weight:600;white-space:nowrap;text-align:right}
+.pl-log.done{color:var(--accent);border-color:var(--accent)}
+.pl-more{margin-top:12px;border-top:1px solid var(--line);padding-top:4px}
+.pl-more summary{min-height:44px;display:flex;align-items:center;cursor:pointer;color:var(--muted)}
+.pl-more .row{margin-top:8px}
+.pl-more input[type=date]{min-width:0}
+/* Shop */
+.sh-range{margin-bottom:6px}
+.sh-range input{min-width:0}
+.sh-warn{margin:6px 0}
+.sh-aisle h2{margin-bottom:4px}
+.sh-row{display:flex;align-items:center;gap:12px;min-height:48px;padding:6px 0;border-top:1px solid var(--line);margin:0;color:var(--text);font-size:16px;cursor:pointer}
+.sh-aisle h2+.sh-row{border-top:none}
+.sh-row input[type=checkbox]{flex:0 0 26px;width:26px;height:26px;min-height:0;padding:0;margin:0}
+.sh-lbl{display:flex;align-items:center;gap:12px;flex:1;min-width:0;min-height:44px;margin:0;color:var(--text);font-size:16px;cursor:pointer}
+.sh-lbl input[type=checkbox]{flex:0 0 26px;width:26px;height:26px;min-height:0;padding:0;margin:0}
+.sh-nm{display:flex;flex-direction:column;min-width:0;flex:1;overflow-wrap:anywhere}
+.sh-row.done .sh-nm>span:first-child{text-decoration:line-through}
+.sh-row.done{opacity:.55}
+.sh-row .x{flex:0 0 44px;min-height:44px;padding:0;border:none;background:none;color:var(--muted);font-size:20px}
+.sh-prog{text-align:center;margin:10px 0}

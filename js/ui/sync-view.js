@@ -41,10 +41,11 @@ export function initSync() {
   cfg = createSyncConfig(globalThis.localStorage);
   svc = createSyncService({
     config: cfg, getState: () => state, onStatus: render,
-    applyState: next => { applying = true; replace(next); save(); emit('settings:changed'); emit('diary:changed'); applying = false; },
+    // a sync that received data refreshes every screen (the `applying` flag stops those refreshes re-triggering a sync)
+    applyState: next => { applying = true; replace(next); save(); emit('settings:changed'); emit('diary:changed'); emit('recipes:changed'); emit('plan:changed'); applying = false; },
   });
   // any local change → sync shortly after the user stops editing (changes made by a sync itself don't re-trigger it)
-  on('diary:changed', () => { if (!applying) svc.schedule(); });
+  for (const evt of ['diary:changed', 'recipes:changed', 'plan:changed']) on(evt, () => { if (!applying) svc.schedule(); });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') svc.schedule(1000); });
   window.addEventListener('online', () => svc.schedule(1000));
   svc.schedule(1500);   // and once shortly after the app opens

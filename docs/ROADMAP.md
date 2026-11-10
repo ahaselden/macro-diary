@@ -60,15 +60,21 @@ Model (ported in spirit from `MealPlannerPC/Models`): `Recipe{id,name,descriptio
 - Nothing is pushed to GitHub or deployed by the agent; the owner reviews the branch first.
 
 ## Status
-(Updated as stages land; see `git log` for the commit group of each.)
+(Updated as stages land; `git log` shows one commit group per stage.)
 
 | Stage | State | Notes |
 |-------|-------|-------|
 | 0 Refactor | **done** | Layered ES modules, golden tests, CI, SW drift test. |
 | 1 Data foundation | **done** | Schema v3, LWW merge with tombstones (D9-D12). |
-| 2 Sync engine | **done, not yet run against a real Supabase** | Engine/adapter/UI verified against a mock server end to end (two browser origins); the SQL in SYNC-SETUP.md has never run on Postgres. |
-| 3a Planner data model | **done** | Schema v4 (D13): recipes/plan/shopping sanitised, merged, synced. |
-| 3 Recipes | in progress | |
-| 4 Meal plan | not started | |
-| 5 Shopping lists | not started | |
-| Part 4 integrations | research notes only | Not built, by design. |
+| 2 Sync engine | **done, not yet run against a real Supabase** | Verified end to end against a local mock server (two browser origins); the SQL has never run on Postgres (KNOWN-ISSUES #12). |
+| 3a Planner data model | **done** | Schema v4 (D13). |
+| 3 Recipes | **done** | Parser port, nutrition, editor, ingredient→food linking. **Not built:** URL import. |
+| 4 Meal plan | **done** | Week view, per-day nutrition vs goals, log to diary (idempotent). |
+| 5 Shopping lists | **done** | Derived list, aisles, ticks/extras, share/CSV. |
+| Part 4 store integrations | **not built, by design** | Research notes above; needs a backend + the owner's developer accounts. |
+
+### What the owner needs to do next (in order)
+1. Review the branch `refactor/modules` commit by commit (`git log --oneline`); nothing has been pushed.
+2. Try the app on the phone after pushing (see README-style steps in `docs/SYNC-SETUP.md` and the PWA install notes).
+3. To go live with sync: follow `docs/SYNC-SETUP.md` (create the Supabase project, run the SQL, paste URL + anon key). Report any SQL error — see KNOWN-ISSUES #12.
+4. Decide on the open design questions listed in `docs/DECISIONS.md` marked *made without the owner* (D9, D10, D13–D17).

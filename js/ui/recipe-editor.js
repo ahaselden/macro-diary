@@ -1,0 +1,187 @@
+// Recipe editor inside the shared bottom-sheet dialog. Works on a deep copy until Save.
+// All handlers live on a root div created inside #dBody, so they vanish when add-food/amount-picker replace the body.
+import { state, save } from '../core/store.js';
+import { $, toast, dialog, head, setCloseGuard, canClose } from '../core/dom.js';
+import { emit } from '../core/bus.js';
+import { esc, rd, r1 } from '../core/format.js';
+import { foodKey } from '../domain/food.js';
+import { parseIngredient, formatQty } from '../domain/ingredient-parse.js';
+import { newRecipe, newIngredient, resolveGrams, recipeNutrition, saveRecipe, deleteRecipe, scaleIngredientText } from '../domain/recipes.js';
+import { searchAll } from '../services/foods.js';
+
+let draft = null, isNew = true;
+
+const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+
+export function openRecipeEditor(recipe) {
+  isNew = !recipe;
+  draft = recipe ? structuredClone(recipe) : newRecipe(newId('r_'), Date.now());
+  if (!Array.isArray(draft.ingredients)) draft.ingredients = [];
+  const dlg = dialog();
+  if (!dlg.open) dlg.showModal();
+  const initial = JSON.stringify(draft);
+  setCloseGuard(() => { readFields(); return JSON.stringify(draft) === initial || confirm('Discard your changes to this recipe?'); });
+  renderForm();
+}
+
+const qtyUnit = i => ((i.qty == null || i.qty === '' ? '' : formatQty(i.qty)) + ' ' + (i.unit || '')).trim();
+
+function ingInfo(i) {
+  const parsed = `<div>${esc(qtyUnit(i))} <b>${esc(i.name)}</b>${i.prep ? ', ' + esc(i.prep) : ''}</div>`;
+  let linked = '';
+  if (i.food) {
+    const g = Number(i.grams);
+    linked = `<div>Linked: ${esc(i.food.name)}${g > 0 ? ` · ${rd(Number(i.food.per100.k) * g / 100)} kcal (${rd(g)} g)` : ''}</div>`;
+    if (!(g > 0)) linked += `<div>Can't convert '${esc(qtyUnit(i) || i.raw)}' for this food — enter grams</div>
+      <div class="row"><input class="grams" type="number" inputmode="decimal" step="any" min="0" placeholder="grams" aria-label="Grams" value=""></div>`;
+  }
+  return parsed + linked + `<div class="row"><button class="fit" data-link>${i.food ? 'Change food' : 'Link food'}</button></div>`;
+}
+
+function renderForm() {
+  head(isNew ? 'New recipe' : 'Edit recipe', false);
+  const d = draft;
+  $('#dBody').innerHTML = `<div class="rc-ed" id="rcRoot">
+    <label for="reName">Name</label><input id="reName" value="${esc(d.name)}" autocomplete="off">
+    <div class="row"><div><label for="reServ">Servings</label><input id="reServ" type="number" inputmode="decimal" step="any" min="0" value="${Number(d.servings) || 1}"></div>
+    <div><label for="reTime">Total time (min)</label><input id="reTime" type="number" inputmode="numeric" min="0" value="${Number(d.totalTime) > 0 ? Number(d.totalTime) : ''}"></div></div>
+    <label for="reDesc">Description</label><textarea id="reDesc">${esc(d.description)}</textarea>
+    <label for="reTags">Tags (comma separated)</label><input id="reTags" value="${esc((d.tags || []).join(', '))}" autocomplete="off">
+    <label for="reSource">Source (text or URL)</label><input id="reSource" value="${esc(d.source)}" autocomplete="off">
+    <h3>Ingredients</h3>
+    <label for="rePaste">Paste ingredients (one per line)</label><textarea id="rePaste" placeholder="2 cups flour&#10;1 tbsp olive oil"></textarea>
+    <button id="reAddIng" style="margin-top:6px;min-height:44px">Add</button>
+    <div id="reIngs">${d.ingredients.map(i => `<div class="ing" data-id="${esc(i.id)}"><div class="row"><input class="ing-raw" value="${esc(i.raw)}" aria-label="Ingredient"><button class="x" data-rm aria-label="Remove">✕</button></div><div class="ing-info muted">${ingInfo(i)}</div></div>`).join('')}</div>
+    <div class="rc-scale" id="reScale"></div>
+    <div class="card rc-sum" id="reSum"></div>
+    <h3>Steps (one per line)</h3><textarea id="reSteps">${esc((d.steps || []).join('\n'))}</textarea>
+    <div class="rc-actions"><button class="primary" id="reSave">Save</button><button id="reCancel">Cancel</button>${isNew ? '' : '<button class="danger" id="reDel">Delete</button>'}</div>
+  </div>`;
+  const root = $('#rcRoot');
+  const find = el => { const row = el.closest('.ing'); return row && draft.ingredients.find(i => i.id === row.dataset.id); };
+
+  root.oninput = ev => {
+    const t = ev.target;
+    if (t.id === 'reName') d.name = t.value;
+    else if (t.id === 'reServ') { const v = +t.value; d.servings = v > 0 ? v : 1; summary(); scaleView(); }
+    else if (t.id === 'reTime') d.totalTime = Math.max(0, +t.value || 0);
+    else if (t.id === 'reDesc') d.description = t.value;
+    else if (t.id === 'reTags') d.tags = t.value.split(',').map(x => x.trim()).filter(Boolean);
+    else if (t.id === 'reSource') d.source = t.value;
+    else if (t.id === 'reSteps') d.steps = t.value.split('\n').map(x => x.trim()).filter(Boolean);
+    else if (t.classList.contains('grams')) { const i = find(t); if (i) { i.grams = +t.value > 0 ? +t.value : null; summary(); } }
+    else if (t.id === 'reScaleN') scaleView();
+  };
+  // re-parse a raw line when the edit is committed (change fires on blur; only the info block is redrawn so clicks aren't lost)
+  root.onchange = ev => {
+    const t = ev.target; if (!t.classList.contains('ing-raw')) return;
+    const i = find(t); if (!i) return;
+    Object.assign(i, parseIngredient(t.value));
+    i.grams = i.food ? resolveGrams(i, state.measures) : null;
+    t.closest('.ing').querySelector('.ing-info').innerHTML = ingInfo(i);
+    summary(); scaleView();
+  };
+  root.onclick = ev => {
+    const t = ev.target;
+    if (t.id === 'reAddIng') {
+      const lines = $('#rePaste').value.split('\n').map(x => x.trim()).filter(Boolean);
+      if (!lines.length) return;
+      lines.forEach(l => draft.ingredients.push(newIngredient(l, newId('i_'))));
+      renderForm();
+    } else if (t.closest('[data-rm]')) {
+      const i = find(t); if (i) { draft.ingredients = draft.ingredients.filter(x => x !== i); renderForm(); }
+    } else if (t.closest('[data-link]')) {
+      const i = find(t); if (i) renderPicker(i);
+    } else if (t.id === 'reSave') doSave();
+    else if (t.id === 'reCancel') { if (canClose()) dialog().close(); }
+    else if (t.id === 'reDel') {
+      if (!confirm('Delete this recipe?')) return;
+      deleteRecipe(state, draft.id, Date.now()); save(); emit('recipes:changed'); dialog().close(); toast('Recipe deleted');
+    }
+  };
+  summary(); scaleView();
+}
+
+function summary() {
+  const el = $('#reSum'); if (!el) return;
+  const n = recipeNutrition(draft, state.measures), p = n.perServing;
+  el.innerHTML = `<div class="big">${rd(p.k)} <span class="muted" style="font-size:14px;font-weight:400">kcal / serving</span></div>
+    <div class="macros"><div><span class="muted">Protein</span><b>${r1(p.p)} g</b></div><div><span class="muted">Carbs</span><b>${r1(p.c)} g</b></div><div><span class="muted">Fat</span><b>${r1(p.f)} g</b></div></div>
+    <div class="muted" style="margin-top:8px">${Number(n.linked) || 0} of ${Number(n.count) || 0} ingredients linked${n.complete ? '' : ' · missing: ' + esc((n.missing || []).join(', '))}</div>`;
+}
+
+function scaleView() {
+  const el = $('#reScale'); if (!el) return;
+  if (!draft.ingredients.length) { el.innerHTML = ''; return; }
+  if (!$('#reScaleN')) el.innerHTML = `<label for="reScaleN">Scale to N servings (display only)</label><input id="reScaleN" type="number" inputmode="decimal" step="any" min="0" placeholder="e.g. 8"><ul id="reScaleOut"></ul>`;
+  const n = +$('#reScaleN').value;
+  $('#reScaleOut').innerHTML = n > 0 ? draft.ingredients.map(i => `<li>${esc(scaleIngredientText(i, n / (Number(draft.servings) || 1)))}</li>`).join('') : '';
+}
+
+/** Read the fields as they are RIGHT NOW (autofill / IME can change a field without a usable input event). */
+function readFields() {
+  const val = id => { const el = $('#' + id); return el ? el.value : null; };
+  if (val('reName') !== null) draft.name = val('reName');
+  if (val('reServ') !== null) { const v = +val('reServ'); draft.servings = v > 0 ? v : 1; }
+  if (val('reTime') !== null) draft.totalTime = Math.max(0, +val('reTime') || 0);
+  if (val('reDesc') !== null) draft.description = val('reDesc');
+  if (val('reTags') !== null) draft.tags = val('reTags').split(',').map(x => x.trim()).filter(Boolean);
+  if (val('reSource') !== null) draft.source = val('reSource');
+  if (val('reSteps') !== null) draft.steps = val('reSteps').split('\n').map(x => x.trim()).filter(Boolean);
+}
+
+function doSave() {
+  readFields();
+  draft.name = String(draft.name || '').trim();
+  if (!draft.name) { toast('Enter a recipe name'); return; }
+  if (!(Number(draft.servings) > 0)) draft.servings = 1;
+  saveRecipe(state, draft, Date.now()); save(); emit('recipes:changed'); dialog().close(); toast('Recipe saved');
+}
+
+/* ---------- inline food picker ---------- */
+function localMatches(q) {
+  q = q.toLowerCase();
+  const all = [...state.custom.map(f => ({ ...f, tag: 'My food' })), ...state.recent.map(f => ({ ...f, tag: 'Recent' }))];
+  const seen = new Set();
+  return all.filter(f => (!q || (f.name + ' ' + (f.brand || '')).toLowerCase().includes(q)) && !seen.has(foodKey(f)) && seen.add(foodKey(f))).slice(0, 15);
+}
+
+function renderPicker(ing) {
+  head('Link food', false);
+  let local = [], remote = [], msg = '';
+  $('#dBody').innerHTML = `<div class="rc-ed" id="rcPick"><button class="ghost" id="pkBack" style="min-height:44px">‹ Back to recipe</button>
+    <p class="muted">${esc(ing.raw)}</p>
+    <div class="row"><input id="pkQ" type="search" placeholder="Search foods" enterkeyhint="search" autocomplete="off" value="${esc(ing.name)}"><button class="fit" id="pkGo">Search</button></div>
+    <div id="pkRes"></div></div>`;
+  const item = (f, i, from) => `<div class="res" data-i="${i}" data-from="${from}"><div class="nm"><div>${esc(f.name)}</div>
+    <div class="muted">${esc(f.brand ? f.brand + ' · ' : '')}${rd(f.per100.k)} kcal /100g</div></div><span class="badge">${esc(f.tag || f.source)}</span></div>`;
+  const draw = () => {
+    local = localMatches($('#pkQ').value.trim());
+    $('#pkRes').innerHTML = (local.length ? `<div class="muted" style="margin-top:10px">Your foods</div>` + local.map((f, i) => item(f, i, 'l')).join('') : '')
+      + (msg ? `<p class="muted">${esc(msg)}</p>` : '')
+      + (remote.length ? `<div class="muted" style="margin-top:10px">Database results</div>` + remote.map((f, i) => item(f, i, 'r')).join('') : '');
+  };
+  const go = async () => {
+    const q = $('#pkQ').value.trim(); if (!q) return;
+    if (!state.useUSDA && !state.useOFF) { msg = 'Enable a food database in Settings.'; draw(); return; }
+    msg = 'Searching…'; remote = []; draw();
+    const { results, errors } = await searchAll(q, { useUSDA: state.useUSDA, useOFF: state.useOFF, apiKey: state.apiKey });
+    if (!$('#pkQ') || $('#pkQ').value.trim() !== q) return;
+    remote = results; msg = !results.length ? (errors.join(' · ') || 'No results found.') : errors.join(' · '); draw();
+  };
+  $('#rcPick').onclick = ev => {
+    const t = ev.target;
+    if (t.id === 'pkBack') { renderForm(); return; }
+    if (t.id === 'pkGo') { go(); return; }
+    const r = t.closest('.res'); if (!r) return;
+    const f = (r.dataset.from === 'l' ? local : remote)[+r.dataset.i]; if (!f) return;
+    const food = { name: f.name, brand: f.brand || '', source: f.source || '', per100: f.per100, servingG: f.servingG || 0, servingLabel: f.servingLabel || '' };
+    if (f.fdcId) food.fdcId = f.fdcId;
+    if (f.portions) food.portions = f.portions;
+    ing.food = food; ing.grams = resolveGrams(ing, state.measures);
+    renderForm();
+  };
+  $('#pkQ').oninput = draw;
+  $('#pkQ').onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); go(); } };
+  draw();
+}

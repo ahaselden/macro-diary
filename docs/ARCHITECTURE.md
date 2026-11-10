@@ -41,11 +41,16 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 | `js/domain/backup.js` | Restore: `validEntry`, `newEntries` (preview count), `mergeRestore` (sanitise the file, then `mergeStates` preferring this device on ties). |
 | `js/domain/reports.js` | Daily/weekly/monthly/yearly ranges, roll-ups, CSV/JSON export contents. |
 | `js/domain/summary.js` | The "share my day" text. |
+| `js/domain/recipes.js` `ingredient-parse.js` `ingredient-tokens.js` | Recipes: text → ingredient parsing, grams resolution, nutrition per serving, save/delete/search/scale ([PLANNER.md](PLANNER.md)). |
+| `js/domain/plan.js` | The weekly plan: add/copy/clear, per-day nutrition, idempotent log-to-diary. |
+| `js/domain/shopping.js` | Shopping list derived from plan + recipes; aisles; ticks/extras; text/CSV. |
+| `js/domain/sync-records.js` | State ⇄ sync records (`day:…`, `recipe:…`, `plan:…`, `settings`, …) and record hashing ([SYNC.md](SYNC.md)). |
 | `js/domain/food.js` | `foodKey` — identity of a food across sources. |
 | `js/services/http.js` | `getJSON` with timeout and friendly errors. |
 | `js/services/usda.js` `off.js` `foods.js` | USDA FoodData Central and Open Food Facts lookups, mapping their responses to our food shape, and `searchAll` which queries both and interleaves results. |
+| `js/services/sync/*.js` | Sync: `engine.js` (pull→merge→push), `index.js` (service: config, sign-in, debounce), `config.js`, adapters `supabase-adapter.js` / `memory-adapter.js`. |
 | `js/services/share.js` `files.js` `barcode.js` | Share sheet/clipboard and the day image; file download; camera barcode scanning. |
-| `js/ui/*.js` | One module per screen/dialog: `diary`, `add-food`, `custom-food`, `amount-picker`, `export-view`, `settings-view`, `restore-dialog`, `theme`, `tabs`, `share-result`; `ctx.js` holds unsaved UI state. |
+| `js/ui/*.js` | One module per screen/dialog (incl. `recipes-view`, `recipe-editor`, `plan-view`, `shop-view`, `sync-view`): `diary`, `add-food`, `custom-food`, `amount-picker`, `export-view`, `settings-view`, `restore-dialog`, `theme`, `tabs`, `share-result`; `ctx.js` holds unsaved UI state. |
 | `sw.js` `manifest.webmanifest` | Offline cache and installability. |
 | `tests/` | `node:test` suites. `tests/golden/` + `tests/fixtures/` are outputs/inputs captured from the original single-file app; the modules must reproduce them exactly ([D3](DECISIONS.md#d3-golden-file-tests-captured-from-the-original-app)). |
 

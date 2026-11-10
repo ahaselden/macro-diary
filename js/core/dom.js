@@ -12,5 +12,10 @@ export function toast(m) {
 /** The modal bottom-sheet used for adding foods, editing entries and restoring backups. */
 export const dialog = () => $('#dlg');
 
+// Screens holding unsaved work register a guard; every way of closing the dialog (✕, backdrop tap, Esc) asks it first.
+let closeGuard = null;
+export const setCloseGuard = fn => { closeGuard = fn; };
+export const canClose = () => !closeGuard || closeGuard() !== false;
+
 /** Set the dialog title and whether the ‹ back button shows. */
 export function head(title, back) { $('#dTitle').textContent = title; $('#dBack').hidden = !back; }
