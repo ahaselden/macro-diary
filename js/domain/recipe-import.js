@@ -188,10 +188,10 @@ function commaParts(line) {
  */
 function ingredientSink(out) {
   let run = false;
-  return line => {
+  return (line, dropIt = false) => {                    // dropIt: the caller discards this line (it still counts as a digit line and ends the rule)
     if (!line) return;
     if (isLabel(line)) { run = true; return; }
-    if (/\d/.test(line)) run = false;
+    if (/\d/.test(line)) { run = false; if (dropIt) return; }
     else if (run) {
       const parts = commaParts(line);
       if (parts.length >= 3) { for (const part of parts) if (out.length < LIM.ingredients) out.push(part.slice(0, LIM.ingredient)); return; }
@@ -306,7 +306,7 @@ export function importFromText(text) {
       }
       const item = stripMark(raw);
       if (!item) continue;
-      if (mode === 'ing') { if (!(item.endsWith(':') && /\d/.test(item))) addIngredient(item); }   // a colon line WITH a number is dropped, as before; one without is a group label
+      if (mode === 'ing') addIngredient(item, item.endsWith(':') && /\d/.test(item));   // a colon line WITH a number is dropped, as before (but it ends a label's list); one without is a group label
       else if (r.steps.length < LIM.steps) r.steps.push(item.slice(0, LIM.step));
     }
     r.name = title.slice(0, LIM.name);
