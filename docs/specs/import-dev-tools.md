@@ -105,3 +105,8 @@ Part C: parser (`tests/import-dev-tools-parser.test.js`)
 - Status codes for host-check and upstream failures are not fixed beyond "not 404 and >= 400" for host refusals.
 - Whether `siteSlug` strips a leading `www`: not tested.
 - Fetch-time details of the CLI `add` (UA, size cap): assumed to reuse the core with real fetch/dns.
+
+## Verification log (implementer, Windows, desktop built-in browser)
+- Manual checklist run against one real page (a public recipe site the owner named): the stand-in returned the page; private (169.254.169.254) and localhost targets were refused; `sites:add` saved a snapshot to the git-ignored folder, a second `add` was refused without `--force`, `test:sites` passed 1/1, `git status` did not list the folder; in the app (Settings -> own project `http://localhost:54321`) Import by web address filled the editor (name, 6 servings, 55 min, 7 tags with the category split, 15 ingredient lines without the "Optional Toppings:" label, source link, nutrition warning), saved-recipe count unchanged. Sync settings were restored afterwards.
+- A test-designer test was changed after implementation: behaviour 10 had a "no content type" case that a `Response` with a string body could not produce (it adds `text/plain`); the designer rebuilt that case with a stream body. No other test was edited.
+- Not verified: the real Deno function, a phone, Linux/macOS.

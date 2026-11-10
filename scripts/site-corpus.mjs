@@ -12,9 +12,12 @@ import { siteSlug, slugPart, buildFixture, expectedFor, runCorpus } from './lib/
 
 const LOCAL_DIR = fileURLToPath(new URL('../tests/local-sites/', import.meta.url));
 const say = (...a) => console.log(...a);
-const die = (msg, code = 1) => { console.error(msg); process.exit(code); };
+// Finish by setting the exit code and unwinding (process.exit() while a fetch/DNS handle is still closing crashes Node on Windows).
+class Quit extends Error { constructor(code) { super('quit'); this.code = code; } }
+const die = (msg, code = 1) => { console.error(msg); throw new Quit(code); };
 const usage = () => die('Usage:\n  node scripts/site-corpus.mjs add <url> [name] [--force]\n  node scripts/site-corpus.mjs check', 2);
 
+async function main() {
 const [command, ...rest] = process.argv.slice(2);
 const force = rest.includes('--force');
 const args = rest.filter(a => a !== '--force');
@@ -47,8 +50,11 @@ if (command === 'add') {
   say('These files hold third-party text. They are git-ignored; never commit them.');
 } else if (command === 'check') {
   const res = await runCorpus(LOCAL_DIR);
-  if (res.total === 0) { say('No saved sites yet (tests/local-sites/ is empty or missing). Add one with: npm run sites:add -- <url>'); process.exit(0); }
+  if (res.total === 0) { say('No saved sites yet (tests/local-sites/ is empty or missing). Add one with: npm run sites:add -- <url>'); return; }
   for (const f of res.failed) { say(`FAIL ${f.name}`); for (const d of f.diffs) say(`  - ${d}`); }
   say(`${res.passed}/${res.total} sites pass`);
-  process.exit(res.failed.length ? 1 : 0);
+  if (res.failed.length) throw new Quit(1);
 } else usage();
+}
+
+try { await main(); } catch (e) { if (e instanceof Quit) process.exitCode = e.code; else throw e; }
