@@ -166,6 +166,13 @@ Purpose: the SQL has been applied (confirmed from the dashboard) but `push_recor
 
 Report back: which step failed, and the message shown. Do not paste your password or the `service_role` key.
 
+## 6c. Optional: recipe import from a web address
+Importing from a pasted web address needs one small function on your project (pasting recipe text works without it). It stores nothing and needs no keys. With the Supabase CLI installed and logged in (`supabase login`, `supabase link --project-ref <your ref>`):
+```
+supabase functions deploy fetch-recipe
+```
+If the app then says the project key was not accepted (the new "publishable" keys are not JWTs), redeploy with `supabase functions deploy fetch-recipe --no-verify-jwt`. **Who can use it:** the app ships the built-in project's public key to every browser, so once the function exists on that project every user of the app sees a working Import button and the whole internet can call it (with `--no-verify-jwt` no key is needed at all). It is an open relay for fetching public pages, limited to 2 MB per answer and counted against your Supabase quota, with no per-user limit (KNOWN-ISSUES 43). Deploy it for your own testing, watch the project's usage, and add the signed-in-user check and rate limit before the app is opened to others. **First test after deploying:** import a real recipe address. If every site answers "That address is not a public website", the platform does not support the DNS lookup the function relies on (KNOWN-ISSUES 42); do not loosen the check, tell me and it will be replaced. If the browser reports a network or CORS failure instead, the gateway is probably rejecting the preflight; try the `--no-verify-jwt` redeploy. Until it is deployed, the Import dialog says "not set up on your project yet" and the paste route still works. This is separate from the database migrations: merging to `main` does NOT deploy it.
+
 ## Troubleshooting
 
 | Symptom | Likely cause / fix |
