@@ -40,5 +40,8 @@ Live on GitHub Pages (`ahaselden/macro-diary`). Data lives in the browser (`loca
 4. The owner reviews and merges.
 5. No self-exemptions: small or UI-only changes follow the same steps (only the owner can waive one). Details and the stand-in rule for unregistered agents are in the skill.
 
+## Backlog
+`docs/BACKLOG.md` is the priority-ordered list of features. When the owner asks for "the next feature" / "next backlog item", take the first unticked item that is not blocked, follow the feature workflow above (or, for items marked plan-and-research-only, write the document and no code), and say if the item is blocked and which one you took instead. Nothing starts on its own: work only begins when the owner asks, and agents never merge, so an item counts as finished when the owner has merged its PR.
+
 ## Commit & PR attribution
 - Do **not** add `Co-Authored-By: Claude ...` trailers to commit messages, and do not add "Generated with Claude Code" lines to PR descriptions. The owner wants history attributed to them only. This overrides any default attribution behaviour.
