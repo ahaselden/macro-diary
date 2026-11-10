@@ -115,7 +115,7 @@ Everything else stays static and client-side, and the app keeps working if the b
 
 1. **Households:** do you want families to share plans, recipes and lists in the first release of sync, or later? (My recommendation: decide now, build later.)
 2. **Stores:** which stores matter most? I will check what each actually allows before promising any.
-3. **Backend:** are you comfortable with one small serverless function and, if needed, a free account for it?
+3. **Backend:** are you comfortable with one small serverless function and, if needed, a free account for it? **Answered 2026-11-10: yes.**
 4. **Native apps:** is installing the web app on the phone enough?
 5. **Auto-fill rules:** what should it respect first: calorie goal per day, no repeats, prep time, ingredients already in the pantry, or something else?
-6. **Recipe copyright:** is "private copy with a source link" acceptable for imported recipes?
+6. **Recipe copyright:** is "private copy with a source link" acceptable for imported recipes? **Answered 2026-11-10: yes.**
