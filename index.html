@@ -673,11 +673,50 @@ $('#bkImport').onclick = () => $('#bkFile').click();
 $('#bkFile').onchange = async ev => {
   const f = ev.target.files[0]; ev.target.value = ''; if (!f) return;
   try {
-    const d = JSON.parse(await f.text()); if (!d || typeof d.days !== 'object' || !d.goals) throw 0;
-    if (!confirm('Replace all data on this device with the backup?')) return;
-    S = {...defaults(), ...d}; save(); loadSettings(); applyTheme(); renderDiary(); toast('Backup restored');
+    const d = JSON.parse(await f.text()); if (!d || typeof d.days !== 'object' || Array.isArray(d.days) || !d.goals) throw 0;
+    restoreFlow(d);
   } catch { toast('Not a valid backup file'); }
 };
+const validEntry = e => e && typeof e.id === 'string' && e.per100 && isFinite(e.grams) && e.grams > 0;
+// entries in the backup that this device doesn't have yet (matched by entry id)
+function newEntries(d){
+  const out = {};
+  for (const [day, list] of Object.entries(d.days)) {
+    if (!Array.isArray(list)) continue;
+    const have = new Set((S.days[day] || []).map(e => e.id)), add = list.filter(e => validEntry(e) && !have.has(e.id));
+    if (add.length) out[day] = add;
+  }
+  return out;
+}
+function mergeBackup(d){
+  for (const [day, add] of Object.entries(newEntries(d))) S.days[day] = [...(S.days[day] || []), ...add];
+  const union = (a, b) => { const seen = new Set(a.map(foodKey)); return [...a, ...b.filter(x => x && x.name && x.per100 && !seen.has(foodKey(x)))]; };
+  S.custom = union(S.custom, d.custom || []).slice(0, 100);
+  S.recent = union(S.recent, d.recent || []).slice(0, 30);
+  for (const [k, list] of Object.entries(d.measures || {})) {
+    const mine = S.measures[k] || [], seen = new Set(mine.map(m => m.label));
+    const add = (Array.isArray(list) ? list : []).filter(m => m && m.label && m.g > 0 && !seen.has(m.label));
+    if (add.length) S.measures[k] = [...mine, ...add];
+  }
+  save();
+}
+function restoreFlow(d){
+  const fresh = newEntries(d), nNew = Object.values(fresh).reduce((a, l) => a + l.length, 0), nDays = Object.keys(fresh).length;
+  const total = Object.values(d.days).reduce((a, l) => a + (Array.isArray(l) ? l.filter(validEntry).length : 0), 0);
+  head('Restore backup', false);
+  $('#dBody').innerHTML = `<p style="margin-top:0">This backup has <b>${total}</b> entries across <b>${Object.values(d.days).filter(l => Array.isArray(l) && l.some(validEntry)).length}</b> days.
+      <b>${nNew}</b> ${nNew === 1 ? 'entry is' : 'entries are'} new to this device${nNew ? ` (across ${nDays} ${nDays === 1 ? 'day' : 'days'})` : ''}.</p>
+    <button class="primary" style="width:100%" id="rMerge">Merge – keep both</button>
+    <p class="muted" style="margin:6px 0 14px">Adds what's missing and keeps everything already here. Your goals, theme and settings stay as they are.</p>
+    <button class="danger" style="width:100%" id="rReplace">Replace everything</button>
+    <p class="muted" style="margin:6px 0 14px">Makes this device an exact copy of the backup. Anything logged here that isn't in the file is lost.</p>
+    <button style="width:100%" id="rCancel">Cancel</button>`;
+  if (!dlg.open) dlg.showModal();
+  $('#rCancel').onclick = () => dlg.close();
+  $('#rMerge').onclick = () => { mergeBackup(d); dlg.close(); loadSettings(); renderDiary(); toast(nNew ? `Merged – ${nNew} new ${nNew === 1 ? 'entry' : 'entries'}` : 'Merged – nothing new to add'); };
+  $('#rReplace').onclick = () => { if (!confirm('Replace ALL data on this device with the backup? This cannot be undone.')) return;
+    S = {...defaults(), ...d}; save(); dlg.close(); loadSettings(); applyTheme(); renderDiary(); toast('Backup restored'); };
+}
 $('#wipe').onclick = () => { if (confirm('Delete ALL diary data on this device? This cannot be undone.')) { S = defaults(); save(); loadSettings(); applyTheme(); renderDiary(); toast('All data deleted'); } };
 
 /* ---------- boot ---------- */
