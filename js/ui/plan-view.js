@@ -8,14 +8,16 @@ import { esc, rd } from '../core/format.js';
 import { fmt, addDays, parse } from '../core/dates.js';
 import { foodKey } from '../domain/food.js';
 import { searchRecipes, recipeNutrition } from '../domain/recipes.js';
-import { weekStart, weekDates, getDay, recipeItem, foodItem, addPlanItem, updatePlanItem, removePlanItem, clearDay, copyDay, copyWeek, itemNutrition, dayNutrition, logItem, logDay } from '../domain/plan.js';
+import { weekStart, weekDates, monthGrid, monthSummary, addMonths, monthStart, autofillDates, getDay, recipeItem, foodItem, addPlanItem, updatePlanItem, removePlanItem, clearDay, copyDay, copyWeek, itemNutrition, dayNutrition, logItem, logDay } from '../domain/plan.js';
 import { proposePlan, applyProposal } from '../domain/autoplan.js';
 import { searchAll } from '../services/foods.js';
 import { registerTab } from './tabs.js';
 
 let weekStartDate = weekStart(fmt(new Date()));
+let view = 'week', monthDate = monthStart(fmt(new Date()));   // which Plan view is showing, and which month the month view shows
 
-const newId = () => 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+let idSeq = 0;   // a counter on the end keeps ids unique when many are made within one millisecond
+const newId = () => 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + (idSeq++).toString(36);
 const changed = diary => { save(); emit('plan:changed'); if (diary) emit('diary:changed'); };
 // A quantity box saves on blur, i.e. just before the tap the user is making on another button. Re-rendering immediately would
 // replace that button and swallow the tap, so the refresh waits a moment.
@@ -60,18 +62,44 @@ function dayHtml(date, today) {
   </div>`;
 }
 
+const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+function monthHtml(today) {
+  const grid = monthGrid(monthDate), sum = monthSummary(state, monthDate), goal = Number(state.goals.k) || 0;
+  const lbl = parse(monthDate).toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const cell = c => {
+    if (!c.inMonth) return '<div class="pm-cell pad"></div>';
+    const x = sum[c.date], n = x.items, k = Math.round(x.k);
+    const cls = ['pm-cell', c.date === today ? 'today' : '', n && goal && x.k > goal ? 'over' : '', n ? 'has' : ''].filter(Boolean).join(' ');
+    return `<button type="button" class="${cls}" data-day="${esc(c.date)}" aria-label="${esc(dayLabel(c.date))}: ${n ? `${k} kcal, ${n} item${n === 1 ? '' : 's'}${x.complete ? '' : ', incomplete'}` : 'nothing planned'}">
+      <span class="pm-d">${Number(c.date.slice(8))}</span>${n ? `<span class="pm-k">${k}</span><span class="pm-n">${n} item${n === 1 ? '' : 's'}${x.complete ? '' : ' !'}</span>` : ''}</button>`;
+  };
+  return `<div class="datebar pl-week"><button data-mm="-1" aria-label="Previous month">‹</button><div class="lbl">${esc(lbl)}</div><button data-mm="1" aria-label="Next month">›</button></div>
+    <div class="pm-grid"><div class="pm-head">${WEEKDAYS.map(d => `<span>${d}</span>`).join('')}</div>${grid.map(row => `<div class="pm-row">${row.map(cell).join('')}</div>`).join('')}</div>
+    <p class="muted">Tap a day to open its week. Numbers are planned kcal; “!” means some items have incomplete nutrition.</p>`;
+}
+
 export function renderPlan() {
   const root = $('#v-plan'); if (!root) return;
   const dates = weekDates(weekStartDate), today = fmt(new Date());
   const lbl = parse(weekStartDate).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
-  root.innerHTML = `<div class="datebar pl-week"><button data-wk="-1" aria-label="Previous week">‹</button><div class="lbl">Week of ${esc(lbl)}</div><button data-wk="1" aria-label="Next week">›</button></div>
+  const toggle = `<div class="row pl-weekbtns pl-views"><button data-view="week" aria-pressed="${view === 'week'}" class="${view === 'week' ? 'primary' : ''}">Week</button><button data-view="month" aria-pressed="${view === 'month'}" class="${view === 'month' ? 'primary' : ''}">Month</button></div>`;
+  const fill = '<div class="row pl-weekbtns"><button data-autofill>Auto-fill week</button></div>';
+  if (view === 'month') { root.innerHTML = toggle + fill + monthHtml(today); return; }
+  root.innerHTML = toggle + `<div class="datebar pl-week"><button data-wk="-1" aria-label="Previous week">‹</button><div class="lbl">Week of ${esc(lbl)}</div><button data-wk="1" aria-label="Next week">›</button></div>
     <div class="row pl-weekbtns"><button data-thisweek>This week</button><button data-copyweek>Copy week to next week</button></div>
-    <div class="row pl-weekbtns"><button data-autofill>Auto-fill week</button></div>
+    ${fill}
     ${dates.map(d => dayHtml(d, today)).join('')}`;
 }
 
 function onClick(ev) {
   const t = ev.target;
+  const vw = t.closest('[data-view]');
+  if (vw) { view = vw.dataset.view === 'month' ? 'month' : 'week'; if (view === 'month') monthDate = monthStart(weekStartDate); renderPlan(); return; }
+  const mm = t.closest('[data-mm]');
+  if (mm) { monthDate = addMonths(monthDate, Number(mm.dataset.mm)) || monthDate; renderPlan(); return; }
+  const dayBtn = t.closest('[data-day]');
+  if (dayBtn) { view = 'week'; weekStartDate = weekStart(dayBtn.dataset.day); renderPlan(); return; }
   const wk = t.closest('[data-wk]');
   if (wk) { weekStartDate = addDays(weekStartDate, 7 * Number(wk.dataset.wk)); renderPlan(); return; }
   if (t.closest('[data-thisweek]')) { weekStartDate = weekStart(fmt(new Date())); renderPlan(); return; }
@@ -141,10 +169,13 @@ export function initPlan() {
 function openAutofill() {
   head('Auto-fill week', false);
   const dlg = dialog(); if (!dlg.open) dlg.showModal();
-  const dates = weekDates(weekStartDate);
-  let seed = 1;
+  const today = fmt(new Date());
+  const viewDate = view === 'month' ? (monthStart(today) === monthDate ? today : monthDate) : weekStartDate;
+  let seed = 1, range = view;
   $('#dBody').innerHTML = `<div class="rc-ed" id="apRoot">
     <p class="muted">Fills only empty meals, using your recipes to fit your calorie goal, avoid repeats and prefer favourites. Nothing changes until you press Accept.</p>
+    <div class="row ap-range"><button type="button" data-range="week" aria-pressed="${range === 'week'}">Week</button><button type="button" data-range="month" aria-pressed="${range === 'month'}">Month</button></div>
+    <p class="muted" id="apSkipped"></p>
     <div class="row ap-slots">${MEALS.map(m => `<label class="ap-slot"><input type="checkbox" data-slot="${esc(m)}"${m === 'Lunch' || m === 'Dinner' ? ' checked' : ''}> ${esc(m)}</label>`).join('')}</div>
     <div id="apList"></div>
     <div class="rc-actions"><button class="primary" id="apAccept">Accept</button><button id="apReroll">Reroll</button><button id="apCancel">Cancel</button></div>
@@ -153,6 +184,9 @@ function openAutofill() {
   let proposal = { days: {}, notes: [] };
   const draw = () => {
     const slots = [...root.querySelectorAll('[data-slot]')].filter(c => c.checked).map(c => c.dataset.slot);
+    const { dates, skippedPast } = autofillDates(range, viewDate, today);
+    root.querySelectorAll('[data-range]').forEach(b => { const on = b.dataset.range === range; b.setAttribute('aria-pressed', String(on)); b.classList.toggle('primary', on); });
+    $('#apSkipped').textContent = skippedPast ? `${skippedPast} past day${skippedPast === 1 ? '' : 's'} skipped (only today and later are filled).` : '';
     proposal = proposePlan(state, { dates, slots, seed });
     const days = Object.keys(proposal.days).sort();
     $('#apList').innerHTML = (days.length ? days.map(d => `<div class="card"><h3>${esc(dayLabel(d))}</h3>${MEALS.filter(m => proposal.days[d][m]).map(m => proposal.days[d][m].map(p => {
@@ -164,7 +198,8 @@ function openAutofill() {
   };
   root.onchange = ev => { if (ev.target.closest('[data-slot]')) draw(); };
   root.onclick = ev => {
-    const id = ev.target.id;
+    const id = ev.target.id, rb = ev.target.closest('[data-range]');
+    if (rb) { range = rb.dataset.range === 'month' ? 'month' : 'week'; seed = 1; draw(); return; }
     if (id === 'apReroll') { seed++; draw(); }
     else if (id === 'apCancel') dialog().close();
     else if (id === 'apAccept') {
