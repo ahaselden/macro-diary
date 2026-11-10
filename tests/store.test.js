@@ -1,0 +1,67 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createStore, defaults, migrate, SCHEMA_VERSION } from '../js/core/store.js';
+import { STORAGE_KEY } from '../js/core/constants.js';
+import { fixture, clone } from './helpers.js';
+
+const fakeStorage = (initial, failWrites = false) => {
+  const m = new Map(initial === undefined ? [] : [[STORAGE_KEY, initial]]);
+  return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { if (failWrites) throw new Error('quota'); m.set(k, v); }, m };
+};
+
+test('storage key is unchanged (existing users data lives here)', () => assert.equal(STORAGE_KEY, 'macrodiary.v1'));
+
+test('empty storage gives defaults', () => {
+  const { state } = createStore(fakeStorage());
+  assert.deepEqual(state, defaults());
+  assert.equal(state.schemaVersion, SCHEMA_VERSION);
+});
+
+test('no storage at all (e.g. node) gives defaults', () => assert.deepEqual(createStore(null).state, defaults()));
+
+test('corrupt JSON falls back to defaults without throwing', () => assert.deepEqual(createStore(fakeStorage('{not json')).state, defaults()));
+
+test('a v1 save (no schemaVersion) loads intact and is stamped to the current version', () => {
+  const v1 = fixture('state');
+  assert.equal(v1.schemaVersion, undefined);
+  const { state } = createStore(fakeStorage(JSON.stringify(v1)));
+  assert.equal(state.schemaVersion, SCHEMA_VERSION);
+  assert.deepEqual(state.days, v1.days);
+  assert.deepEqual(state.goals, v1.goals);
+  assert.deepEqual(state.measures, v1.measures);
+});
+
+test('keys missing from an old save are filled from defaults', () => {
+  const { state } = createStore(fakeStorage(JSON.stringify({ goals: { k: 1800, p: 1, c: 1, f: 1 } })));
+  assert.equal(state.goals.k, 1800);
+  assert.equal(state.weightUnit, 'g');
+  assert.deepEqual(state.days, {});
+});
+
+test('save writes JSON under the storage key and returns true', () => {
+  const st = fakeStorage(); const s = createStore(st);
+  s.state.goals.k = 1234;
+  assert.equal(s.save(), true);
+  assert.equal(JSON.parse(st.m.get(STORAGE_KEY)).goals.k, 1234);
+});
+
+test('failed save returns false and calls onSaveError', () => {
+  const s = createStore(fakeStorage(undefined, true)); let called = 0; s.onSaveError = () => called++;
+  assert.equal(s.save(), false);
+  assert.equal(called, 1);
+});
+
+test('replace keeps object identity, drops old keys, migrates and fills defaults', () => {
+  const s = createStore(fakeStorage()); const ref = s.state;
+  s.state.extraOld = 1; s.state.days = { '2025-01-01': [{ id: 'x' }] };
+  s.replace(clone(fixture('state')));
+  assert.equal(s.state, ref);
+  assert.equal('extraOld' in s.state, false);
+  assert.equal(s.state.schemaVersion, SCHEMA_VERSION);
+  assert.equal(Object.keys(s.state.days).length, Object.keys(fixture('state').days).length);
+});
+
+test('migrate never removes data and never lowers the version', () => {
+  assert.equal(migrate({ days: { a: [] } }).schemaVersion, 2);
+  assert.equal(migrate({ schemaVersion: 7 }).schemaVersion, 7);
+});

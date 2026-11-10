@@ -16,104 +16,9 @@
 try{var d=JSON.parse(localStorage.getItem('macrodiary.v1')),t=d&&d.theme;if(typeof t!=='string')t='auto';
 if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}
 </script>
-<style>
-:root{
-  --bg:#f5f6f4;--card:#fff;--text:#1a1f1c;--muted:#667069;--line:#e3e7e2;
-  --accent:#16a34a;--accent-ink:#fff;--kcal:#16a34a;--p:#3b82f6;--c:#f59e0b;--f:#ef4444;--over:#dc2626;
-  --nav-h:60px;color-scheme:light;
-}
-:root{--kcal:var(--accent)}
-[data-theme=dark],[data-theme=black],[data-theme=midnight],[data-theme=forest],[data-theme=nord],[data-theme=dracula],[data-theme=ember],[data-theme=contrast]{--over:#f87171}
-[data-theme=light]{color-scheme:light;--bg:#f5f6f4;--card:#fff;--text:#1a1f1c;--muted:#667069;--line:#e3e7e2;--accent:#16a34a;--accent-ink:#fff;--p:#3b82f6;--c:#f59e0b;--f:#ef4444}
-[data-theme=dark]{color-scheme:dark;--bg:#101311;--card:#1a1f1c;--text:#eef2ee;--muted:#9aa59d;--line:#2a312c;--accent:#22c55e;--accent-ink:#06210f;--p:#60a5fa;--c:#fbbf24;--f:#f87171}
-[data-theme=black]{color-scheme:dark;--bg:#000;--card:#0c0e0d;--text:#eef2ee;--muted:#9aa59d;--line:#1f2421;--accent:#22c55e;--accent-ink:#06210f;--p:#60a5fa;--c:#fbbf24;--f:#f87171}
-[data-theme=midnight]{color-scheme:dark;--bg:#0b1220;--card:#121b2e;--text:#e6edf7;--muted:#8a9bb5;--line:#22304a;--accent:#60a5fa;--accent-ink:#08152e;--p:#93c5fd;--c:#fbbf24;--f:#f87171}
-[data-theme=forest]{color-scheme:dark;--bg:#0f1a14;--card:#17261d;--text:#e4f0e6;--muted:#8fae98;--line:#25382c;--accent:#4ade80;--accent-ink:#052e16;--p:#7dd3fc;--c:#fde047;--f:#fb7185}
-[data-theme=nord]{color-scheme:dark;--bg:#2e3440;--card:#3b4252;--text:#eceff4;--muted:#a3adc0;--line:#4c566a;--accent:#88c0d0;--accent-ink:#1f2530;--p:#81a1c1;--c:#ebcb8b;--f:#bf616a}
-[data-theme=dracula]{color-scheme:dark;--bg:#282a36;--card:#343746;--text:#f8f8f2;--muted:#a9aed0;--line:#44475a;--accent:#bd93f9;--accent-ink:#1d1530;--p:#8be9fd;--c:#f1fa8c;--f:#ff5555}
-[data-theme=ember]{color-scheme:dark;--bg:#1c1210;--card:#2a1a16;--text:#fbeee8;--muted:#c0958a;--line:#40272a;--accent:#fb923c;--accent-ink:#2b1103;--p:#7dd3fc;--c:#fcd34d;--f:#f87171}
-[data-theme=ocean]{color-scheme:light;--bg:#eef6fb;--card:#fff;--text:#0c2233;--muted:#5a7a90;--line:#d3e5f0;--accent:#0284c7;--accent-ink:#fff;--p:#0284c7;--c:#d97706;--f:#dc2626}
-[data-theme=rose]{color-scheme:light;--bg:#fff1f3;--card:#fff;--text:#3b1020;--muted:#8a5a68;--line:#f5d0d8;--accent:#e11d48;--accent-ink:#fff;--p:#6366f1;--c:#d97706;--f:#be123c}
-[data-theme=solarized]{color-scheme:light;--bg:#fdf6e3;--card:#fffdf5;--text:#073642;--muted:#657b83;--line:#e4dcc3;--accent:#2176b0;--accent-ink:#fff;--p:#268bd2;--c:#b58900;--f:#dc322f}
-[data-theme=paper]{color-scheme:light;--bg:#f4ecd8;--card:#fbf5e6;--text:#3b2f22;--muted:#7a6a55;--line:#e2d6bb;--accent:#8b5e34;--accent-ink:#fff;--p:#2f6f8f;--c:#b7791f;--f:#b83232}
-[data-theme=contrast]{color-scheme:dark;--bg:#000;--card:#0a0a0a;--text:#fff;--muted:#e0e0e0;--line:#fff;--accent:#ffe600;--accent-ink:#000;--p:#00ffff;--c:#ffd400;--f:#ff6b6b}
-.themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;margin-top:8px}
-.th{display:flex;flex-direction:column;gap:6px;align-items:stretch;padding:6px;min-height:0;border-radius:12px;background:none;font-size:12px;text-align:center;color:var(--muted)}
-.th.on{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent);color:var(--text);font-weight:600}
-.pvs{display:flex;border-radius:8px;overflow:hidden;height:46px;border:1px solid var(--line)}
-.pv{flex:1;display:flex;gap:4px;padding:6px;background:var(--bg);align-items:stretch}
-.pv i{border-radius:4px;background:var(--card);flex:1;border:1px solid var(--line)}
-.pv b{width:12px;border-radius:4px;background:var(--accent)}
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0}
-body{background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px)}
-.wrap{max-width:720px;margin:0 auto;padding:0 14px}
-header.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(env(safe-area-inset-top) + 8px) 0 8px}
-h1{font-size:18px;margin:0}
-h2{font-size:15px;margin:0}
-button,input,select{font:inherit;color:inherit}
-input,select{width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);font-size:16px}
-label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
-button{min-height:44px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer}
-button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
-button.ghost{border:none;background:none}
-button.danger{color:var(--over)}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
-.row{display:flex;gap:8px;align-items:center}
-.row>*{flex:1}.row>.fit{flex:0 0 auto}
-.muted{color:var(--muted);font-size:13px}
-.datebar{display:flex;align-items:center;gap:6px}
-.datebar .lbl{flex:1;text-align:center;font-weight:600}
-.datebar button{width:44px;padding:0;flex:0 0 44px;font-size:20px}
-.big{font-size:34px;font-weight:700;line-height:1}
-.bar{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:6px}
-.bar>i{display:block;height:100%;border-radius:99px;background:var(--kcal)}
-.bar.over>i{background:var(--over)}
-.macros{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
-.macros b{display:block;font-size:15px}
-.meal-h{display:flex;align-items:center;justify-content:space-between}
-.entry{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
-.entry .nm{flex:1;min-width:0}
-.entry .nm div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.entry .k{font-weight:600;white-space:nowrap}
-.entry .x{flex:0 0 36px;min-height:36px;padding:0;border:none;background:none;color:var(--muted);font-size:20px}
-nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:10;display:flex;background:var(--card);border-top:1px solid var(--line);
-  padding-bottom:env(safe-area-inset-bottom)}
-nav.tabs button{flex:1;border:none;border-radius:0;min-height:var(--nav-h);background:none;color:var(--muted);font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
-nav.tabs button span{font-size:20px}
-nav.tabs button.on{color:var(--accent);font-weight:600}
-.view{display:none}.view.on{display:block}
-dialog{border:none;padding:0;background:var(--card);color:var(--text);width:100%;max-width:560px;max-height:92dvh;
-  border-radius:18px 18px 0 0;margin:auto auto 0;overflow:hidden}
-dialog::backdrop{background:rgba(0,0,0,.5)}
-@media (min-width:640px){dialog{margin:auto;border-radius:18px}}
-.dlg-in{display:flex;flex-direction:column;max-height:92dvh}
-.dlg-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
-.dlg-head h2{flex:1}
-.dlg-body{overflow:auto;padding:12px 14px calc(env(safe-area-inset-bottom) + 16px);-webkit-overflow-scrolling:touch}
-.seg{display:flex;gap:6px;margin-bottom:10px}
-.seg button{flex:1;min-height:38px;font-size:14px}
-.seg button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.res{display:flex;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
-.res .nm{flex:1;min-width:0}
-.res .nm div{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.badge{font-size:11px;padding:2px 6px;border-radius:99px;background:var(--line);color:var(--muted);white-space:nowrap}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{padding:6px 4px;text-align:right;border-top:1px solid var(--line)}
-th:first-child,td:first-child{text-align:left}
-th{color:var(--muted);font-weight:600;font-size:12px;border-top:none}
-.tscroll{overflow-x:auto}
-.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.stats b{display:block;font-size:20px}
-.mini{height:6px;background:var(--line);border-radius:9px;min-width:50px;overflow:hidden}
-.mini i{display:block;height:100%;background:var(--kcal)}
-.chk{display:flex;align-items:center;gap:8px;margin:8px 0}.chk input{width:auto;min-height:0}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 14px);background:#222;color:#fff;
-  padding:10px 16px;border-radius:99px;z-index:50;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
-.toast.show{opacity:1}
-video{width:100%;border-radius:12px;background:#000;max-height:50dvh}
-</style>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/themes.css">
+<link rel="stylesheet" href="css/components.css">
 </head>
 <body>
 
@@ -204,34 +109,30 @@ video{width:100%;border-radius:12px;background:#000;max-height:50dvh}
 </div></dialog>
 <div class="toast" id="toast"></div>
 
-<script>
-"use strict";
+<script type="module">
+import { state as S, store, save, replace, defaults } from './js/core/store.js';
+import { MEALS } from './js/core/constants.js';
+import { esc, rd, r1, r2, fmtW as fmtWu, amtLabel as amtLabelU } from './js/core/format.js';
+import { fmt, parse, addDays, pretty } from './js/core/dates.js';
+import { foodKey } from './js/domain/food.js';
+import { entryMacros, totals } from './js/domain/nutrition.js';
+import { frac, unitsFor as unitsForM } from './js/domain/units.js';
+import { xData as xDataM, rollup, exportFiles } from './js/domain/reports.js';
+import { validEntry, newEntries, mergeBackup } from './js/domain/backup.js';
+
 const $ = s => document.querySelector(s);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const MEALS = ['Breakfast','Lunch','Dinner','Snacks'];
-const rd = n => Math.round(n || 0);
-const r1 = n => Math.round((n || 0) * 10) / 10;
-const r2 = n => Math.round((n || 0) * 100) / 100;
-const OZ = 28.3495;
-const fmtW = g => S.weightUnit === 'oz' ? `${r1(g / OZ)} oz` : `${rd(g)} g`;
-const amtLabel = e => e.disp ? `${e.disp} (${fmtW(e.grams)})` : fmtW(e.grams);
+// temporary shims until the UI is split into modules (they bind the current weight unit / measures)
+const fmtW = g => fmtWu(g, S.weightUnit);
+const amtLabel = e => amtLabelU(e, S.weightUnit);
 
 /* ---------- state ---------- */
-const defaults = () => ({theme:'auto', weightUnit:'g', measures:{}, goals:{k:2000,p:150,c:200,f:65}, apiKey:'', useUSDA:true, useOFF:true, days:{}, recent:[], custom:[]});
-let S = (() => { try { const d = JSON.parse(localStorage.getItem('macrodiary.v1')); if (d) return {...defaults(), ...d}; } catch {} return defaults(); })();
-const save = () => { try { localStorage.setItem('macrodiary.v1', JSON.stringify(S)); } catch { toast('Could not save – storage full or blocked'); } };
 function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove('show'),2200); }
+store.onSaveError = () => toast('Could not save – storage full or blocked');
 
 /* ---------- dates ---------- */
-const fmt = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-const parse = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
-const addDays = (s,n) => { const d = parse(s); d.setDate(d.getDate()+n); return fmt(d); };
-const pretty = s => parse(s).toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short',year:'numeric'});
 let cur = fmt(new Date());
 
 /* ---------- math ---------- */
-const entryMacros = e => { const f = e.grams/100; return {k:e.per100.k*f, p:e.per100.p*f, c:e.per100.c*f, f:e.per100.f*f}; };
-const totals = list => list.reduce((t,e) => { const m = entryMacros(e); t.k+=m.k; t.p+=m.p; t.c+=m.c; t.f+=m.f; return t; }, {k:0,p:0,c:0,f:0});
 
 /* ---------- theme ---------- */
 const THEMES = [['auto','Auto'],['light','Light'],['dark','Dark'],['black','Black (OLED)'],['midnight','Midnight'],['forest','Forest'],['nord','Nord'],
@@ -340,7 +241,7 @@ function localMatches(q){
   const seen = new Set();
   return all.filter(f => (!q || (f.name + ' ' + (f.brand||'')).toLowerCase().includes(q)) && !seen.has(foodKey(f)) && seen.add(foodKey(f))).slice(0, 15);
 }
-const foodKey = f => [f.name, f.brand, f.source].join('|');
+
 function resHTML(list, from){
   return list.map((f,i) => `<div class="res" data-i="${i}" data-from="${from}"><div class="nm"><div>${esc(f.name)}</div>
     <div class="muted">${esc(f.brand ? f.brand + ' · ' : '')}${rd(f.per100.k)} kcal /100g · P${r1(f.per100.p)} C${r1(f.per100.c)} F${r1(f.per100.f)}</div></div>
@@ -456,29 +357,7 @@ function renderCustom(){
 }
 
 /* ---------- units & amount picker ---------- */
-const frac = t => t.trim().split(/\s+/).reduce((a, x) => a + (x.includes('/') ? +x.split('/')[0] / +x.split('/')[1] : +x), 0);
-// millilitres described by a label like "1 cup", "2 tbsp (30 ml)" or "cup, sliced"; null if it isn't a volume
-function volOf(label){
-  const m = String(label || '').match(/^\s*(\d+(?:\.\d+)?(?:\s+\d+\/\d+|\/\d+)?)?\s*(cups?|tbsp|tablespoons?|tsp|teaspoons?|fl\.?\s*oz|fluid\s+ounces?|ml|milliliters?|millilitres?|liters?|litres?|pints?|quarts?)\b/i);
-  if (!m) return null;
-  const n = m[1] ? frac(m[1]) : 1, u = m[2].toLowerCase();
-  const per = u.startsWith('cup') ? 236.588 : /^(tbsp|tablespoon)/.test(u) ? 14.7868 : /^(tsp|teaspoon)/.test(u) ? 4.92892 : /^(fl|fluid)/.test(u) ? 29.5735
-    : u.startsWith('pint') ? 473.176 : u.startsWith('quart') ? 946.353 : /^(liter|litre)/.test(u) ? 1000 : 1;
-  return n * per;
-}
-// every unit this food can be entered in; g = grams per 1 unit
-function unitsFor(food){
-  const u = [{key:'w:g', label:'grams (g)', short:'g', g:1}, {key:'w:oz', label:'ounces (oz)', short:'oz', g:OZ}, {key:'w:lb', label:'pounds (lb)', short:'lb', g:453.592}];
-  if (food.servingG > 0) u.push({key:'s', short:'serving', g:food.servingG,
-    label:`serving (${food.servingLabel ? food.servingLabel : rd(food.servingG) + ' g'})`});
-  const ports = [...(food.portions || []), ...(S.measures[foodKey(food)] || [])];
-  ports.forEach(p => u.push({key:'p:' + p.label, label:`${p.label} (${rd(p.g)} g)`, short:p.label, g:p.g}));
-  const cands = ports.map(p => [p.label, p.g]); if (food.servingG > 0 && food.servingLabel) cands.unshift([food.servingLabel, food.servingG]);
-  let d = null; for (const [l, g] of cands) { const ml = volOf(l); if (ml > 0) { d = g / ml; break; } }
-  if (d) [['ml','milliliters (ml)',1],['tsp','teaspoons (tsp)',4.92892],['tbsp','tablespoons (tbsp)',14.7868],['floz','fluid ounces (fl oz)',29.5735],['cup','cups',236.588]]
-    .forEach(([k, l, ml]) => { if (!cands.some(([pl]) => Math.abs((volOf(pl) || 0) - ml) < ml * 0.01)) u.push({key:'v:' + k, label:l, short:k === 'floz' ? 'fl oz' : k, g:ml * d}); });
-  const seen = new Set(); return u.filter(x => x.g > 0 && !seen.has(x.key) && seen.add(x.key));
-}
+const unitsFor = food => unitsForM(food, S.measures);
 // USDA household measures (cups, tbsp, "1 medium" …) live on the food detail record
 async function loadPortions(food){
   const key = encodeURIComponent(S.apiKey.trim() || 'DEMO_KEY');
@@ -551,26 +430,7 @@ function showFood(food, existing){
 }
 
 /* ---------- export ---------- */
-function rangeOf(kind, s){
-  const d = parse(s); let a, b;
-  if (kind === 'day') a = b = d;
-  else if (kind === 'week') { a = new Date(d); a.setDate(d.getDate() - ((d.getDay()+6)%7)); b = new Date(a); b.setDate(a.getDate()+6); }
-  else if (kind === 'month') { a = new Date(d.getFullYear(), d.getMonth(), 1); b = new Date(d.getFullYear(), d.getMonth()+1, 0); }
-  else { a = new Date(d.getFullYear(), 0, 1); b = new Date(d.getFullYear(), 11, 31); }
-  return [fmt(a), fmt(b)];
-}
-function xData(){
-  const kind = $('#xKind').value, date = $('#xDate').value || cur, [a,b] = rangeOf(kind, date);
-  const days = Object.keys(S.days).filter(d => d >= a && d <= b).sort();
-  const rows = days.map(d => ({date:d, ...totals(S.days[d]), n:S.days[d].length}));
-  return {kind, a, b, days, rows};
-}
-function rollup(x){
-  if (x.kind !== 'year') return x.rows.map(r => ({label:r.date, ...r, days:1}));
-  const m = {};
-  x.rows.forEach(r => { const key = r.date.slice(0,7); const o = m[key] ||= {label:key, k:0,p:0,c:0,f:0, days:0}; o.k+=r.k; o.p+=r.p; o.c+=r.c; o.f+=r.f; o.days++; });
-  return Object.values(m);
-}
+const xData = () => xDataM(S, $('#xKind').value, $('#xDate').value || cur);
 function renderExport(){
   if (!$('#xDate').value) $('#xDate').value = cur;
   const x = xData(); $('#xRange').textContent = x.a === x.b ? pretty(x.a) : `${pretty(x.a)} → ${pretty(x.b)}`;
@@ -584,30 +444,17 @@ function renderExport(){
     : '<p class="muted" style="margin:0">Nothing logged in this period.</p>';
 }
 ['#xKind','#xDate'].forEach(s => $(s).onchange = renderExport);
-const csvCell = v => { let s = String(v ?? ''); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; };
-const toCSV = rows => '﻿' + rows.map(r => r.map(csvCell).join(',')).join('\r\n');
 function download(name, text, type){
   const blob = new Blob([text], {type}), url = URL.createObjectURL(blob), a = document.createElement('a');
   a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
-const xName = (x, what, ext) => `macro-diary-${what}-${x.kind}-${x.a}${x.a===x.b?'':'_to_'+x.b}.${ext}`;
-$('#xEntries').onclick = () => {
-  const x = xData(), rows = [['Date','Meal','Food','Brand','Amount (g)','Amount (oz)','Logged as','Calories','Protein (g)','Carbs (g)','Fat (g)','Source']];
-  x.days.forEach(d => S.days[d].forEach(e => { const m = entryMacros(e); rows.push([d, e.meal, e.name, e.brand, r1(e.grams), r1(e.grams / OZ), e.disp || '', rd(m.k), r1(m.p), r1(m.c), r1(m.f), e.source]); }));
-  if (rows.length === 1) return toast('Nothing to export');
-  download(xName(x,'entries','csv'), toCSV(rows), 'text/csv');
+const doExport = which => {
+  const f = exportFiles(S, xData(), new Date().toISOString()).find(f => f.name.includes(`-${which}-`));
+  f ? download(f.name, f.text, f.type) : toast('Nothing to export');
 };
-$('#xSummary').onclick = () => {
-  const x = xData(); if (!x.rows.length) return toast('Nothing to export');
-  const yr = x.kind === 'year', rows = [[yr ? 'Month' : 'Date', 'Days logged', yr ? 'Avg calories/day' : 'Calories', 'Protein (g)', 'Carbs (g)', 'Fat (g)', 'Calorie goal']];
-  rollup(x).forEach(r => { const d = yr ? r.days : 1; rows.push([r.label, r.days, rd(r.k/d), r1(r.p/d), r1(r.c/d), r1(r.f/d), S.goals.k]); });
-  download(xName(x,'summary','csv'), toCSV(rows), 'text/csv');
-};
-$('#xJson').onclick = () => {
-  const x = xData(); if (!x.days.length) return toast('Nothing to export');
-  const days = {}; x.days.forEach(d => days[d] = S.days[d]);
-  download(xName(x,'data','json'), JSON.stringify({exported:new Date().toISOString(), from:x.a, to:x.b, goals:S.goals, days}, null, 2), 'application/json');
-};
+$('#xEntries').onclick = () => doExport('entries');
+$('#xSummary').onclick = () => doExport('summary');
+$('#xJson').onclick = () => doExport('data');
 $('#xShare').onclick = () => {
   const x = xData(); if (!x.rows.length) return toast('Nothing logged');
   const n = x.rows.length, t = x.rows.reduce((t,r) => (t.k+=r.k,t.p+=r.p,t.c+=r.c,t.f+=r.f,t), {k:0,p:0,c:0,f:0});
@@ -677,31 +524,8 @@ $('#bkFile').onchange = async ev => {
     restoreFlow(d);
   } catch { toast('Not a valid backup file'); }
 };
-const validEntry = e => e && typeof e.id === 'string' && e.per100 && isFinite(e.grams) && e.grams > 0;
-// entries in the backup that this device doesn't have yet (matched by entry id)
-function newEntries(d){
-  const out = {};
-  for (const [day, list] of Object.entries(d.days)) {
-    if (!Array.isArray(list)) continue;
-    const have = new Set((S.days[day] || []).map(e => e.id)), add = list.filter(e => validEntry(e) && !have.has(e.id));
-    if (add.length) out[day] = add;
-  }
-  return out;
-}
-function mergeBackup(d){
-  for (const [day, add] of Object.entries(newEntries(d))) S.days[day] = [...(S.days[day] || []), ...add];
-  const union = (a, b) => { const seen = new Set(a.map(foodKey)); return [...a, ...b.filter(x => x && x.name && x.per100 && !seen.has(foodKey(x)))]; };
-  S.custom = union(S.custom, d.custom || []).slice(0, 100);
-  S.recent = union(S.recent, d.recent || []).slice(0, 30);
-  for (const [k, list] of Object.entries(d.measures || {})) {
-    const mine = S.measures[k] || [], seen = new Set(mine.map(m => m.label));
-    const add = (Array.isArray(list) ? list : []).filter(m => m && m.label && m.g > 0 && !seen.has(m.label));
-    if (add.length) S.measures[k] = [...mine, ...add];
-  }
-  save();
-}
 function restoreFlow(d){
-  const fresh = newEntries(d), nNew = Object.values(fresh).reduce((a, l) => a + l.length, 0), nDays = Object.keys(fresh).length;
+  const fresh = newEntries(S, d), nNew = Object.values(fresh).reduce((a, l) => a + l.length, 0), nDays = Object.keys(fresh).length;
   const total = Object.values(d.days).reduce((a, l) => a + (Array.isArray(l) ? l.filter(validEntry).length : 0), 0);
   head('Restore backup', false);
   $('#dBody').innerHTML = `<p style="margin-top:0">This backup has <b>${total}</b> entries across <b>${Object.values(d.days).filter(l => Array.isArray(l) && l.some(validEntry)).length}</b> days.
@@ -713,11 +537,11 @@ function restoreFlow(d){
     <button style="width:100%" id="rCancel">Cancel</button>`;
   if (!dlg.open) dlg.showModal();
   $('#rCancel').onclick = () => dlg.close();
-  $('#rMerge').onclick = () => { mergeBackup(d); dlg.close(); loadSettings(); renderDiary(); toast(nNew ? `Merged – ${nNew} new ${nNew === 1 ? 'entry' : 'entries'}` : 'Merged – nothing new to add'); };
+  $('#rMerge').onclick = () => { replace(mergeBackup(S, d)); save(); dlg.close(); loadSettings(); renderDiary(); toast(nNew ? `Merged – ${nNew} new ${nNew === 1 ? 'entry' : 'entries'}` : 'Merged – nothing new to add'); };
   $('#rReplace').onclick = () => { if (!confirm('Replace ALL data on this device with the backup? This cannot be undone.')) return;
-    S = {...defaults(), ...d}; save(); dlg.close(); loadSettings(); applyTheme(); renderDiary(); toast('Backup restored'); };
+    replace(d); save(); dlg.close(); loadSettings(); applyTheme(); renderDiary(); toast('Backup restored'); };
 }
-$('#wipe').onclick = () => { if (confirm('Delete ALL diary data on this device? This cannot be undone.')) { S = defaults(); save(); loadSettings(); applyTheme(); renderDiary(); toast('All data deleted'); } };
+$('#wipe').onclick = () => { if (confirm('Delete ALL diary data on this device? This cannot be undone.')) { replace(defaults()); save(); loadSettings(); applyTheme(); renderDiary(); toast('All data deleted'); } };
 
 /* ---------- boot ---------- */
 applyTheme(); tab('diary'); renderDiary();
