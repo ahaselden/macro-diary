@@ -9,6 +9,7 @@
 .row{display:flex;gap:8px;align-items:center}
 .row>*{flex:1}.row>.fit{flex:0 0 auto}
 .muted{color:var(--muted);font-size:13px}
+input[data-ocr]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}   /* value filled from a label photo, not yet touched by the user */
 .datebar{display:flex;align-items:center;gap:6px}
 .datebar .lbl{flex:1;text-align:center;font-weight:600}
 .datebar button{width:44px;padding:0;flex:0 0 44px;font-size:20px}

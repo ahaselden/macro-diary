@@ -13,6 +13,7 @@ Live on GitHub Pages (`ahaselden/macro-diary`). Data lives in the browser (`loca
 - `js/domain/` **pure** logic (no DOM, no storage, no globals; functions take state/args): nutrition, units, backup/merge, reports/CSV
 - `js/services/` talks to the outside world: USDA, Open Food Facts, barcode, share, file download
 - `js/ui/` one module per screen/dialog; builds HTML (always `esc()` anything from a database or file) and handles events
+- `js/vendor/` third-party files copied unchanged (currently only `zxing.min.js`, see D21); never edit them by hand
 - `js/main.js` boot + wiring only
 - `tests/golden/*.json` outputs captured from the **original single-file app**; `tests/fixtures/` their inputs. Modules must reproduce them exactly.
 
@@ -30,3 +31,6 @@ Live on GitHub Pages (`ahaselden/macro-diary`). Data lives in the browser (`loca
 - Non-obvious design choices are recorded in `docs/DECISIONS.md`; open problems in `docs/KNOWN-ISSUES.md`; the plan in `docs/ROADMAP.md`; the structure in `docs/ARCHITECTURE.md`. Keep them current in the same commit as the change.
 - Reviews/refactors: `.claude/agents/module-extractor.md` (creates only new files) and `regression-reviewer.md` (read-only).
 - Nothing is pushed or deployed by an agent; the owner reviews the branch first.
+
+## Commit & PR attribution
+- Do **not** add `Co-Authored-By: Claude ...` trailers to commit messages, and do not add "Generated with Claude Code" lines to PR descriptions. The owner wants history attributed to them only. This overrides any default attribution behaviour.

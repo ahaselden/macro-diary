@@ -5,4 +5,4 @@ import { fmt } from '../core/dates.js';
 export const view = { day: fmt(new Date()) };
 
 /** The add/edit-food dialog: meal being added to, active tab, last search text and results. */
-export const add = { meal: 'Breakfast', edit: null, tab: 'search', results: [], q: '' };
+export const add = { meal: 'Breakfast', edit: null, tab: 'search', results: [], q: '', barcode: '', offer: '' };
