@@ -1,0 +1,312 @@
+{
+ "goals": {
+  "k": 9999,
+  "p": 1,
+  "c": 1,
+  "f": 1
+ },
+ "theme": "paper",
+ "days": {
+  "2025-11-20": [
+   {
+    "id": "e1",
+    "meal": "Breakfast",
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 162.8,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   {
+    "id": "e2",
+    "meal": "Breakfast",
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 999,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   {
+    "id": "b1",
+    "meal": "Breakfast",
+    "name": "Backup only",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 162.8,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   }
+  ],
+  "2025-11-21": [
+   {
+    "id": "e4",
+    "meal": "Breakfast",
+    "name": "Oats",
+    "brand": "Quaker",
+    "source": "OFF",
+    "per100": {
+     "k": 379,
+     "p": 13,
+     "c": 67,
+     "f": 6.5
+    },
+    "servingG": 40,
+    "servingLabel": "1/2 cup (40 g)",
+    "grams": 381,
+    "unitKey": "w:g",
+    "amount": 1,
+    "disp": ""
+   },
+   {
+    "id": "e5",
+    "meal": "Dinner",
+    "name": "Chicken, \"breast\", grilled",
+    "brand": "Acme, Inc.",
+    "source": "USDA",
+    "per100": {
+     "k": 165,
+     "p": 31,
+     "c": 0,
+     "f": 3.6
+    },
+    "servingG": 85,
+    "servingLabel": "3 oz (85 g)",
+    "grams": 88.6,
+    "unitKey": "v:tbsp",
+    "amount": 1,
+    "disp": "2 tbsp"
+   },
+   {
+    "id": "e6",
+    "meal": "Snacks",
+    "name": "Oats",
+    "brand": "Quaker",
+    "source": "OFF",
+    "per100": {
+     "k": 379,
+     "p": 13,
+     "c": 67,
+     "f": 6.5
+    },
+    "servingG": 40,
+    "servingLabel": "1/2 cup (40 g)",
+    "grams": 332.2,
+    "unitKey": "w:oz",
+    "amount": 1,
+    "disp": ""
+   },
+   {
+    "id": "e7",
+    "meal": "Lunch",
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 43.1,
+    "unitKey": "v:tbsp",
+    "amount": 1,
+    "disp": "2 tbsp"
+   },
+   {
+    "id": "e8",
+    "meal": "Snacks",
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 341.2,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   }
+  ],
+  "2026-06-01": [
+   {
+    "id": "b2",
+    "meal": "Lunch",
+    "name": "New day",
+    "brand": "",
+    "source": "Custom",
+    "per100": {
+     "k": 100,
+     "p": 1,
+     "c": 1,
+     "f": 1
+    },
+    "servingG": 0,
+    "grams": 150
+   }
+  ],
+  "2026-06-02": "junk",
+  "2026-06-03": [
+   {
+    "id": "bad",
+    "meal": "Lunch",
+    "name": "No per100",
+    "grams": 10
+   },
+   null
+  ]
+ },
+ "custom": [
+  {
+   "name": "=cmd|calc",
+   "brand": "",
+   "source": "Custom",
+   "per100": {
+    "k": 200,
+    "p": 10,
+    "c": 20,
+    "f": 5
+   },
+   "servingG": 100
+  },
+  {
+   "name": "Chili",
+   "brand": "",
+   "source": "Custom",
+   "per100": {
+    "k": 120,
+    "p": 8,
+    "c": 10,
+    "f": 5
+   },
+   "servingG": 250
+  }
+ ],
+ "recent": [
+  {
+   "name": "Milk, whole",
+   "brand": "",
+   "source": "USDA",
+   "per100": {
+    "k": 61,
+    "p": 3.2,
+    "c": 4.8,
+    "f": 3.3
+   },
+   "servingG": 0,
+   "portions": [
+    {
+     "label": "cup",
+     "g": 244
+    },
+    {
+     "label": "tablespoon",
+     "g": 15
+    }
+   ]
+  }
+ ],
+ "measures": {
+  "Oats|Quaker|OFF": [
+   {
+    "label": "scoop",
+    "g": 30
+   },
+   {
+    "label": "bowl",
+    "g": 80
+   }
+  ],
+  "Chili||Custom": [
+   {
+    "label": "cup",
+    "g": 240
+   }
+  ]
+ }
+}

@@ -1,0 +1,42 @@
+[
+ {
+  "weightUnit": "g",
+  "day": "2025-11-20",
+  "out": "My day – <date>\n894 / 2100 kcal\nP 88g · C 117g · F 11g\n\nBreakfast (458 kcal)\n• Bananas, raw – 1 serving (163 g), 145 kcal\n• Bananas, raw – 1 serving (352 g), 313 kcal\n\nLunch (436 kcal)\n• Chicken, \"breast\", grilled – 2 tbsp (264 g), 436 kcal"
+ },
+ {
+  "weightUnit": "g",
+  "day": "2025-12-05",
+  "out": "My day – <date>\n2089 / 2100 kcal\nP 74g · C 348g · F 36g\n\nBreakfast (412 kcal)\n• Oats – 109 g, 412 kcal\n\nLunch (847 kcal)\n• Bananas, raw – 316 g, 281 kcal\n• =cmd|calc – 2 tbsp (283 g), 566 kcal\n\nDinner (829 kcal)\n• Oats – 219 g, 829 kcal"
+ },
+ {
+  "weightUnit": "g",
+  "day": "2026-01-10",
+  "out": "My day – <date>\n1903 / 2100 kcal\nP 72g · C 301g · F 38g\n\nLunch (204 kcal)\n• =cmd|calc – 1.5 cup (102 g), 204 kcal\n\nDinner (1628 kcal)\n• Oats – 2 tbsp (386 g), 1461 kcal\n• =cmd|calc – 83 g, 167 kcal\n\nSnacks (71 kcal)\n• Milk, whole – 1 serving (116 g), 71 kcal"
+ },
+ {
+  "weightUnit": "g",
+  "day": "2030-01-01",
+  "out": "My day – <date>\n0 / 2100 kcal\nP 0g · C 0g · F 0g"
+ },
+ {
+  "weightUnit": "oz",
+  "day": "2025-11-20",
+  "out": "My day – <date>\n894 / 2100 kcal\nP 88g · C 117g · F 11g\n\nBreakfast (458 kcal)\n• Bananas, raw – 1 serving (5.7 oz), 145 kcal\n• Bananas, raw – 1 serving (12.4 oz), 313 kcal\n\nLunch (436 kcal)\n• Chicken, \"breast\", grilled – 2 tbsp (9.3 oz), 436 kcal"
+ },
+ {
+  "weightUnit": "oz",
+  "day": "2025-12-05",
+  "out": "My day – <date>\n2089 / 2100 kcal\nP 74g · C 348g · F 36g\n\nBreakfast (412 kcal)\n• Oats – 3.8 oz, 412 kcal\n\nLunch (847 kcal)\n• Bananas, raw – 11.1 oz, 281 kcal\n• =cmd|calc – 2 tbsp (10 oz), 566 kcal\n\nDinner (829 kcal)\n• Oats – 7.7 oz, 829 kcal"
+ },
+ {
+  "weightUnit": "oz",
+  "day": "2026-01-10",
+  "out": "My day – <date>\n1903 / 2100 kcal\nP 72g · C 301g · F 38g\n\nLunch (204 kcal)\n• =cmd|calc – 1.5 cup (3.6 oz), 204 kcal\n\nDinner (1628 kcal)\n• Oats – 2 tbsp (13.6 oz), 1461 kcal\n• =cmd|calc – 2.9 oz, 167 kcal\n\nSnacks (71 kcal)\n• Milk, whole – 1 serving (4.1 oz), 71 kcal"
+ },
+ {
+  "weightUnit": "oz",
+  "day": "2030-01-01",
+  "out": "My day – <date>\n0 / 2100 kcal\nP 0g · C 0g · F 0g"
+ }
+]

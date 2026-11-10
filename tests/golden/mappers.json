@@ -1,0 +1,666 @@
+{
+ "mapOFF": [
+  {
+   "input": {
+    "product_name": "Yogurt",
+    "brands": "Jaouda, Other",
+    "nutriments": {
+     "energy-kcal_100g": 88.1,
+     "proteins_100g": 3.9,
+     "carbohydrates_100g": 14.3,
+     "fat_100g": 1.7
+    },
+    "serving_quantity": "125",
+    "serving_size": "1 pot (125 g)"
+   },
+   "out": {
+    "name": "Yogurt",
+    "brand": "Jaouda",
+    "source": "OFF",
+    "per100": {
+     "k": 88.1,
+     "p": 3.9,
+     "c": 14.3,
+     "f": 1.7
+    },
+    "servingG": 125,
+    "servingLabel": "1 pot (125 g)"
+   }
+  },
+  {
+   "input": {
+    "product_name": "KJ only",
+    "brands": "",
+    "nutriments": {
+     "energy_100g": 418.4
+    }
+   },
+   "out": {
+    "name": "KJ only",
+    "brand": "",
+    "source": "OFF",
+    "per100": {
+     "k": 99.99999999999999,
+     "p": 0,
+     "c": 0,
+     "f": 0
+    },
+    "servingG": 0,
+    "servingLabel": ""
+   }
+  },
+  {
+   "input": {
+    "product_name": "",
+    "nutriments": {
+     "energy-kcal_100g": 5
+    }
+   },
+   "out": null
+  },
+  {
+   "input": {
+    "product_name": "No energy",
+    "nutriments": {
+     "proteins_100g": 3
+    }
+   },
+   "out": null
+  },
+  {
+   "input": {
+    "product_name": "No nutriments"
+   },
+   "out": null
+  },
+  {
+   "input": {
+    "product_name": "Strings",
+    "nutriments": {
+     "energy-kcal_100g": "250",
+     "proteins_100g": "abc"
+    },
+    "serving_quantity": 0
+   },
+   "out": {
+    "name": "Strings",
+    "brand": "",
+    "source": "OFF",
+    "per100": {
+     "k": 250,
+     "p": 0,
+     "c": 0,
+     "f": 0
+    },
+    "servingG": 0,
+    "servingLabel": ""
+   }
+  }
+ ],
+ "mapUSDA": [
+  {
+   "input": {
+    "description": "Bananas, raw",
+    "fdcId": 1,
+    "foodNutrients": [
+     {
+      "nutrientNumber": "208",
+      "unitName": "KCAL",
+      "value": 89
+     },
+     {
+      "nutrientNumber": "203",
+      "unitName": "G",
+      "value": 1.09
+     },
+     {
+      "nutrientNumber": "205",
+      "value": 22.8
+     },
+     {
+      "nutrientNumber": "204",
+      "value": 0.33
+     }
+    ]
+   },
+   "out": {
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.09,
+     "c": 22.8,
+     "f": 0.33
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "fdcId": 1
+   }
+  },
+  {
+   "input": {
+    "description": "ATWATER FOOD",
+    "fdcId": 2,
+    "foodNutrients": [
+     {
+      "nutrientNumber": "957",
+      "unitName": "KCAL",
+      "value": 120
+     },
+     {
+      "nutrientNumber": "203",
+      "value": 5
+     }
+    ]
+   },
+   "out": {
+    "name": "Atwater food",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 120,
+     "p": 5,
+     "c": 0,
+     "f": 0
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "fdcId": 2
+   }
+  },
+  {
+   "input": {
+    "description": "kj only food",
+    "fdcId": 3,
+    "foodNutrients": [
+     {
+      "nutrientNumber": "268",
+      "unitName": "KJ",
+      "value": 418.4
+     }
+    ]
+   },
+   "out": {
+    "name": "Kj only food",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 99.99999999999999,
+     "p": 0,
+     "c": 0,
+     "f": 0
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "fdcId": 3
+   }
+  },
+  {
+   "input": {
+    "description": "Kj tagged 208",
+    "fdcId": 4,
+    "foodNutrients": [
+     {
+      "nutrientNumber": "208",
+      "unitName": "KJ",
+      "value": 500
+     },
+     {
+      "nutrientNumber": "958",
+      "unitName": "KCAL",
+      "value": 110
+     }
+    ]
+   },
+   "out": {
+    "name": "Kj tagged 208",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 110,
+     "p": 0,
+     "c": 0,
+     "f": 0
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "fdcId": 4
+   }
+  },
+  {
+   "input": {
+    "description": "Cereal",
+    "fdcId": 5,
+    "brandOwner": "Acme",
+    "servingSize": 30,
+    "servingSizeUnit": "g",
+    "householdServingFullText": "1 cup",
+    "foodNutrients": [
+     {
+      "nutrientNumber": "208",
+      "unitName": "KCAL",
+      "value": 380
+     }
+    ]
+   },
+   "out": {
+    "name": "Cereal",
+    "brand": "Acme",
+    "source": "USDA",
+    "per100": {
+     "k": 380,
+     "p": 0,
+     "c": 0,
+     "f": 0
+    },
+    "servingG": 30,
+    "servingLabel": "1 cup",
+    "fdcId": 5
+   }
+  },
+  {
+   "input": {
+    "description": "Soda",
+    "fdcId": 6,
+    "brandName": "BrandName",
+    "servingSize": 355,
+    "servingSizeUnit": "ml",
+    "foodNutrients": [
+     {
+      "nutrientNumber": "208",
+      "unitName": "KCAL",
+      "value": 40
+     }
+    ]
+   },
+   "out": {
+    "name": "Soda",
+    "brand": "BrandName",
+    "source": "USDA",
+    "per100": {
+     "k": 40,
+     "p": 0,
+     "c": 0,
+     "f": 0
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "fdcId": 6
+   }
+  },
+  {
+   "input": {
+    "description": "No energy",
+    "fdcId": 7,
+    "foodNutrients": [
+     {
+      "nutrientNumber": "203",
+      "value": 5
+     }
+    ]
+   },
+   "out": null
+  },
+  {
+   "input": {
+    "description": "Mixed Case Food",
+    "fdcId": 8,
+    "foodNutrients": [
+     {
+      "nutrientNumber": "208",
+      "unitName": "KCAL",
+      "value": 10
+     }
+    ]
+   },
+   "out": {
+    "name": "Mixed Case Food",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 10,
+     "p": 0,
+     "c": 0,
+     "f": 0
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "fdcId": 8
+   }
+  },
+  {
+   "input": {
+    "description": "GRAMS UP",
+    "fdcId": 9,
+    "servingSize": "28",
+    "servingSizeUnit": "GRM",
+    "foodNutrients": [
+     {
+      "nutrientNumber": "208",
+      "unitName": "KCAL",
+      "value": 10
+     }
+    ]
+   },
+   "out": {
+    "name": "Grams up",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 10,
+     "p": 0,
+     "c": 0,
+     "f": 0
+    },
+    "servingG": 28,
+    "servingLabel": "",
+    "fdcId": 9
+   }
+  }
+ ],
+ "portions": [
+  {
+   "input": {
+    "foodPortions": [
+     {
+      "amount": 1,
+      "gramWeight": 244,
+      "measureUnit": {
+       "name": "cup"
+      },
+      "modifier": ""
+     },
+     {
+      "amount": 1,
+      "gramWeight": 15,
+      "measureUnit": {
+       "name": "tablespoon"
+      }
+     },
+     {
+      "amount": 2,
+      "gramWeight": 60,
+      "measureUnit": {
+       "name": "undetermined"
+      },
+      "portionDescription": "2 slices"
+     },
+     {
+      "amount": 1,
+      "gramWeight": 5,
+      "measureUnit": {
+       "name": "undetermined"
+      },
+      "modifier": "quantity not specified"
+     },
+     {
+      "amount": 0.5,
+      "gramWeight": 60,
+      "measureUnit": {
+       "name": "cup"
+      },
+      "modifier": "chopped"
+     },
+     {
+      "amount": 1,
+      "gramWeight": 0,
+      "measureUnit": {
+       "name": "cup"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 118,
+      "measureUnit": {
+       "name": "undetermined"
+      },
+      "modifier": "medium (7\" to 7-7/8\" long)"
+     },
+     {
+      "amount": 1,
+      "gramWeight": 30,
+      "portionDescription": "1/2 cup"
+     },
+     {
+      "amount": 1,
+      "gramWeight": 244,
+      "measureUnit": {
+       "name": "cup"
+      }
+     }
+    ]
+   },
+   "out": [
+    {
+     "label": "cup",
+     "g": 244
+    },
+    {
+     "label": "tablespoon",
+     "g": 15
+    },
+    {
+     "label": "slices",
+     "g": 30
+    },
+    {
+     "label": "cup, chopped",
+     "g": 120
+    },
+    {
+     "label": "medium (7\" to 7-7/8\" long)",
+     "g": 118
+    }
+   ]
+  },
+  {
+   "input": {},
+   "out": []
+  },
+  {
+   "input": {
+    "foodPortions": [
+     {
+      "amount": 1,
+      "gramWeight": 10,
+      "measureUnit": {
+       "name": "piece0"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 11,
+      "measureUnit": {
+       "name": "piece1"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 12,
+      "measureUnit": {
+       "name": "piece2"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 13,
+      "measureUnit": {
+       "name": "piece3"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 14,
+      "measureUnit": {
+       "name": "piece4"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 15,
+      "measureUnit": {
+       "name": "piece5"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 16,
+      "measureUnit": {
+       "name": "piece6"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 17,
+      "measureUnit": {
+       "name": "piece7"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 18,
+      "measureUnit": {
+       "name": "piece8"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 19,
+      "measureUnit": {
+       "name": "piece9"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 20,
+      "measureUnit": {
+       "name": "piece10"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 21,
+      "measureUnit": {
+       "name": "piece11"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 22,
+      "measureUnit": {
+       "name": "piece12"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 23,
+      "measureUnit": {
+       "name": "piece13"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 24,
+      "measureUnit": {
+       "name": "piece14"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 25,
+      "measureUnit": {
+       "name": "piece15"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 26,
+      "measureUnit": {
+       "name": "piece16"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 27,
+      "measureUnit": {
+       "name": "piece17"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 28,
+      "measureUnit": {
+       "name": "piece18"
+      }
+     },
+     {
+      "amount": 1,
+      "gramWeight": 29,
+      "measureUnit": {
+       "name": "piece19"
+      }
+     }
+    ]
+   },
+   "out": [
+    {
+     "label": "piece0",
+     "g": 10
+    },
+    {
+     "label": "piece1",
+     "g": 11
+    },
+    {
+     "label": "piece2",
+     "g": 12
+    },
+    {
+     "label": "piece3",
+     "g": 13
+    },
+    {
+     "label": "piece4",
+     "g": 14
+    },
+    {
+     "label": "piece5",
+     "g": 15
+    },
+    {
+     "label": "piece6",
+     "g": 16
+    },
+    {
+     "label": "piece7",
+     "g": 17
+    },
+    {
+     "label": "piece8",
+     "g": 18
+    },
+    {
+     "label": "piece9",
+     "g": 19
+    },
+    {
+     "label": "piece10",
+     "g": 20
+    },
+    {
+     "label": "piece11",
+     "g": 21
+    },
+    {
+     "label": "piece12",
+     "g": 22
+    },
+    {
+     "label": "piece13",
+     "g": 23
+    }
+   ]
+  }
+ ]
+}

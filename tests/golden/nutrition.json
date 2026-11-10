@@ -1,0 +1,1392 @@
+{
+ "entryMacros": [
+  {
+   "e": {
+    "id": "e1",
+    "meal": "Breakfast",
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 162.8,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   "out": {
+    "k": 144.892,
+    "p": 1.7908000000000002,
+    "c": 37.1184,
+    "f": 0.4884
+   }
+  },
+  {
+   "e": {
+    "id": "e2",
+    "meal": "Breakfast",
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 352,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   "out": {
+    "k": 313.28000000000003,
+    "p": 3.8720000000000003,
+    "c": 80.256,
+    "f": 1.056
+   }
+  },
+  {
+   "e": {
+    "id": "e3",
+    "meal": "Lunch",
+    "name": "Chicken, \"breast\", grilled",
+    "brand": "Acme, Inc.",
+    "source": "USDA",
+    "per100": {
+     "k": 165,
+     "p": 31,
+     "c": 0,
+     "f": 3.6
+    },
+    "servingG": 85,
+    "servingLabel": "3 oz (85 g)",
+    "grams": 264,
+    "unitKey": "v:tbsp",
+    "amount": 1,
+    "disp": "2 tbsp"
+   },
+   "out": {
+    "k": 435.6,
+    "p": 81.84,
+    "c": 0,
+    "f": 9.504000000000001
+   }
+  },
+  {
+   "e": {
+    "id": "e4",
+    "meal": "Breakfast",
+    "name": "Oats",
+    "brand": "Quaker",
+    "source": "OFF",
+    "per100": {
+     "k": 379,
+     "p": 13,
+     "c": 67,
+     "f": 6.5
+    },
+    "servingG": 40,
+    "servingLabel": "1/2 cup (40 g)",
+    "grams": 381,
+    "unitKey": "w:g",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 1443.99,
+    "p": 49.53,
+    "c": 255.27,
+    "f": 24.765
+   }
+  },
+  {
+   "e": {
+    "id": "e5",
+    "meal": "Dinner",
+    "name": "Chicken, \"breast\", grilled",
+    "brand": "Acme, Inc.",
+    "source": "USDA",
+    "per100": {
+     "k": 165,
+     "p": 31,
+     "c": 0,
+     "f": 3.6
+    },
+    "servingG": 85,
+    "servingLabel": "3 oz (85 g)",
+    "grams": 88.6,
+    "unitKey": "v:tbsp",
+    "amount": 1,
+    "disp": "2 tbsp"
+   },
+   "out": {
+    "k": 146.18999999999997,
+    "p": 27.465999999999998,
+    "c": 0,
+    "f": 3.1895999999999995
+   }
+  },
+  {
+   "e": {
+    "id": "e6",
+    "meal": "Snacks",
+    "name": "Oats",
+    "brand": "Quaker",
+    "source": "OFF",
+    "per100": {
+     "k": 379,
+     "p": 13,
+     "c": 67,
+     "f": 6.5
+    },
+    "servingG": 40,
+    "servingLabel": "1/2 cup (40 g)",
+    "grams": 332.2,
+    "unitKey": "w:oz",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 1259.038,
+    "p": 43.186,
+    "c": 222.574,
+    "f": 21.593
+   }
+  },
+  {
+   "e": {
+    "id": "e7",
+    "meal": "Lunch",
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 43.1,
+    "unitKey": "v:tbsp",
+    "amount": 1,
+    "disp": "2 tbsp"
+   },
+   "out": {
+    "k": 38.359,
+    "p": 0.4741,
+    "c": 9.8268,
+    "f": 0.1293
+   }
+  },
+  {
+   "e": {
+    "id": "e8",
+    "meal": "Snacks",
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 341.2,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   "out": {
+    "k": 303.668,
+    "p": 3.7532,
+    "c": 77.7936,
+    "f": 1.0235999999999998
+   }
+  },
+  {
+   "e": {
+    "id": "e9",
+    "meal": "Dinner",
+    "name": "Milk, whole",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 61,
+     "p": 3.2,
+     "c": 4.8,
+     "f": 3.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "cup",
+      "g": 244
+     },
+     {
+      "label": "tablespoon",
+      "g": 15
+     }
+    ],
+    "grams": 290.3,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   "out": {
+    "k": 177.083,
+    "p": 9.2896,
+    "c": 13.9344,
+    "f": 9.5799
+   }
+  },
+  {
+   "e": {
+    "id": "e10",
+    "meal": "Lunch",
+    "name": "=cmd|calc",
+    "brand": "",
+    "source": "Custom",
+    "per100": {
+     "k": 200,
+     "p": 10,
+     "c": 20,
+     "f": 5
+    },
+    "servingG": 100,
+    "servingLabel": "",
+    "grams": 57.2,
+    "unitKey": "v:tbsp",
+    "amount": 1,
+    "disp": "2 tbsp"
+   },
+   "out": {
+    "k": 114.4,
+    "p": 5.720000000000001,
+    "c": 11.440000000000001,
+    "f": 2.8600000000000003
+   }
+  },
+  {
+   "e": {
+    "id": "e11",
+    "meal": "Breakfast",
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 312.1,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   "out": {
+    "k": 277.76900000000006,
+    "p": 3.433100000000001,
+    "c": 71.15880000000001,
+    "f": 0.9363000000000001
+   }
+  },
+  {
+   "e": {
+    "id": "e12",
+    "meal": "Lunch",
+    "name": "Oats",
+    "brand": "Quaker",
+    "source": "OFF",
+    "per100": {
+     "k": 379,
+     "p": 13,
+     "c": 67,
+     "f": 6.5
+    },
+    "servingG": 40,
+    "servingLabel": "1/2 cup (40 g)",
+    "grams": 102,
+    "unitKey": "v:tbsp",
+    "amount": 1,
+    "disp": "2 tbsp"
+   },
+   "out": {
+    "k": 386.58,
+    "p": 13.26,
+    "c": 68.34,
+    "f": 6.63
+   }
+  },
+  {
+   "e": {
+    "id": "e13",
+    "meal": "Lunch",
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 355.5,
+    "unitKey": "w:oz",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 316.39500000000004,
+    "p": 3.9105000000000003,
+    "c": 81.054,
+    "f": 1.0665
+   }
+  },
+  {
+   "e": {
+    "id": "e14",
+    "meal": "Snacks",
+    "name": "Chicken, \"breast\", grilled",
+    "brand": "Acme, Inc.",
+    "source": "USDA",
+    "per100": {
+     "k": 165,
+     "p": 31,
+     "c": 0,
+     "f": 3.6
+    },
+    "servingG": 85,
+    "servingLabel": "3 oz (85 g)",
+    "grams": 241.3,
+    "unitKey": "w:g",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 398.14500000000004,
+    "p": 74.80300000000001,
+    "c": 0,
+    "f": 8.686800000000002
+   }
+  },
+  {
+   "e": {
+    "id": "e15",
+    "meal": "Breakfast",
+    "name": "Milk, whole",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 61,
+     "p": 3.2,
+     "c": 4.8,
+     "f": 3.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "cup",
+      "g": 244
+     },
+     {
+      "label": "tablespoon",
+      "g": 15
+     }
+    ],
+    "grams": 392.4,
+    "unitKey": "w:oz",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 239.364,
+    "p": 12.5568,
+    "c": 18.8352,
+    "f": 12.9492
+   }
+  },
+  {
+   "e": {
+    "id": "e16",
+    "meal": "Lunch",
+    "name": "Chicken, \"breast\", grilled",
+    "brand": "Acme, Inc.",
+    "source": "USDA",
+    "per100": {
+     "k": 165,
+     "p": 31,
+     "c": 0,
+     "f": 3.6
+    },
+    "servingG": 85,
+    "servingLabel": "3 oz (85 g)",
+    "grams": 289.8,
+    "unitKey": "v:tbsp",
+    "amount": 1,
+    "disp": "2 tbsp"
+   },
+   "out": {
+    "k": 478.17,
+    "p": 89.83800000000001,
+    "c": 0,
+    "f": 10.4328
+   }
+  },
+  {
+   "e": {
+    "id": "e17",
+    "meal": "Dinner",
+    "name": "Milk, whole",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 61,
+     "p": 3.2,
+     "c": 4.8,
+     "f": 3.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "cup",
+      "g": 244
+     },
+     {
+      "label": "tablespoon",
+      "g": 15
+     }
+    ],
+    "grams": 64.6,
+    "unitKey": "w:g",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 39.40599999999999,
+    "p": 2.0671999999999997,
+    "c": 3.1007999999999996,
+    "f": 2.1317999999999997
+   }
+  },
+  {
+   "e": {
+    "id": "e18",
+    "meal": "Lunch",
+    "name": "=cmd|calc",
+    "brand": "",
+    "source": "Custom",
+    "per100": {
+     "k": 200,
+     "p": 10,
+     "c": 20,
+     "f": 5
+    },
+    "servingG": 100,
+    "servingLabel": "",
+    "grams": 99.7,
+    "unitKey": "p:cup",
+    "amount": 1,
+    "disp": "1.5 cup"
+   },
+   "out": {
+    "k": 199.4,
+    "p": 9.97,
+    "c": 19.94,
+    "f": 4.985
+   }
+  },
+  {
+   "e": {
+    "id": "e19",
+    "meal": "Snacks",
+    "name": "Milk, whole",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 61,
+     "p": 3.2,
+     "c": 4.8,
+     "f": 3.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "cup",
+      "g": 244
+     },
+     {
+      "label": "tablespoon",
+      "g": 15
+     }
+    ],
+    "grams": 330.4,
+    "unitKey": "p:cup",
+    "amount": 1,
+    "disp": "1.5 cup"
+   },
+   "out": {
+    "k": 201.54399999999998,
+    "p": 10.5728,
+    "c": 15.859199999999998,
+    "f": 10.903199999999998
+   }
+  },
+  {
+   "e": {
+    "id": "e20",
+    "meal": "Breakfast",
+    "name": "Chicken, \"breast\", grilled",
+    "brand": "Acme, Inc.",
+    "source": "USDA",
+    "per100": {
+     "k": 165,
+     "p": 31,
+     "c": 0,
+     "f": 3.6
+    },
+    "servingG": 85,
+    "servingLabel": "3 oz (85 g)",
+    "grams": 68,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   "out": {
+    "k": 112.2,
+    "p": 21.080000000000002,
+    "c": 0,
+    "f": 2.4480000000000004
+   }
+  },
+  {
+   "e": {
+    "id": "e21",
+    "meal": "Snacks",
+    "name": "Oats",
+    "brand": "Quaker",
+    "source": "OFF",
+    "per100": {
+     "k": 379,
+     "p": 13,
+     "c": 67,
+     "f": 6.5
+    },
+    "servingG": 40,
+    "servingLabel": "1/2 cup (40 g)",
+    "grams": 181.9,
+    "unitKey": "p:cup",
+    "amount": 1,
+    "disp": "1.5 cup"
+   },
+   "out": {
+    "k": 689.401,
+    "p": 23.647,
+    "c": 121.87299999999999,
+    "f": 11.8235
+   }
+  },
+  {
+   "e": {
+    "id": "e22",
+    "meal": "Breakfast",
+    "name": "=cmd|calc",
+    "brand": "",
+    "source": "Custom",
+    "per100": {
+     "k": 200,
+     "p": 10,
+     "c": 20,
+     "f": 5
+    },
+    "servingG": 100,
+    "servingLabel": "",
+    "grams": 49.4,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   "out": {
+    "k": 98.8,
+    "p": 4.9399999999999995,
+    "c": 9.879999999999999,
+    "f": 2.4699999999999998
+   }
+  },
+  {
+   "e": {
+    "id": "e23",
+    "meal": "Snacks",
+    "name": "Chicken, \"breast\", grilled",
+    "brand": "Acme, Inc.",
+    "source": "USDA",
+    "per100": {
+     "k": 165,
+     "p": 31,
+     "c": 0,
+     "f": 3.6
+    },
+    "servingG": 85,
+    "servingLabel": "3 oz (85 g)",
+    "grams": 84.1,
+    "unitKey": "v:tbsp",
+    "amount": 1,
+    "disp": "2 tbsp"
+   },
+   "out": {
+    "k": 138.765,
+    "p": 26.070999999999998,
+    "c": 0,
+    "f": 3.0276
+   }
+  },
+  {
+   "e": {
+    "id": "e24",
+    "meal": "Snacks",
+    "name": "Milk, whole",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 61,
+     "p": 3.2,
+     "c": 4.8,
+     "f": 3.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "cup",
+      "g": 244
+     },
+     {
+      "label": "tablespoon",
+      "g": 15
+     }
+    ],
+    "grams": 367.2,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   "out": {
+    "k": 223.992,
+    "p": 11.750399999999999,
+    "c": 17.6256,
+    "f": 12.117599999999998
+   }
+  },
+  {
+   "e": {
+    "id": "e25",
+    "meal": "Dinner",
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 120.4,
+    "unitKey": "w:oz",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 107.15599999999999,
+    "p": 1.3244,
+    "c": 27.4512,
+    "f": 0.36119999999999997
+   }
+  },
+  {
+   "e": {
+    "id": "e26",
+    "meal": "Dinner",
+    "name": "Oats",
+    "brand": "Quaker",
+    "source": "OFF",
+    "per100": {
+     "k": 379,
+     "p": 13,
+     "c": 67,
+     "f": 6.5
+    },
+    "servingG": 40,
+    "servingLabel": "1/2 cup (40 g)",
+    "grams": 159.3,
+    "unitKey": "w:g",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 603.7470000000001,
+    "p": 20.709000000000003,
+    "c": 106.73100000000001,
+    "f": 10.354500000000002
+   }
+  },
+  {
+   "e": {
+    "id": "e27",
+    "meal": "Dinner",
+    "name": "Milk, whole",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 61,
+     "p": 3.2,
+     "c": 4.8,
+     "f": 3.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "cup",
+      "g": 244
+     },
+     {
+      "label": "tablespoon",
+      "g": 15
+     }
+    ],
+    "grams": 230.1,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   "out": {
+    "k": 140.36100000000002,
+    "p": 7.363200000000001,
+    "c": 11.0448,
+    "f": 7.5933
+   }
+  },
+  {
+   "e": {
+    "id": "e28",
+    "meal": "Lunch",
+    "name": "=cmd|calc",
+    "brand": "",
+    "source": "Custom",
+    "per100": {
+     "k": 200,
+     "p": 10,
+     "c": 20,
+     "f": 5
+    },
+    "servingG": 100,
+    "servingLabel": "",
+    "grams": 179,
+    "unitKey": "w:oz",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 358,
+    "p": 17.9,
+    "c": 35.8,
+    "f": 8.95
+   }
+  },
+  {
+   "e": {
+    "id": "e29",
+    "meal": "Snacks",
+    "name": "Chicken, \"breast\", grilled",
+    "brand": "Acme, Inc.",
+    "source": "USDA",
+    "per100": {
+     "k": 165,
+     "p": 31,
+     "c": 0,
+     "f": 3.6
+    },
+    "servingG": 85,
+    "servingLabel": "3 oz (85 g)",
+    "grams": 381,
+    "unitKey": "w:oz",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 628.65,
+    "p": 118.11,
+    "c": 0,
+    "f": 13.716000000000001
+   }
+  },
+  {
+   "e": {
+    "id": "e30",
+    "meal": "Lunch",
+    "name": "Chicken, \"breast\", grilled",
+    "brand": "Acme, Inc.",
+    "source": "USDA",
+    "per100": {
+     "k": 165,
+     "p": 31,
+     "c": 0,
+     "f": 3.6
+    },
+    "servingG": 85,
+    "servingLabel": "3 oz (85 g)",
+    "grams": 225.6,
+    "unitKey": "w:g",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 372.23999999999995,
+    "p": 69.93599999999999,
+    "c": 0,
+    "f": 8.121599999999999
+   }
+  },
+  {
+   "e": {
+    "id": "e31",
+    "meal": "Snacks",
+    "name": "Oats",
+    "brand": "Quaker",
+    "source": "OFF",
+    "per100": {
+     "k": 379,
+     "p": 13,
+     "c": 67,
+     "f": 6.5
+    },
+    "servingG": 40,
+    "servingLabel": "1/2 cup (40 g)",
+    "grams": 288.9,
+    "unitKey": "v:tbsp",
+    "amount": 1,
+    "disp": "2 tbsp"
+   },
+   "out": {
+    "k": 1094.9309999999998,
+    "p": 37.556999999999995,
+    "c": 193.563,
+    "f": 18.778499999999998
+   }
+  },
+  {
+   "e": {
+    "id": "e32",
+    "meal": "Dinner",
+    "name": "Chicken, \"breast\", grilled",
+    "brand": "Acme, Inc.",
+    "source": "USDA",
+    "per100": {
+     "k": 165,
+     "p": 31,
+     "c": 0,
+     "f": 3.6
+    },
+    "servingG": 85,
+    "servingLabel": "3 oz (85 g)",
+    "grams": 280.5,
+    "unitKey": "w:oz",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 462.82500000000005,
+    "p": 86.955,
+    "c": 0,
+    "f": 10.098
+   }
+  },
+  {
+   "e": {
+    "id": "e33",
+    "meal": "Lunch",
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 311.2,
+    "unitKey": "w:oz",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 276.968,
+    "p": 3.4232000000000005,
+    "c": 70.95360000000001,
+    "f": 0.9336
+   }
+  },
+  {
+   "e": {
+    "id": "e34",
+    "meal": "Lunch",
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 265.1,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   "out": {
+    "k": 235.93900000000002,
+    "p": 2.9161000000000006,
+    "c": 60.442800000000005,
+    "f": 0.7953
+   }
+  },
+  {
+   "e": {
+    "id": "e35",
+    "meal": "Lunch",
+    "name": "=cmd|calc",
+    "brand": "",
+    "source": "Custom",
+    "per100": {
+     "k": 200,
+     "p": 10,
+     "c": 20,
+     "f": 5
+    },
+    "servingG": 100,
+    "servingLabel": "",
+    "grams": 294,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   "out": {
+    "k": 588,
+    "p": 29.4,
+    "c": 58.8,
+    "f": 14.7
+   }
+  },
+  {
+   "e": {
+    "id": "e36",
+    "meal": "Snacks",
+    "name": "Oats",
+    "brand": "Quaker",
+    "source": "OFF",
+    "per100": {
+     "k": 379,
+     "p": 13,
+     "c": 67,
+     "f": 6.5
+    },
+    "servingG": 40,
+    "servingLabel": "1/2 cup (40 g)",
+    "grams": 297.9,
+    "unitKey": "w:g",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 1129.041,
+    "p": 38.727,
+    "c": 199.593,
+    "f": 19.3635
+   }
+  },
+  {
+   "e": {
+    "id": "e37",
+    "meal": "Dinner",
+    "name": "Chicken, \"breast\", grilled",
+    "brand": "Acme, Inc.",
+    "source": "USDA",
+    "per100": {
+     "k": 165,
+     "p": 31,
+     "c": 0,
+     "f": 3.6
+    },
+    "servingG": 85,
+    "servingLabel": "3 oz (85 g)",
+    "grams": 398.7,
+    "unitKey": "p:cup",
+    "amount": 1,
+    "disp": "1.5 cup"
+   },
+   "out": {
+    "k": 657.855,
+    "p": 123.59700000000001,
+    "c": 0,
+    "f": 14.353200000000001
+   }
+  },
+  {
+   "e": {
+    "id": "e38",
+    "meal": "Snacks",
+    "name": "Chicken, \"breast\", grilled",
+    "brand": "Acme, Inc.",
+    "source": "USDA",
+    "per100": {
+     "k": 165,
+     "p": 31,
+     "c": 0,
+     "f": 3.6
+    },
+    "servingG": 85,
+    "servingLabel": "3 oz (85 g)",
+    "grams": 40.7,
+    "unitKey": "p:cup",
+    "amount": 1,
+    "disp": "1.5 cup"
+   },
+   "out": {
+    "k": 67.155,
+    "p": 12.617,
+    "c": 0,
+    "f": 1.4652
+   }
+  },
+  {
+   "e": {
+    "id": "e39",
+    "meal": "Dinner",
+    "name": "=cmd|calc",
+    "brand": "",
+    "source": "Custom",
+    "per100": {
+     "k": 200,
+     "p": 10,
+     "c": 20,
+     "f": 5
+    },
+    "servingG": 100,
+    "servingLabel": "",
+    "grams": 29.1,
+    "unitKey": "w:oz",
+    "amount": 1,
+    "disp": ""
+   },
+   "out": {
+    "k": 58.20000000000001,
+    "p": 2.91,
+    "c": 5.82,
+    "f": 1.455
+   }
+  },
+  {
+   "e": {
+    "id": "e40",
+    "meal": "Lunch",
+    "name": "Chicken, \"breast\", grilled",
+    "brand": "Acme, Inc.",
+    "source": "USDA",
+    "per100": {
+     "k": 165,
+     "p": 31,
+     "c": 0,
+     "f": 3.6
+    },
+    "servingG": 85,
+    "servingLabel": "3 oz (85 g)",
+    "grams": 238.6,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   "out": {
+    "k": 393.69,
+    "p": 73.96600000000001,
+    "c": 0,
+    "f": 8.5896
+   }
+  }
+ ],
+ "totals": {
+  "2025-11-20": {
+   "k": 893.772,
+   "p": 87.50280000000001,
+   "c": 117.37440000000001,
+   "f": 11.0484
+  },
+  "2025-11-21": {
+   "k": 3191.245,
+   "p": 124.4093,
+   "c": 565.4644000000001,
+   "f": 50.700500000000005
+  },
+  "2025-11-22": {
+   "k": 955.8320000000001,
+   "p": 31.7027,
+   "c": 164.87320000000003,
+   "f": 20.0062
+  },
+  "2025-11-24": {
+   "k": 953.9040000000001,
+   "p": 91.2703,
+   "c": 99.8892,
+   "f": 22.7025
+  },
+  "2025-11-25": {
+   "k": 517.576,
+   "p": 91.90520000000001,
+   "c": 3.1007999999999996,
+   "f": 12.5646
+  },
+  "2025-11-26": {
+   "k": 400.94399999999996,
+   "p": 20.5428,
+   "c": 35.7992,
+   "f": 15.888199999999998
+  },
+  "2025-11-27": {
+   "k": 1039.166,
+   "p": 75.738,
+   "c": 131.753,
+   "f": 19.769099999999998
+  },
+  "2025-11-28": {
+   "k": 934.895,
+   "p": 33.7838,
+   "c": 151.80780000000001,
+   "f": 22.8333
+  },
+  "2025-11-29": {
+   "k": 1127.011,
+   "p": 143.3732,
+   "c": 46.8448,
+   "f": 30.2593
+  },
+  "2025-12-01": {
+   "k": 2206.964,
+   "p": 197.8712,
+   "c": 264.5166,
+   "f": 37.93169999999999
+  },
+  "2025-12-02": {
+   "k": 2677.9900000000002,
+   "p": 207.2571,
+   "c": 318.8358,
+   "f": 50.6772
+  },
+  "2025-12-03": {
+   "k": 1481.1360000000002,
+   "p": 109.8874,
+   "c": 196.06719999999999,
+   "f": 26.256800000000002
+  },
+  "2025-12-04": {
+   "k": 1961.3659999999998,
+   "p": 135.442,
+   "c": 268.26800000000003,
+   "f": 35.71
+  },
+  "2025-12-05": {
+   "k": 2088.687,
+   "p": 74.36880000000001,
+   "c": 348.06739999999996,
+   "f": 36.3949
+  },
+  "2025-12-06": {
+   "k": 2218.654,
+   "p": 109.07289999999999,
+   "c": 288.5072,
+   "f": 46.3723
+  },
+  "2025-12-08": {
+   "k": 619.0569999999999,
+   "p": 41.655,
+   "c": 69.357,
+   "f": 19.052699999999998
+  },
+  "2025-12-09": {
+   "k": 2969.8510000000006,
+   "p": 94.7914,
+   "c": 550.6222,
+   "f": 46.4897
+  },
+  "2025-12-10": {
+   "k": 1439.986,
+   "p": 46.037800000000004,
+   "c": 266.7024,
+   "f": 22.5894
+  },
+  "2025-12-11": {
+   "k": 1424.2649999999999,
+   "p": 49.617700000000006,
+   "c": 242.8936,
+   "f": 29.7371
+  },
+  "2025-12-12": {
+   "k": 385.61999999999995,
+   "p": 28.107999999999997,
+   "c": 32.16,
+   "f": 9.4368
+  },
+  "2025-12-13": {
+   "k": 740.388,
+   "p": 109.9038,
+   "c": 28.960800000000003,
+   "f": 18.424799999999998
+  },
+  "2025-12-15": {
+   "k": 2034.355,
+   "p": 277.507,
+   "c": 75.94,
+   "f": 46.8022
+  },
+  "2025-12-16": {
+   "k": 405.33400000000006,
+   "p": 11.4772,
+   "c": 76.636,
+   "f": 5.997999999999999
+  },
+  "2025-12-17": {
+   "k": 201.14600000000002,
+   "p": 5.020200000000001,
+   "c": 40.3128,
+   "f": 3.8838
+  },
+  "2025-12-18": {
+   "k": 1450.871,
+   "p": 70.089,
+   "c": 233.09299999999996,
+   "f": 25.500700000000002
+  }
+ },
+ "empty": {
+  "k": 0,
+  "p": 0,
+  "c": 0,
+  "f": 0
+ }
+}

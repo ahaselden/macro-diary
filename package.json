@@ -1,0 +1,11 @@
+{
+  "name": "macro-diary",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Calorie and macro tracker (PWA) with USDA and Open Food Facts lookup",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "test": "node --test tests/"
+  }
+}

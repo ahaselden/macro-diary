@@ -1,0 +1,810 @@
+{
+ "unitsFor": [
+  {
+   "food": {
+    "id": "e1",
+    "meal": "Breakfast",
+    "name": "Bananas, raw",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 89,
+     "p": 1.1,
+     "c": 22.8,
+     "f": 0.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "medium",
+      "g": 118
+     },
+     {
+      "label": "cup, sliced",
+      "g": 150
+     }
+    ],
+    "grams": 162.8,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   "measures": {
+    "Oats|Quaker|OFF": [
+     {
+      "label": "scoop",
+      "g": 30
+     }
+    ],
+    "Flour||Custom": [
+     {
+      "label": "cup",
+      "g": 125
+     }
+    ]
+   },
+   "out": [
+    {
+     "key": "w:g",
+     "label": "grams (g)",
+     "short": "g",
+     "g": 1
+    },
+    {
+     "key": "w:oz",
+     "label": "ounces (oz)",
+     "short": "oz",
+     "g": 28.3495
+    },
+    {
+     "key": "w:lb",
+     "label": "pounds (lb)",
+     "short": "lb",
+     "g": 453.592
+    },
+    {
+     "key": "p:medium",
+     "label": "medium (118 g)",
+     "short": "medium",
+     "g": 118
+    },
+    {
+     "key": "p:cup, sliced",
+     "label": "cup, sliced (150 g)",
+     "short": "cup, sliced",
+     "g": 150
+    },
+    {
+     "key": "v:ml",
+     "label": "milliliters (ml)",
+     "short": "ml",
+     "g": 0.6340135594366578
+    },
+    {
+     "key": "v:tsp",
+     "label": "teaspoons (tsp)",
+     "short": "tsp",
+     "g": 3.1250021133785313
+    },
+    {
+     "key": "v:tbsp",
+     "label": "tablespoons (tbsp)",
+     "short": "tbsp",
+     "g": 9.375031700677972
+    },
+    {
+     "key": "v:floz",
+     "label": "fluid ounces (fl oz)",
+     "short": "fl oz",
+     "g": 18.75
+    }
+   ]
+  },
+  {
+   "food": {
+    "id": "e3",
+    "meal": "Lunch",
+    "name": "Chicken, \"breast\", grilled",
+    "brand": "Acme, Inc.",
+    "source": "USDA",
+    "per100": {
+     "k": 165,
+     "p": 31,
+     "c": 0,
+     "f": 3.6
+    },
+    "servingG": 85,
+    "servingLabel": "3 oz (85 g)",
+    "grams": 264,
+    "unitKey": "v:tbsp",
+    "amount": 1,
+    "disp": "2 tbsp"
+   },
+   "measures": {
+    "Oats|Quaker|OFF": [
+     {
+      "label": "scoop",
+      "g": 30
+     }
+    ],
+    "Flour||Custom": [
+     {
+      "label": "cup",
+      "g": 125
+     }
+    ]
+   },
+   "out": [
+    {
+     "key": "w:g",
+     "label": "grams (g)",
+     "short": "g",
+     "g": 1
+    },
+    {
+     "key": "w:oz",
+     "label": "ounces (oz)",
+     "short": "oz",
+     "g": 28.3495
+    },
+    {
+     "key": "w:lb",
+     "label": "pounds (lb)",
+     "short": "lb",
+     "g": 453.592
+    },
+    {
+     "key": "s",
+     "short": "serving",
+     "g": 85,
+     "label": "serving (3 oz (85 g))"
+    }
+   ]
+  },
+  {
+   "food": {
+    "id": "e4",
+    "meal": "Breakfast",
+    "name": "Oats",
+    "brand": "Quaker",
+    "source": "OFF",
+    "per100": {
+     "k": 379,
+     "p": 13,
+     "c": 67,
+     "f": 6.5
+    },
+    "servingG": 40,
+    "servingLabel": "1/2 cup (40 g)",
+    "grams": 381,
+    "unitKey": "w:g",
+    "amount": 1,
+    "disp": ""
+   },
+   "measures": {
+    "Oats|Quaker|OFF": [
+     {
+      "label": "scoop",
+      "g": 30
+     }
+    ],
+    "Flour||Custom": [
+     {
+      "label": "cup",
+      "g": 125
+     }
+    ]
+   },
+   "out": [
+    {
+     "key": "w:g",
+     "label": "grams (g)",
+     "short": "g",
+     "g": 1
+    },
+    {
+     "key": "w:oz",
+     "label": "ounces (oz)",
+     "short": "oz",
+     "g": 28.3495
+    },
+    {
+     "key": "w:lb",
+     "label": "pounds (lb)",
+     "short": "lb",
+     "g": 453.592
+    },
+    {
+     "key": "s",
+     "short": "serving",
+     "g": 40,
+     "label": "serving (1/2 cup (40 g))"
+    },
+    {
+     "key": "p:scoop",
+     "label": "scoop (30 g)",
+     "short": "scoop",
+     "g": 30
+    },
+    {
+     "key": "v:ml",
+     "label": "milliliters (ml)",
+     "short": "ml",
+     "g": 0.3381405650328842
+    },
+    {
+     "key": "v:tsp",
+     "label": "teaspoons (tsp)",
+     "short": "tsp",
+     "g": 1.6666677938018835
+    },
+    {
+     "key": "v:tbsp",
+     "label": "tablespoons (tbsp)",
+     "short": "tbsp",
+     "g": 5.000016907028252
+    },
+    {
+     "key": "v:floz",
+     "label": "fluid ounces (fl oz)",
+     "short": "fl oz",
+     "g": 10
+    },
+    {
+     "key": "v:cup",
+     "label": "cups",
+     "short": "cup",
+     "g": 80
+    }
+   ]
+  },
+  {
+   "food": {
+    "id": "e9",
+    "meal": "Dinner",
+    "name": "Milk, whole",
+    "brand": "",
+    "source": "USDA",
+    "per100": {
+     "k": 61,
+     "p": 3.2,
+     "c": 4.8,
+     "f": 3.3
+    },
+    "servingG": 0,
+    "servingLabel": "",
+    "portions": [
+     {
+      "label": "cup",
+      "g": 244
+     },
+     {
+      "label": "tablespoon",
+      "g": 15
+     }
+    ],
+    "grams": 290.3,
+    "unitKey": "s",
+    "amount": 1,
+    "disp": "1 serving"
+   },
+   "measures": {
+    "Oats|Quaker|OFF": [
+     {
+      "label": "scoop",
+      "g": 30
+     }
+    ],
+    "Flour||Custom": [
+     {
+      "label": "cup",
+      "g": 125
+     }
+    ]
+   },
+   "out": [
+    {
+     "key": "w:g",
+     "label": "grams (g)",
+     "short": "g",
+     "g": 1
+    },
+    {
+     "key": "w:oz",
+     "label": "ounces (oz)",
+     "short": "oz",
+     "g": 28.3495
+    },
+    {
+     "key": "w:lb",
+     "label": "pounds (lb)",
+     "short": "lb",
+     "g": 453.592
+    },
+    {
+     "key": "p:cup",
+     "label": "cup (244 g)",
+     "short": "cup",
+     "g": 244
+    },
+    {
+     "key": "p:tablespoon",
+     "label": "tablespoon (15 g)",
+     "short": "tablespoon",
+     "g": 15
+    },
+    {
+     "key": "v:ml",
+     "label": "milliliters (ml)",
+     "short": "ml",
+     "g": 1.0313287233502968
+    },
+    {
+     "key": "v:tsp",
+     "label": "teaspoons (tsp)",
+     "short": "tsp",
+     "g": 5.083336771095745
+    },
+    {
+     "key": "v:floz",
+     "label": "fluid ounces (fl oz)",
+     "short": "fl oz",
+     "g": 30.5
+    }
+   ]
+  },
+  {
+   "food": {
+    "id": "e10",
+    "meal": "Lunch",
+    "name": "=cmd|calc",
+    "brand": "",
+    "source": "Custom",
+    "per100": {
+     "k": 200,
+     "p": 10,
+     "c": 20,
+     "f": 5
+    },
+    "servingG": 100,
+    "servingLabel": "",
+    "grams": 57.2,
+    "unitKey": "v:tbsp",
+    "amount": 1,
+    "disp": "2 tbsp"
+   },
+   "measures": {
+    "Oats|Quaker|OFF": [
+     {
+      "label": "scoop",
+      "g": 30
+     }
+    ],
+    "Flour||Custom": [
+     {
+      "label": "cup",
+      "g": 125
+     }
+    ]
+   },
+   "out": [
+    {
+     "key": "w:g",
+     "label": "grams (g)",
+     "short": "g",
+     "g": 1
+    },
+    {
+     "key": "w:oz",
+     "label": "ounces (oz)",
+     "short": "oz",
+     "g": 28.3495
+    },
+    {
+     "key": "w:lb",
+     "label": "pounds (lb)",
+     "short": "lb",
+     "g": 453.592
+    },
+    {
+     "key": "s",
+     "short": "serving",
+     "g": 100,
+     "label": "serving (100 g)"
+    }
+   ]
+  },
+  {
+   "food": {
+    "name": "Flour",
+    "brand": "",
+    "source": "Custom",
+    "per100": {
+     "k": 364,
+     "p": 10,
+     "c": 76,
+     "f": 1
+    },
+    "servingG": 0
+   },
+   "measures": {
+    "Oats|Quaker|OFF": [
+     {
+      "label": "scoop",
+      "g": 30
+     }
+    ],
+    "Flour||Custom": [
+     {
+      "label": "cup",
+      "g": 125
+     }
+    ]
+   },
+   "out": [
+    {
+     "key": "w:g",
+     "label": "grams (g)",
+     "short": "g",
+     "g": 1
+    },
+    {
+     "key": "w:oz",
+     "label": "ounces (oz)",
+     "short": "oz",
+     "g": 28.3495
+    },
+    {
+     "key": "w:lb",
+     "label": "pounds (lb)",
+     "short": "lb",
+     "g": 453.592
+    },
+    {
+     "key": "p:cup",
+     "label": "cup (125 g)",
+     "short": "cup",
+     "g": 125
+    },
+    {
+     "key": "v:ml",
+     "label": "milliliters (ml)",
+     "short": "ml",
+     "g": 0.5283446328638816
+    },
+    {
+     "key": "v:tsp",
+     "label": "teaspoons (tsp)",
+     "short": "tsp",
+     "g": 2.604168427815443
+    },
+    {
+     "key": "v:tbsp",
+     "label": "tablespoons (tbsp)",
+     "short": "tbsp",
+     "g": 7.812526417231644
+    },
+    {
+     "key": "v:floz",
+     "label": "fluid ounces (fl oz)",
+     "short": "fl oz",
+     "g": 15.625
+    }
+   ]
+  },
+  {
+   "food": {
+    "name": "Juice",
+    "brand": "X",
+    "source": "OFF",
+    "per100": {
+     "k": 45,
+     "p": 0.5,
+     "c": 10,
+     "f": 0
+    },
+    "servingG": 240,
+    "servingLabel": "1 cup (240 ml)"
+   },
+   "measures": {
+    "Oats|Quaker|OFF": [
+     {
+      "label": "scoop",
+      "g": 30
+     }
+    ],
+    "Flour||Custom": [
+     {
+      "label": "cup",
+      "g": 125
+     }
+    ]
+   },
+   "out": [
+    {
+     "key": "w:g",
+     "label": "grams (g)",
+     "short": "g",
+     "g": 1
+    },
+    {
+     "key": "w:oz",
+     "label": "ounces (oz)",
+     "short": "oz",
+     "g": 28.3495
+    },
+    {
+     "key": "w:lb",
+     "label": "pounds (lb)",
+     "short": "lb",
+     "g": 453.592
+    },
+    {
+     "key": "s",
+     "short": "serving",
+     "g": 240,
+     "label": "serving (1 cup (240 ml))"
+    },
+    {
+     "key": "v:ml",
+     "label": "milliliters (ml)",
+     "short": "ml",
+     "g": 1.0144216950986524
+    },
+    {
+     "key": "v:tsp",
+     "label": "teaspoons (tsp)",
+     "short": "tsp",
+     "g": 5.00000338140565
+    },
+    {
+     "key": "v:tbsp",
+     "label": "tablespoons (tbsp)",
+     "short": "tbsp",
+     "g": 15.000050721084753
+    },
+    {
+     "key": "v:floz",
+     "label": "fluid ounces (fl oz)",
+     "short": "fl oz",
+     "g": 29.999999999999996
+    }
+   ]
+  },
+  {
+   "food": {
+    "name": "Sauce",
+    "brand": "",
+    "source": "OFF",
+    "per100": {
+     "k": 50,
+     "p": 1,
+     "c": 5,
+     "f": 2
+    },
+    "servingG": 30,
+    "servingLabel": "2 tbsp (30g)"
+   },
+   "measures": {
+    "Oats|Quaker|OFF": [
+     {
+      "label": "scoop",
+      "g": 30
+     }
+    ],
+    "Flour||Custom": [
+     {
+      "label": "cup",
+      "g": 125
+     }
+    ]
+   },
+   "out": [
+    {
+     "key": "w:g",
+     "label": "grams (g)",
+     "short": "g",
+     "g": 1
+    },
+    {
+     "key": "w:oz",
+     "label": "ounces (oz)",
+     "short": "oz",
+     "g": 28.3495
+    },
+    {
+     "key": "w:lb",
+     "label": "pounds (lb)",
+     "short": "lb",
+     "g": 453.592
+    },
+    {
+     "key": "s",
+     "short": "serving",
+     "g": 30,
+     "label": "serving (2 tbsp (30g))"
+    },
+    {
+     "key": "v:ml",
+     "label": "milliliters (ml)",
+     "short": "ml",
+     "g": 1.0144182649389997
+    },
+    {
+     "key": "v:tsp",
+     "label": "teaspoons (tsp)",
+     "short": "tsp",
+     "g": 4.999986474423134
+    },
+    {
+     "key": "v:tbsp",
+     "label": "tablespoons (tbsp)",
+     "short": "tbsp",
+     "g": 15
+    },
+    {
+     "key": "v:cup",
+     "label": "cups",
+     "short": "cup",
+     "g": 239.99918846538804
+    }
+   ]
+  },
+  {
+   "food": {
+    "name": "Cookie",
+    "brand": "",
+    "source": "OFF",
+    "per100": {
+     "k": 480,
+     "p": 5,
+     "c": 65,
+     "f": 22
+    },
+    "servingG": 15,
+    "servingLabel": "3 cookies"
+   },
+   "measures": {
+    "Oats|Quaker|OFF": [
+     {
+      "label": "scoop",
+      "g": 30
+     }
+    ],
+    "Flour||Custom": [
+     {
+      "label": "cup",
+      "g": 125
+     }
+    ]
+   },
+   "out": [
+    {
+     "key": "w:g",
+     "label": "grams (g)",
+     "short": "g",
+     "g": 1
+    },
+    {
+     "key": "w:oz",
+     "label": "ounces (oz)",
+     "short": "oz",
+     "g": 28.3495
+    },
+    {
+     "key": "w:lb",
+     "label": "pounds (lb)",
+     "short": "lb",
+     "g": 453.592
+    },
+    {
+     "key": "s",
+     "short": "serving",
+     "g": 15,
+     "label": "serving (3 cookies)"
+    }
+   ]
+  }
+ ],
+ "volOf": [
+  {
+   "l": "1 cup",
+   "out": 236.588
+  },
+  {
+   "l": "cup, sliced",
+   "out": 236.588
+  },
+  {
+   "l": "2 tbsp (30g)",
+   "out": 29.5736
+  },
+  {
+   "l": "1 1/2 fl oz",
+   "out": 44.36025
+  },
+  {
+   "l": "1/2 cup",
+   "out": 118.294
+  },
+  {
+   "l": "3 cookies",
+   "out": null
+  },
+  {
+   "l": "large",
+   "out": null
+  },
+  {
+   "l": "tablespoon",
+   "out": 14.7868
+  },
+  {
+   "l": "2 TSP",
+   "out": 9.85784
+  },
+  {
+   "l": "8 fl. oz",
+   "out": 236.588
+  },
+  {
+   "l": "fluid ounce",
+   "out": 29.5735
+  },
+  {
+   "l": "500 ml",
+   "out": 500
+  },
+  {
+   "l": "1 liter",
+   "out": 1000
+  },
+  {
+   "l": "2 pints",
+   "out": 946.352
+  },
+  {
+   "l": "1 quart",
+   "out": 946.353
+  },
+  {
+   "l": "",
+   "out": null
+  },
+  {
+   "l": null,
+   "out": null
+  },
+  {
+   "l": "cups of tea",
+   "out": 236.588
+  },
+  {
+   "l": "10 milliliters",
+   "out": 10
+  }
+ ],
+ "frac": [
+  {
+   "t": "1",
+   "out": 1
+  },
+  {
+   "t": "1/2",
+   "out": 0.5
+  },
+  {
+   "t": "1 1/2",
+   "out": 1.5
+  },
+  {
+   "t": "2.5",
+   "out": 2.5
+  },
+  {
+   "t": "3/4",
+   "out": 0.75
+  }
+ ]
+}
