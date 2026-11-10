@@ -3,6 +3,7 @@ import { state, save, replace, defaults } from '../core/store.js';
 import { $, toast } from '../core/dom.js';
 import { on, emit } from '../core/bus.js';
 import { fmt } from '../core/dates.js';
+import { touchSettings } from '../domain/entries.js';
 import { download } from '../services/files.js';
 import { registerTab } from './tabs.js';
 import { restoreFlow } from './restore-dialog.js';
@@ -16,8 +17,10 @@ const num = (s, d) => { const v = parseFloat($(s).value); return v >= 0 ? v : d;
 
 export function initSettings() {
   ['#gK', '#gP', '#gC', '#gF', '#wUnit', '#apiKey', '#srcUSDA', '#srcOFF'].forEach(s => $(s).addEventListener('change', () => {
+    const synced = () => JSON.stringify([state.goals, state.weightUnit, state.useUSDA, state.useOFF]), before = synced();
     state.goals = { k: num('#gK', state.goals.k), p: num('#gP', state.goals.p), c: num('#gC', state.goals.c), f: num('#gF', state.goals.f) };
     state.weightUnit = $('#wUnit').value; state.apiKey = $('#apiKey').value.trim(); state.useUSDA = $('#srcUSDA').checked; state.useOFF = $('#srcOFF').checked;
+    if (synced() !== before) touchSettings(state, Date.now());   // only synced settings bump the sync timestamp (apiKey/theme are per-device)
     save(); emit('diary:changed'); toast('Saved');
   }));
   $('#bkExport').onclick = () => download(`macro-diary-backup-${fmt(new Date())}.json`, JSON.stringify(state), 'application/json');

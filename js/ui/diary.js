@@ -6,6 +6,7 @@ import { MEALS } from '../core/constants.js';
 import { esc, rd, amtLabel } from '../core/format.js';
 import { fmt, addDays, pretty } from '../core/dates.js';
 import { entryMacros, totals } from '../domain/nutrition.js';
+import { removeEntry } from '../domain/entries.js';
 import { dayText } from '../domain/summary.js';
 import { dayImage } from '../services/share.js';
 import { view } from './ctx.js';
@@ -47,8 +48,7 @@ export function initDiary() {
     const cur = view.day;
     if (del) {
       ev.stopPropagation();
-      state.days[cur] = (state.days[cur] || []).filter(e => e.id !== del.dataset.del);
-      if (!state.days[cur].length) delete state.days[cur];
+      removeEntry(state, cur, del.dataset.del, Date.now());   // leaves a tombstone so the deletion syncs
       save(); emit('diary:changed');
     }
     else if (addBtn) openAdd(addBtn.dataset.add);

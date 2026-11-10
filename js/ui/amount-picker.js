@@ -5,6 +5,7 @@ import { emit } from '../core/bus.js';
 import { MEALS } from '../core/constants.js';
 import { esc, rd, r1, r2, fmtW } from '../core/format.js';
 import { foodKey } from '../domain/food.js';
+import { addEntry, updateEntry } from '../domain/entries.js';
 import { unitsFor as unitsForM } from '../domain/units.js';
 import { loadPortions } from '../services/usda.js';
 import { view, add } from './ctx.js';
@@ -45,7 +46,7 @@ export function showFood(food, existing) {
   $('#mAdd').onclick = () => {
     const label = $('#mName').value.trim(), g = +$('#mG').value;
     if (!label || !(g > 0)) { toast('Enter a name and grams'); return; }
-    const k = foodKey(food); state.measures[k] = [...(state.measures[k] || []).filter(m => m.label !== label), { label, g }]; save();
+    const k = foodKey(food); state.measures[k] = [...(state.measures[k] || []).filter(m => m.label !== label), { label, g, updatedAt: Date.now() }]; save();
     units = unitsFor(food); fill('p:' + label); $('#amt').value = 1; upd(); $('#mName').value = $('#mG').value = ''; toast('Measure saved');
   };
   if (canLoad) loadPortions(food, state.apiKey).then(() => { if (showFood.tok !== tok || !$('#unit')) return;
@@ -55,11 +56,11 @@ export function showFood(food, existing) {
   $('#addGo').onclick = () => {
     const g = grams(); if (!(g > 0)) { toast('Enter an amount'); return; }
     const meal = $('#mealSel').value, un = unitNow(), amount = +$('#amt').value, disp = un.key.startsWith('w:') ? '' : `${r2(amount)} ${un.short}`;
-    if (existing) { Object.assign(existing, { grams: g, meal, unitKey: un.key, amount, disp }); }
+    if (existing) { updateEntry(state, view.day, existing.id, { grams: g, meal, unitKey: un.key, amount, disp }, Date.now()); }
     else {
       const info = { name: food.name, brand: food.brand || '', source: food.source || '', per100: food.per100, servingG: food.servingG || 0,
         servingLabel: food.servingLabel || '', fdcId: food.fdcId, portions: food.portions };
-      (state.days[view.day] ||= []).push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), meal, ...info, grams: g, unitKey: un.key, amount, disp });
+      addEntry(state, view.day, { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), meal, ...info, grams: g, unitKey: un.key, amount, disp }, Date.now());
       state.recent = [info, ...state.recent.filter(f => foodKey(f) !== foodKey(info))].slice(0, 30);
     }
     save(); emit('diary:changed'); dialog().close(); toast(existing ? 'Updated' : 'Added to ' + meal);

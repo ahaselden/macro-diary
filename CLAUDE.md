@@ -8,7 +8,7 @@ Live on GitHub Pages (`ahaselden/macro-diary`). Data lives in the browser (`loca
 - `npm test` — `node --test tests/` (no deps)
 
 ## Architecture (layers; imports only point downward)
-`ui → services, domain, core` · `services → core` · `domain → plain data only` · `core → nothing`
+`ui → services, domain, core` · `services → domain, core` · `domain → core/{constants,format,dates,schema} + domain only` · `core → nothing`
 - `js/core/` state store, dates, formatting, DOM helpers, constants
 - `js/domain/` **pure** logic (no DOM, no storage, no globals; functions take state/args): nutrition, units, backup/merge, reports/CSV
 - `js/services/` talks to the outside world: USDA, Open Food Facts, barcode, share, file download

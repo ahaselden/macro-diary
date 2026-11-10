@@ -27,3 +27,17 @@ Short records of non-obvious choices and **why**, in the order they were made. A
 
 ## D8. Bugs found during a refactor are logged, not fixed
 Reported by extraction agents/reviewer and kept as-is so behaviour stays identical; collected in `docs/KNOWN-ISSUES.md` for deliberate fixing later.
+
+---
+
+## D9. Last-writer-wins per record, with tombstones, for merging (restore now, sync later) — *made without the owner*
+**Context:** the old "Merge" only *added* entries missing locally. That can't carry an edit ("I fixed the grams on my phone") or a deletion ("I removed that entry") from one device to another, and sync needs both. **Decision:** every record (diary entry, custom food, saved measure; settings as one record) carries `updatedAt`; the newer one wins; a deletion writes a **tombstone** `state.tombstones[id] = deletedAt`, which beats any version of the entry last edited before it. Implemented in `js/domain/merge.js` as a pure `mergeStates(a, b)`; entry changes go through `js/domain/entries.js` (`addEntry/updateEntry/removeEntry`) so they are always stamped. **Why LWW per record rather than per day or per field:** a day is edited from several devices (breakfast on the phone, lunch on the PC) so day-level LWW would lose entries; per-field LWW adds bookkeeping with no real benefit for records this small. **Why tombstones:** without them a deleted entry reappears from whichever device hasn't heard of the deletion yet. **Guarantees (property-tested over 300 random state triples):** commutative, associative, idempotent — devices converge in any sync order. **Trade-offs:** device clocks are trusted (a phone with a wrong clock can win or lose edits unfairly; acceptable for one person's devices); tombstones accumulate until `pruneTombstones` (not yet called automatically); equal timestamps are broken by comparing the serialised records (arbitrary but identical everywhere).
+
+## D10. What does *not* sync — *made without the owner*
+`theme`, `apiKey` and `recent` stay per-device. Theme is a per-device preference (dark on the phone, light on the PC). The USDA key is a credential the owner should paste per device rather than have copied to a cloud store. `recent` is derived convenience data whose list order would otherwise make every sync "change" something and never settle. Goals, weight unit and database toggles sync as one settings record. Revisit if the owner wants the key or theme synced.
+
+## D11. Schema v3 and sanitising on every load/restore
+`core/schema.js` (pure, so `domain/` can use it) holds `defaults`, `migrate`, `sanitize`. v3 adds `tombstones` and `settingsUpdatedAt`; **existing entries are not rewritten** — a missing `updatedAt` simply means 0 ("older than any real edit"), so upgrading changes nothing a user can see and cannot lose data (tested against the original fixture). `sanitize` forces untrusted fields (goals, units, theme, tombstones…) to safe types because a restored file reaches the HTML through them (KNOWN-ISSUES #1).
+
+## D12. "Restore → Merge" prefers this device on a tie
+Old backups have no timestamps, so every record ties. For *restore* (a human deliberately importing a file) the device keeps its own version on a tie (`preferLocal`), matching the old behaviour; for *sync* the symmetric tie-break is used because it must not depend on which device runs the merge. The test suite proves a restore-merge still brings in exactly the data the original merge did (golden), and that it now also applies newer edits and deletions found in the backup.

@@ -2,7 +2,7 @@
 import { state, save, replace } from '../core/store.js';
 import { $, toast, dialog, head } from '../core/dom.js';
 import { emit } from '../core/bus.js';
-import { validEntry, newEntries, mergeBackup } from '../domain/backup.js';
+import { validEntry, newEntries, mergeRestore } from '../domain/backup.js';
 
 export function restoreFlow(d) {
   const dlg = dialog();
@@ -20,7 +20,7 @@ export function restoreFlow(d) {
   if (!dlg.open) dlg.showModal();
   $('#rCancel').onclick = () => dlg.close();
   $('#rMerge').onclick = () => {
-    replace(mergeBackup(state, d)); save(); dlg.close();
+    replace(mergeRestore(state, d)); save(); dlg.close();
     emit('settings:changed'); emit('diary:changed');
     toast(nNew ? `Merged – ${nNew} new ${nNew === 1 ? 'entry' : 'entries'}` : 'Merged – nothing new to add');
   };

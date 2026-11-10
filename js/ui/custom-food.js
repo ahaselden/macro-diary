@@ -18,6 +18,7 @@ export function renderCustom() {
     if (!(k >= 0) || $('#cK').value === '') { toast('Enter calories'); return; }
     const s = 100 / size, food = { name, brand: '', source: 'Custom', servingG: size,
       per100: { k: k * s, p: (+$('#cP').value || 0) * s, c: (+$('#cC').value || 0) * s, f: (+$('#cF').value || 0) * s } };
+    food.updatedAt = Date.now();
     if ($('#cSave').checked) { state.custom = [food, ...state.custom.filter(f => foodKey(f) !== foodKey(food))].slice(0, 100); save(); }
     showFood(food);
   };

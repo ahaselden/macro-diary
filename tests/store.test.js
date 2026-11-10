@@ -88,6 +88,21 @@ test('sanitising leaves valid diary data untouched', () => {
 });
 
 test('migrate never removes data and never lowers the version', () => {
-  assert.equal(migrate({ days: { a: [] } }).schemaVersion, 2);
+  assert.equal(migrate({ days: { a: [] } }).schemaVersion, SCHEMA_VERSION);
   assert.equal(migrate({ schemaVersion: 7 }).schemaVersion, 7);
+});
+
+test('v3 adds tombstones + settingsUpdatedAt to old data without touching entries', () => {
+  const v1 = fixture('state'), s = createStore(fakeStorage(JSON.stringify(v1)));
+  assert.deepEqual(s.state.tombstones, {});
+  assert.equal(s.state.settingsUpdatedAt, 0);
+  assert.equal(s.state.schemaVersion, 3);
+  const first = Object.values(s.state.days)[0][0];
+  assert.equal('updatedAt' in first, false);            // not rewritten: missing means 0
+});
+
+test('tombstones from untrusted input are cleaned to id -> non-negative number', () => {
+  const s = createStore(fakeStorage()); s.replace({ tombstones: { a: 5, b: 'x', c: -1, d: '7' }, settingsUpdatedAt: 'nope' });
+  assert.deepEqual(s.state.tombstones, { a: 5, d: 7 });
+  assert.equal(s.state.settingsUpdatedAt, 0);
 });

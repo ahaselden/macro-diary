@@ -21,7 +21,7 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 │            core/            │   constants, formatting, dates, the state store, the event bus, DOM helpers
 └─────────────────────────────┘
 ```
-**Import rule:** arrows only point down. `domain/` may import only `core/constants`, `core/format`, `core/dates` and other `domain/` files (never `core/dom` or `core/store`). `core/` modules import nothing from the layers above. Why: pure `domain/` code runs in Node, so it is testable without a browser, and features that don't exist yet (recipes, shopping lists) can reuse it. See [D2](DECISIONS.md#d2-strict-layers-ui--services--domain--core).
+**Import rule:** arrows only point down. `domain/` may import only `core/constants`, `core/format`, `core/dates`, `core/schema` and other `domain/` files (never `core/dom` or `core/store`). `core/` modules import nothing from the layers above. Why: pure `domain/` code runs in Node, so it is testable without a browser, and features that don't exist yet (recipes, shopping lists) can reuse it. See [D2](DECISIONS.md#d2-strict-layers-ui--services--domain--core).
 
 ## Map
 
@@ -30,12 +30,15 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 | `index.html` | Markup only (all screens + the dialog). Loads `css/*` and `js/main.js`. A tiny inline script sets the saved theme before first paint to avoid a flash. |
 | `css/base.css` `themes.css` `components.css` | Reset/controls; the 14 colour palettes as `[data-theme=…]` blocks of CSS variables; widgets/layout. |
 | `js/main.js` | Boot and wiring only. |
-| `js/core/store.js` | The single `state` object, load/save, `schemaVersion` + `migrate()` + `sanitize()`, `replace()`. The only place that touches `localStorage`. |
+| `js/core/schema.js` | Pure: `defaults`, `migrate` (version steps), `sanitize` (forces untrusted fields to safe types), `SCHEMA_VERSION`. |
+| `js/core/store.js` | The single `state` object, load/save, `replace()`. The only place that touches `localStorage`; uses `schema.js`. |
 | `js/core/constants.js` `format.js` `dates.js` | Shared constants; `esc`, rounding, `fmtW`, `amtLabel`; local-date helpers. Pure. |
 | `js/core/dom.js` `bus.js` | `$`, `toast`, dialog helpers; tiny pub/sub (`on`/`emit`) so screens can react to each other without importing each other. |
 | `js/domain/nutrition.js` | Calories/macros of an entry and of a list. |
 | `js/domain/units.js` | Which units a food can be entered in (g/oz/lb, servings, household measures, volume units derived from a known density). |
-| `js/domain/backup.js` | Validating and merging a backup file into the current state. |
+| `js/domain/entries.js` | The only sanctioned way to add/edit/remove diary entries (`addEntry/updateEntry/removeEntry/touchSettings`): stamps `updatedAt`, leaves tombstones on delete; also `validEntry`. |
+| `js/domain/merge.js` | `mergeStates(a, b)`: conflict-free last-writer-wins merge of two states (see [D9](DECISIONS.md)). Used by restore now and by sync later. |
+| `js/domain/backup.js` | Restore: `validEntry`, `newEntries` (preview count), `mergeRestore` (sanitise the file, then `mergeStates` preferring this device on ties). |
 | `js/domain/reports.js` | Daily/weekly/monthly/yearly ranges, roll-ups, CSV/JSON export contents. |
 | `js/domain/summary.js` | The "share my day" text. |
 | `js/domain/food.js` | `foodKey` — identity of a food across sources. |
@@ -53,20 +56,24 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 3. Replacing everything (restore/wipe) goes through `replace()`, which keeps the same `state` object so every module's reference stays valid ([D4](DECISIONS.md#d4-application-state-is-one-mutable-object-state-replaced-via-replace)), then emits `settings:changed` and `diary:changed`.
 4. `save()` writes JSON to `localStorage`; if that fails (storage full/blocked) `store.onSaveError` shows a toast.
 
-## Data shape (schema v2)
+## Data shape (schema v3)
 
 ```
 state = {
-  schemaVersion: 2,
-  theme: 'auto' | 'dark' | …,   weightUnit: 'g' | 'oz',
+  schemaVersion: 3,
+  theme: 'auto' | 'dark' | …,   weightUnit: 'g' | 'oz',            // theme, apiKey, recent: per-device, never synced (D10)
   goals: { k, p, c, f },        apiKey, useUSDA, useOFF,
+  settingsUpdatedAt: ms,                                             // stamps the synced settings as ONE record
   days: { 'YYYY-MM-DD': [ entry, … ] },
-  recent: [ food, … ],  custom: [ food, … ],
-  measures: { foodKey: [ { label, g } ] }
+  tombstones: { entryId: deletedAtMs },                              // so deletions propagate between devices
+  recent: [ food, … ],  custom: [ food (+updatedAt), … ],
+  measures: { foodKey: [ { label, g, updatedAt } ] }
 }
-entry = { id, meal, name, brand, source, per100: {k,p,c,f}, servingG, servingLabel, fdcId, portions,
+entry = { id, updatedAt, meal, name, brand, source, per100: {k,p,c,f}, servingG, servingLabel, fdcId, portions,
           grams, unitKey, amount, disp }
 ```
+History: v1 = original app, v2 = added `schemaVersion`, v3 = tombstones/`settingsUpdatedAt` and `updatedAt` on edited records. Missing `updatedAt` means 0 ("older than any real edit"), so upgrading rewrites nothing. Changes to entries must go through `domain/entries.js` so they are stamped and deletions leave tombstones.
+
 Nutrition is stored **per 100 g** and an entry stores the grams eaten, so changing units never changes the calories. `disp` ("1.5 cup") remembers how the user entered it.
 
 ## Security notes
