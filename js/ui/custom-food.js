@@ -15,7 +15,7 @@ export function renderCustom() {
   ocrRun++;
   $('#tabBody').innerHTML = `
     <div class="muted">Fill this in from a nutrition label:</div>
-    <div class="row" style="margin-top:6px"><button id="cCam">📷 Take a photo</button><button id="cPick">🖼 Choose an image</button></div>
+    <div class="row" style="margin-top:6px"><button id="cCam"><span aria-hidden="true">📷</span> Take a photo</button><button id="cPick"><span aria-hidden="true">🖼</span> Choose an image</button></div>
     <input type="file" id="cFileCam" accept="image/*" capture="environment" hidden>
     <input type="file" id="cFile" accept="image/*" hidden>
     <div class="muted" id="cLabelMsg" style="margin:6px 0 10px" aria-live="polite"></div>
@@ -76,5 +76,5 @@ async function readLabel(file) {
       r.missing.length ? `Not found, please type: ${esc(r.missing.join(', '))}.` : '', ...r.warnings.map(w => '⚠ ' + esc(w))].filter(Boolean);
     msg(lines.join('<br>'));
   } catch (err) { msg('Could not read the photo: ' + esc(err.message || err) + '. You can still type the numbers.'); }
-  finally { setBusy(false); }
+  finally { if (run === ocrRun) setBusy(false); }   // a stale run must not re-enable the buttons while a newer read is in progress
 }
