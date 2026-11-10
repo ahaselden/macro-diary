@@ -1,7 +1,7 @@
 // Caches the app shell so it opens offline. Food-database requests always go to the network.
 // Keep SHELL in sync with the files that ship: tests/sw.test.js fails if a js/css file is missing from it.
 // After changing ANY shipped file, bump CACHE so installed copies (phones) pick up the update.
-const CACHE = 'macro-diary-v13';
+const CACHE = 'macro-diary-v14';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png',
   'css/base.css',
@@ -57,6 +57,7 @@ const SHELL = [
   'js/ui/sync-view.js',
   'js/ui/tabs.js',
   'js/ui/theme.js',
+  'js/vendor/zxing.min.js',
 ];
 
 self.addEventListener('install', e => {

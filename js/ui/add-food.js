@@ -87,7 +87,7 @@ async function doSearch() {
 
 /* camera logic lives in services/barcode.js */
 async function scan() {
-  $('#results').innerHTML = '<video id="vid" playsinline muted></video><p class="muted">Point at a barcode…</p>';
+  $('#results').innerHTML = '<video id="vid" playsinline muted></video><p class="muted">Starting camera… then point at a barcode.</p>';
   try { await startScan($('#vid'), code => { $('#q').value = code; add.q = code; doSearch(); }); }
   catch { toast('Camera unavailable (needs HTTPS and permission)'); renderResults(); }
 }

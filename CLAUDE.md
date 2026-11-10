@@ -13,6 +13,7 @@ Live on GitHub Pages (`ahaselden/macro-diary`). Data lives in the browser (`loca
 - `js/domain/` **pure** logic (no DOM, no storage, no globals; functions take state/args): nutrition, units, backup/merge, reports/CSV
 - `js/services/` talks to the outside world: USDA, Open Food Facts, barcode, share, file download
 - `js/ui/` one module per screen/dialog; builds HTML (always `esc()` anything from a database or file) and handles events
+- `js/vendor/` third-party files copied unchanged (currently only `zxing.min.js`, see D21); never edit them by hand
 - `js/main.js` boot + wiring only
 - `tests/golden/*.json` outputs captured from the **original single-file app**; `tests/fixtures/` their inputs. Modules must reproduce them exactly.
 
