@@ -73,6 +73,7 @@ Model (ported in spirit from `MealPlannerPC/Models`): `Recipe{id,name,descriptio
 | 5 Shopping lists | **done** | Derived list, aisles, ticks/extras, share/CSV. |
 | Barcode scan + label OCR | **done, merged (PRs 2, 5)** | Native detector with ZXing fallback; Tesseract.js label reader; separate Take a photo / Choose an image buttons (D24). Unverified on real phones and real packaging (KNOWN-ISSUES #29, #31, #33, #36). |
 | Sync setup defaults + setup link | **done, merged (PR #8)** | Built-in default project (set to the owner's project, D25) and an "Add another device" link. QR code not built. |
+| Favourite recipes | **done, merged (PR #10)** | `favorite` flag on recipes (schema v5, D26), star on cards and in the editor, Favourites filter. Auto-fill (next) can read the flag. |
 | Part 4 store integrations | **not built, by design** | Research notes above; needs a backend + the owner's developer accounts. |
 
 ### What the owner needs to do next (in order)
