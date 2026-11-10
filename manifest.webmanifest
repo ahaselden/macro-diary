@@ -1,0 +1,13 @@
+{
+  "name": "Macro Diary",
+  "short_name": "Macro Diary",
+  "description": "Calorie and macro tracker with food database lookup",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#16a34a",
+  "theme_color": "#16a34a",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
