@@ -75,7 +75,7 @@ Leap Feb 2028/2100/2000, Feb 2027, 6-row months, year boundary, `'2025-02-30'`, 
 - [x] Week | Month toggle switches views; the pressed state is announced by a screen reader; keyboard Tab/Enter/Space work on toggle, day cells and prev/next.
 - [x] Month grid looks right on a phone width (7 columns, no horizontal scroll, 6-row months fit), padding days are visibly dimmed and today is marked.
 - [x] Day cell shows kcal (rounded) and item count; empty days look empty; incomplete days are flagged.
-- [x] Tapping a day (also a padding day) switches to the week view containing it.
+- [x] Tapping a day (padding days are blank and not tappable, see D28) switches to the week view containing it.
 - [x] Prev/next month cross year boundaries (Dec <-> Jan) and Feb 2028 shows 29 days.
 - [x] Auto-fill dialog: range defaults to the current view; switching Week/Month regenerates; "N past days skipped" shows when applicable; with everything past, the dialog says nothing to fill.
 - [x] Month auto-fill accepted: planned meals are not overwritten, reload keeps the plan, Accept twice adds nothing.
