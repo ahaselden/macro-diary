@@ -1,0 +1,11 @@
+{
+  "name": "Sheet-Pan Chicken & Veg",
+  "description": "An easy dinner. Everything cooks on one tray.",
+  "servings": 4,
+  "totalTime": 50,
+  "tagsSorted": ["dinner", "one pan"],
+  "steps": ["Heat the oven to 220°C.", "Toss everything with the oil.", "Roast for 35 minutes, turning once."],
+  "ingredients": ["4 chicken thighs", "2 cups broccoli florets", "1 tbsp olive oil", "salt and pepper, to taste"],
+  "warningCount": 0,
+  "warningPatterns": []
+}

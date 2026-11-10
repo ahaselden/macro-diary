@@ -1,0 +1,11 @@
+{
+  "name": "Garlic Tomato Pasta",
+  "description": "",
+  "servings": 4,
+  "totalTime": 45,
+  "tagsSorted": [],
+  "steps": ["Heat the oil and cook the garlic for 1 minute.", "Add the tomatoes and salt; simmer for 20 minutes.", "Boil the spaghetti until al dente.", "Toss with the sauce and top with basil."],
+  "ingredients": ["8 oz spaghetti", "2 tbsp olive oil", "3 cloves garlic, minced", "1 can (14 oz) crushed tomatoes", "1/2 tsp salt", "fresh basil, to serve"],
+  "warningCount": 0,
+  "warningPatterns": []
+}

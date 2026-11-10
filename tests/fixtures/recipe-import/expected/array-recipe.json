@@ -1,0 +1,11 @@
+{
+  "name": "Weeknight Lentil Soup",
+  "description": "A hearty soup & it freezes well.",
+  "servings": 6,
+  "totalTime": 60,
+  "tagsSorted": ["soup", "vegetarian"],
+  "steps": ["Soften the onion and carrots in the oil.", "Add the lentils, stock and cumin; simmer 25 minutes.", "Blend half the soup and stir it back in."],
+  "ingredients": ["1 tbsp olive oil", "1 onion, diced", "2 carrots, chopped", "1 cup red lentils", "4 cups vegetable stock", "1/2 tsp cumin"],
+  "warningCount": 0,
+  "warningPatterns": []
+}
