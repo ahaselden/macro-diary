@@ -66,15 +66,16 @@ Model (ported in spirit from `MealPlannerPC/Models`): `Recipe{id,name,descriptio
 |-------|-------|-------|
 | 0 Refactor | **done** | Layered ES modules, golden tests, CI, SW drift test. |
 | 1 Data foundation | **done** | Schema v3, LWW merge with tombstones (D9-D12). |
-| 2 Sync engine | **done, not yet run against a real Supabase** | Verified end to end against a local mock server (two browser origins); the SQL has never run on Postgres (KNOWN-ISSUES #12). |
+| 2 Sync engine | **done; schema applied to the real project, no real sync yet** | Engine verified against a local mock server (two browser origins). The SQL is in `supabase/migrations/` and was merged to `main` on 2026-11-10 and the owner confirmed the table and `push_record` exist in Supabase. No device has synced through the real project yet; test steps are in SYNC-SETUP.md section 6b (KNOWN-ISSUES #12). |
 | 3a Planner data model | **done** | Schema v4 (D13). |
 | 3 Recipes | **done** | Parser port, nutrition, editor, ingredient→food linking. **Not built:** URL import. |
 | 4 Meal plan | **done** | Week view, per-day nutrition vs goals, log to diary (idempotent). |
 | 5 Shopping lists | **done** | Derived list, aisles, ticks/extras, share/CSV. |
+| Barcode scan + label OCR | **done, merged (PRs 2, 5)** | Native detector with ZXing fallback; Tesseract.js label reader; separate Take a photo / Choose an image buttons (D24). Unverified on real phones and real packaging (KNOWN-ISSUES #29, #31, #33, #36). |
 | Part 4 store integrations | **not built, by design** | Research notes above; needs a backend + the owner's developer accounts. |
 
 ### What the owner needs to do next (in order)
-1. Review the branch `refactor/modules` commit by commit (`git log --oneline`); nothing has been pushed.
-2. Try the app on the phone after pushing (see README-style steps in `docs/SYNC-SETUP.md` and the PWA install notes).
-3. To go live with sync: follow `docs/SYNC-SETUP.md` (create the Supabase project, run the SQL, paste URL + anon key). Report any SQL error — see KNOWN-ISSUES #12.
-4. Decide on the open design questions listed in `docs/DECISIONS.md` marked *made without the owner* (D9, D10, D13–D17).
+1. Run the real two-device sync test in `docs/SYNC-SETUP.md` section 6b and report any failing step (KNOWN-ISSUES #12).
+2. Try the app on the phone: install, barcode scan, label photo (camera and upload), offline (KNOWN-ISSUES #21, #29, #31, #33, #36).
+3. Answer the open questions at the end of [VISION.md](VISION.md) (households first: it changes the database layout). The suggested order of next features is in its section 6.
+4. Decide on the open design questions in `docs/DECISIONS.md` marked *made without the owner* (D9, D10, D13-D17).

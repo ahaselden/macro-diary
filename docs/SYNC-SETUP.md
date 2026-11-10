@@ -144,6 +144,22 @@ The URL, anon key and your login session are stored only in that browser on that
 
 Dashboard → **Table Editor** → `records`. You should see rows such as `day:2026-…` and `settings`, with `rev` starting at 1 and rising each time that record is changed. `seq` rises with every write.
 
+## 6b. First real sync test (two devices)
+
+Purpose: the SQL has been applied (confirmed from the dashboard) but `push_record` has never been called by a real sync. This is the checklist that exercises it. If a step fails, stop and note the exact message shown in Settings -> Sync.
+
+1. **Settings -> Sync** on device A (PC is easiest). Enter the Project URL, the anon key, your email and a password; press **Create account**. Expect "signed in" with no error. (If it says to confirm your email, do step 3 of section 3 first.)
+2. Add or edit one diary entry, then press **Sync now**. Expect "Last synced just now".
+3. Dashboard -> Table Editor -> `records`: expect rows such as `day:<today>` and `settings`, `rev` = 1. This proves `push_record` works (insert path).
+4. Edit the same entry again and Sync now. In `records` the `rev` of that day should become 2 (update path).
+5. Device B (phone): install/open the app, **Settings -> Sync**, same URL and key, **Sign in** (do not create a second account). Press **Sync now**. Expect the entry from device A to appear.
+6. Change something on B, Sync now on B, then Sync now on A. Expect the change on A.
+7. Delete an entry on B, sync B then A. Expect it gone on A (tombstone).
+8. Optional conflict check: turn off networking on both, edit the same entry on each, reconnect and sync both. Expect the newer edit to win and no error.
+9. When it works, turn off "Allow new users to sign up" (section 3, step 4).
+
+Report back: which step failed, and the message shown. Do not paste your password or the `service_role` key.
+
 ## Troubleshooting
 
 | Symptom | Likely cause / fix |
