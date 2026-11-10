@@ -1,0 +1,2 @@
+# Minimal Supabase CLI config so the GitHub integration finds this folder. Local `supabase start` is not used by this project.
+project_id = "macro-diary"

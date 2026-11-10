@@ -15,6 +15,8 @@ Time needed: about 15 minutes. No coding, no credit card.
 
 ## 2. Create the tables and functions (SQL)
 
+> **If your Supabase project is connected to the GitHub repo** (Supabase dashboard -> Integrations -> GitHub, "Deploy to production" on `main`), you can skip this step: the same SQL is in `supabase/migrations/20261110120000_sync_records.sql` and is applied automatically when it is merged to `main`. Check the result in the dashboard under **Database -> Migrations** and **Table editor** (a `records` table). If the run fails, the integration shows the error: paste it to us. Do not also run the SQL by hand unless it failed. (It is safe to run twice, but then the migration history and the database disagree.) A test keeps the SQL below and the migration file identical.
+
 1. In the left menu open **SQL Editor** → **New query**.
 2. Paste **all** of the SQL below and click **Run**. It should finish with "Success. No rows returned". It is safe to run twice.
 

@@ -22,6 +22,7 @@ Live on GitHub Pages (`ahaselden/macro-diary`). Data lives in the browser (`loca
 - Keep domain functions pure so they stay testable; put anything touching `document`, `localStorage`, `fetch` in `core/`, `services/` or `ui/`.
 - Escape all external text before inserting into HTML (`esc`); CSV cells starting with `= + - @` are neutralised (`csvCell`).
 - Service worker (`sw.js`): after changing any shipped file, bump `CACHE` so phones pick up the update, and keep the precache list in sync.
+- `supabase/migrations/*.sql` are **applied to the production database automatically when merged to `main`** (Supabase GitHub integration). Migrations are forward-only: never edit one that has been merged; add a new later-dated file. Keep the sync SQL in `docs/SYNC-SETUP.md` identical (`tests/supabase-migration.test.js`). Never put keys, passwords or the `service_role` key in the repo; the app only ever uses the public anon key, entered in Settings.
 - Do not commit secrets. The USDA key is entered by the user in Settings and stays in their browser.
 
 ## Working rules added by the refactor
