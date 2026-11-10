@@ -11,15 +11,36 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
 <title>Macro Diary</title>
+<script>
+// apply saved theme before first paint to avoid a flash
+try{var d=JSON.parse(localStorage.getItem('macrodiary.v1')),t=(d&&d.theme)||{},m=t.mode||'system',
+dk=m==='dark'||m==='black'||(m==='system'&&matchMedia('(prefers-color-scheme:dark)').matches),r=document.documentElement;
+r.dataset.scheme=dk?'dark':'light';r.dataset.theme=t.color||'green';if(m==='black')r.dataset.black='';}catch(e){}
+</script>
 <style>
 :root{
   --bg:#f5f6f4;--card:#fff;--text:#1a1f1c;--muted:#667069;--line:#e3e7e2;
   --accent:#16a34a;--accent-ink:#fff;--kcal:#16a34a;--p:#3b82f6;--c:#f59e0b;--f:#ef4444;--over:#dc2626;
-  --nav-h:60px;
+  --nav-h:60px;color-scheme:light;
 }
-@media (prefers-color-scheme:dark){
-  :root{--bg:#101311;--card:#1a1f1c;--text:#eef2ee;--muted:#9aa59d;--line:#2a312c;--accent:#22c55e;--accent-ink:#06210f;--kcal:#22c55e;--p:#60a5fa;--c:#fbbf24;--f:#f87171}
-}
+:root{--kcal:var(--accent)}
+:root[data-scheme=dark]{color-scheme:dark;--bg:#101311;--card:#1a1f1c;--text:#eef2ee;--muted:#9aa59d;--line:#2a312c;--accent:#22c55e;--accent-ink:#06210f;--p:#60a5fa;--c:#fbbf24;--f:#f87171}
+:root[data-scheme=dark][data-black]{--bg:#000;--card:#0c0e0d;--line:#1f2421}
+/* colour themes: light variant, then dark variant */
+:root[data-theme=blue]{--accent:#2563eb;--accent-ink:#fff}
+:root[data-theme=blue][data-scheme=dark]{--accent:#60a5fa;--accent-ink:#08152e}
+:root[data-theme=purple]{--accent:#7c3aed;--accent-ink:#fff}
+:root[data-theme=purple][data-scheme=dark]{--accent:#a78bfa;--accent-ink:#1a0b3b}
+:root[data-theme=orange]{--accent:#c2410c;--accent-ink:#fff}
+:root[data-theme=orange][data-scheme=dark]{--accent:#fb923c;--accent-ink:#2b1103}
+:root[data-theme=rose]{--accent:#e11d48;--accent-ink:#fff}
+:root[data-theme=rose][data-scheme=dark]{--accent:#fb7185;--accent-ink:#2d0610}
+:root[data-theme=teal]{--accent:#0f766e;--accent-ink:#fff}
+:root[data-theme=teal][data-scheme=dark]{--accent:#2dd4bf;--accent-ink:#042f2a}
+.swatches{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.sw{width:44px;height:44px;min-height:44px;padding:0;border-radius:50%;border:3px solid var(--card);box-shadow:0 0 0 1px var(--line)}
+.sw.on{box-shadow:0 0 0 3px var(--text)}
+.sw-lbl{font-size:12px;color:var(--muted);text-align:center;margin-top:2px}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0}
 body{background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
@@ -135,6 +156,15 @@ video{width:100%;border-radius:12px;background:#000;max-height:50dvh}
   <!-- SETTINGS -->
   <section class="view" id="v-settings">
     <div class="card">
+      <h2>Appearance</h2>
+      <label>Mode</label>
+      <div class="seg" id="modeSeg" style="margin-bottom:0">
+        <button data-mode="system">System</button><button data-mode="light">Light</button><button data-mode="dark">Dark</button><button data-mode="black">Black</button>
+      </div>
+      <label>Colour theme</label>
+      <div class="swatches" id="swatches"></div>
+    </div>
+    <div class="card">
       <h2>Daily goals</h2>
       <div class="row"><div><label>Calories</label><input id="gK" type="number" inputmode="numeric"></div><div><label>Protein (g)</label><input id="gP" type="number" inputmode="numeric"></div></div>
       <div class="row"><div><label>Carbs (g)</label><input id="gC" type="number" inputmode="numeric"></div><div><label>Fat (g)</label><input id="gF" type="number" inputmode="numeric"></div></div>
@@ -178,7 +208,7 @@ const rd = n => Math.round(n || 0);
 const r1 = n => Math.round((n || 0) * 10) / 10;
 
 /* ---------- state ---------- */
-const defaults = () => ({goals:{k:2000,p:150,c:200,f:65}, apiKey:'', useUSDA:true, useOFF:true, days:{}, recent:[], custom:[]});
+const defaults = () => ({theme:{mode:'system', color:'green'}, goals:{k:2000,p:150,c:200,f:65}, apiKey:'', useUSDA:true, useOFF:true, days:{}, recent:[], custom:[]});
 let S = (() => { try { const d = JSON.parse(localStorage.getItem('macrodiary.v1')); if (d) return {...defaults(), ...d}; } catch {} return defaults(); })();
 const save = () => { try { localStorage.setItem('macrodiary.v1', JSON.stringify(S)); } catch { toast('Could not save – storage full or blocked'); } };
 function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove('show'),2200); }
@@ -193,6 +223,26 @@ let cur = fmt(new Date());
 /* ---------- math ---------- */
 const entryMacros = e => { const f = e.grams/100; return {k:e.per100.k*f, p:e.per100.p*f, c:e.per100.c*f, f:e.per100.f*f}; };
 const totals = list => list.reduce((t,e) => { const m = entryMacros(e); t.k+=m.k; t.p+=m.p; t.c+=m.c; t.f+=m.f; return t; }, {k:0,p:0,c:0,f:0});
+
+/* ---------- theme ---------- */
+const THEMES = {green:['Green','#16a34a'], blue:['Ocean','#2563eb'], teal:['Teal','#0f766e'], purple:['Grape','#7c3aed'], orange:['Sunset','#c2410c'], rose:['Rose','#e11d48']};
+const darkMQ = matchMedia('(prefers-color-scheme:dark)');
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+function applyTheme(){
+  const t = {mode:'system', color:'green', ...S.theme}, root = document.documentElement;
+  const dark = t.mode === 'dark' || t.mode === 'black' || (t.mode === 'system' && darkMQ.matches);
+  root.dataset.scheme = dark ? 'dark' : 'light';
+  root.dataset.theme = THEMES[t.color] ? t.color : 'green';
+  if (t.mode === 'black') root.dataset.black = ''; else delete root.dataset.black;
+  document.querySelector('meta[name=theme-color]').content = cssVar('--bg') || '#16a34a';
+  document.querySelectorAll('#modeSeg button').forEach(b => b.classList.toggle('on', b.dataset.mode === t.mode));
+  document.querySelectorAll('#swatches [data-color]').forEach(b => b.classList.toggle('on', b.dataset.color === t.color));
+}
+darkMQ.addEventListener?.('change', applyTheme);
+$('#swatches').innerHTML = Object.entries(THEMES).map(([k,[n,c]]) =>
+  `<div><button class="sw" data-color="${k}" style="background:${c}" aria-label="${n} theme"></button><div class="sw-lbl">${n}</div></div>`).join('');
+$('#modeSeg').onclick = e => { const b = e.target.closest('[data-mode]'); if (b) { S.theme = {...S.theme, mode:b.dataset.mode}; save(); applyTheme(); } };
+$('#swatches').onclick = e => { const b = e.target.closest('[data-color]'); if (b) { S.theme = {...S.theme, color:b.dataset.color}; save(); applyTheme(); } };
 
 /* ---------- tabs ---------- */
 function tab(name){
@@ -503,8 +553,8 @@ function dayText(){
 }
 function dayImage(){
   const list = S.days[cur] || [], t = totals(list), W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
-  const x = c.getContext('2d'), dark = matchMedia('(prefers-color-scheme: dark)').matches;
-  const bg = dark ? '#101311' : '#f5f6f4', fg = dark ? '#eef2ee' : '#1a1f1c', mu = dark ? '#9aa59d' : '#667069', ln = dark ? '#2a312c' : '#e3e7e2';
+  const x = c.getContext('2d');
+  const bg = cssVar('--bg'), fg = cssVar('--text'), mu = cssVar('--muted'), ln = cssVar('--line');
   x.fillStyle = bg; x.fillRect(0,0,W,H); x.fillStyle = fg; x.textBaseline = 'alphabetic';
   x.font = '600 44px system-ui,sans-serif'; x.fillText(pretty(cur), 60, 100);
   x.font = '700 150px system-ui,sans-serif'; x.fillText(String(rd(t.k)), 60, 280);
@@ -550,13 +600,13 @@ $('#bkFile').onchange = async ev => {
   try {
     const d = JSON.parse(await f.text()); if (!d || typeof d.days !== 'object' || !d.goals) throw 0;
     if (!confirm('Replace all data on this device with the backup?')) return;
-    S = {...defaults(), ...d}; save(); loadSettings(); renderDiary(); toast('Backup restored');
+    S = {...defaults(), ...d}; save(); loadSettings(); applyTheme(); renderDiary(); toast('Backup restored');
   } catch { toast('Not a valid backup file'); }
 };
-$('#wipe').onclick = () => { if (confirm('Delete ALL diary data on this device? This cannot be undone.')) { S = defaults(); save(); loadSettings(); renderDiary(); toast('All data deleted'); } };
+$('#wipe').onclick = () => { if (confirm('Delete ALL diary data on this device? This cannot be undone.')) { S = defaults(); save(); loadSettings(); applyTheme(); renderDiary(); toast('All data deleted'); } };
 
 /* ---------- boot ---------- */
-tab('diary'); renderDiary();
+applyTheme(); tab('diary'); renderDiary();
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
