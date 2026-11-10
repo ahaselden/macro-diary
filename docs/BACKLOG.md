@@ -5,6 +5,7 @@ The queue of work, highest priority first. **When a feature is finished (PR merg
 *Drafted on 2026-11-10 from VISION section 6 and the known issues. The order is a proposal; the owner can reorder it by editing this file.*
 
 ## How to use this list
+0. **Nothing starts by itself.** Work begins only when the owner asks (for example "do the next backlog item"); an item counts as finished when the owner has merged its PR, because agents never merge. `CLAUDE.md` points every session here.
 1. Take the first item whose box is not ticked and whose **Blocked by** is empty or done.
 2. If an item is blocked (needs a decision or an account from the owner), skip it, say so in the PR or chat, and take the next one. Do not start work that needs an answer nobody has given.
 3. When the PR merges, tick the box, add the PR number and today's date, and update the status in VISION section 2 and ROADMAP in the same change.
