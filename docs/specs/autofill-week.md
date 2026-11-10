@@ -73,15 +73,17 @@ Domain tests: `tests/autofill-week.test.js` (ids match titles). UI: `tests/autof
 Empty/one recipe, all favourites, goal exceeded, month crossing, partial plans, duplicate/bad/unsorted dates, 31 dates, prototype-key recipe ids and slot names, NaN/Infinity/huge/negative numbers, wrong types everywhere, frozen state, inherited opts. Recipe names are never put into `why`; escaping of names in the dialog is a manual check.
 
 ## Cannot be tested automatically (manual checklist)
-- [ ] Week view shows an "Auto-fill week" button; keyboard focus + Enter/Space opens the preview.
-- [ ] Preview lists every proposed day and slot with recipe name, servings, kcal and the why text; Lunch and Dinner toggles are on by default, Breakfast/Snacks off; toggling regenerates.
-- [ ] Nothing is saved until Accept: close the app/Cancel and reload, plan unchanged.
-- [ ] Accept adds items, the week view re-renders, state survives reload; Accept twice (or Accept after planning a slot by hand) never overwrites.
-- [ ] Reroll gives a different proposal (with enough recipes) and Cancel closes without changes.
-- [ ] A recipe named `<img src=x onerror=alert(1)>` shows as text in the preview.
-- [ ] Incomplete recipes are not offered by default; if a toggle exists for them the pick is flagged.
-- [ ] No recipes / all slots full: the dialog says so instead of showing an empty list.
-- [ ] After update the phone picks up the new `CACHE` (reload twice); works offline; sync of the new plan days to a second device.
+- [x] Week view shows an "Auto-fill week" button; keyboard focus + Enter/Space opens the preview.
+- [x] Preview lists every proposed day and slot with recipe name, servings, kcal and the why text; Lunch and Dinner toggles are on by default, Breakfast/Snacks off; toggling regenerates.
+- [x] Nothing is saved until Accept: close the app/Cancel and reload, plan unchanged.
+- [x] Accept adds items, the week view re-renders, state survives reload; Accept twice (or Accept after planning a slot by hand) never overwrites.
+- [x] Reroll gives a different proposal (with enough recipes) and Cancel closes without changes.
+- [x] A recipe named `<img src=x onerror=alert(1)>` shows as text in the preview.
+- [ ] (UI never offers incomplete recipes; n/a) Incomplete recipes are not offered by default; if a toggle exists for them the pick is flagged.
+- [x] No recipes / all slots full: the dialog says so instead of showing an empty list.
+- [ ] (not tried; needs a real phone) After update the phone picks up the new `CACHE` (reload twice); works offline; sync of the new plan days to a second device.
+
+*Ticked items checked 2026-11-10 in the desktop built-in browser with a seeded 4-recipe library (keyboard use, the `<img onerror>` name and a second device were not tried; the escaped recipe name `<b>` was checked).*
 
 ## How weak the UI tests are
 U1-U6 are regexes over source text: they show markup and calls exist, not that the dialog opens, that Reroll changes the seed, that Cancel discards, or that save/re-render happen. U6 passes today (vacuous before implementation: there is no `proposePlan` in the file) and only becomes meaningful once the feature exists. Wording regexes may need loosening for reasonable different markup (say so in the PR).

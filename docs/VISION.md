@@ -24,7 +24,7 @@ The goal is that individuals and families can plan how and when they will eat th
 | 5 | Import a recipe from **pasted text** | **Built** | Paste ingredient lines. |
 | 6 | Import a recipe from a **website** | Not built | Needs a small backend (section 5). |
 | 7 | Plan a day or week by hand, log planned meals to the diary | **Built** | No month view yet. |
-| 8 | **Auto-fill a week or month** from existing recipes | Not built | Section 4.2. |
+| 8 | **Auto-fill a week or month** from existing recipes | **Week built** (in PR, D27); month not built | Section 4.2. Preview, then Accept; never overwrites planned meals. |
 | 9 | **Favourite** recipes | **Built** (PR #10, D26) | Section 4.3. Used as a filter now; auto-fill will use it as a preference. |
 | 10 | Shopping list from the plan (aisles, tick-off, share) | **Built** | |
 | 11 | Pick a store and **add the list to its cart** | Not built | Needs a backend and developer accounts (section 4.5). |
@@ -100,7 +100,7 @@ Everything else stays static and client-side, and the app keeps working if the b
 
 1. Go live with sync (owner sets up Supabase), after deciding on households (4.6).
 2. Favourites (small; unlocks 3). **Done (PR #10 merged).**
-3. Auto-fill week/month (pure logic, no backend, fully testable).
+3. Auto-fill week/month (pure logic, no backend, fully testable). **Week done (PR open); month remains.**
 4. Recipe import from websites (first use of the backend).
 5. Store integration, starting with the one store that allows it.
 
