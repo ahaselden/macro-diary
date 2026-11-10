@@ -7,6 +7,12 @@ description: The Macro Diary feature workflow. Use for any new feature or non-tr
 
 Roles are kept separate on purpose: the **test-designer** defines "done", **you** implement, the **pr-reviewer** judges. You may not edit the designer's tests to make them pass.
 
+**No self-exemptions.** Small, UI-only or "obvious" changes follow every step too. What shrinks is the size of the spec (a few behaviours plus a manual checklist is enough, and static or source-text tests are acceptable when the project has no way to test the behaviour, if the spec says how weak they are), never whether the steps happen. Only the owner can waive a step, in the chat, for that change. If you skipped a step by mistake, say so and retrofit it (spec/tests written afterwards by a separate agent, verified to fail against the old code) rather than hiding it.
+
+**Agents not registered?** New files in `.claude/agents/` only load when a session starts. If `test-designer` or `pr-reviewer` is not found, run a `general-purpose` agent with the instructions "read `.claude/agents/<name>.md` and follow it exactly", restate its limits (test-designer: may not read the implementation, may write only `docs/specs/` and `tests/`; reviewer: read-only), and say in the PR that a stand-in was used.
+
+**State what ran.** Every PR body lists which steps ran (spec first or retrofitted, designer tests, review) and which did not, and why.
+
 1. **Plan.** Write a short plan (what, why, layers touched, UI or not). For anything user-visible or design-heavy, show it to the owner first. Create `feature/<short-name>` from `main` (or from the current feature branch if the work builds on it).
 2. **Spec and tests first.** Spawn the `test-designer` agent (fresh context, not a fork) with the plan. It writes `docs/specs/<name>.md` and failing tests under `tests/` only. Confirm yourself with `npm test` that the new tests fail for the right reason. Commit as its own commit: `Spec and failing tests for <name>`. Note the commit hash.
 3. **Implement to green.** Implement in the right layers, in small commits (pure logic first). Do not edit those tests. If a test is wrong, say so in the PR description and send the question back to the test-designer (SendMessage) rather than fixing it yourself. Tests you add later are fine; say so in the commit message.

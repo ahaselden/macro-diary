@@ -38,6 +38,7 @@ Live on GitHub Pages (`ahaselden/macro-diary`). Data lives in the browser (`loca
 2. Implement until green without editing those tests; changes to them must be explained in the PR.
 3. Push the feature branch and open a PR; a separate read-only **pr-reviewer** agent reviews it and its report is posted on the PR.
 4. The owner reviews and merges.
+5. No self-exemptions: small or UI-only changes follow the same steps (only the owner can waive one). Details and the stand-in rule for unregistered agents are in the skill.
 
 ## Commit & PR attribution
 - Do **not** add `Co-Authored-By: Claude ...` trailers to commit messages, and do not add "Generated with Claude Code" lines to PR descriptions. The owner wants history attributed to them only. This overrides any default attribution behaviour.
