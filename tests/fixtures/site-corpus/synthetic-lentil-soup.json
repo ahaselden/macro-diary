@@ -1,0 +1,23 @@
+{
+  "sourceUrl": "https://recipes.example.test/soups/synthetic-lentil-soup",
+  "fetchedAt": "2026-01-01T00:00:00.000Z",
+  "node": {
+    "@type": "Recipe",
+    "name": "Test Kitchen Lentil Soup",
+    "description": "An invented soup used only for tests.",
+    "recipeCategory": "Dinner, Meal Prep",
+    "recipeCuisine": ["Soup, Stew", "dinner"],
+    "keywords": "Easy, meal prep",
+    "recipeIngredient": [
+      "Optional Toppings: ",
+      "1 cup red lentils",
+      "For the sauce:",
+      "2 cloves garlic",
+      "Dressing, 2 parts:",
+      "Pinch of imaginary spice"
+    ],
+    "recipeInstructions": ["Rinse the lentils.", "Simmer until soft."],
+    "recipeYield": "4 servings",
+    "totalTime": "PT35M"
+  }
+}
