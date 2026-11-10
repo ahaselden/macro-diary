@@ -27,3 +27,7 @@ E9. Network behaviour unchanged: exactly one `fetchImpl` call is made on a rejec
 ## Open questions
 - Exact wording is not fixed; tests assert required ideas by regex only.
 - Whether to distinguish `navigator.onLine === false` (UI could say "offline" as fact) is out of scope: services must not rely on globals here and the plan says wording only.
+
+## Verification log (implementer, desktop built-in browser)
+- With `fetch` made to reject with `TypeError("Failed to fetch")` (what a browser reports when the function is missing and the preflight fails), the Import dialog showed: "Could not reach the import service. Your connection may be down, or the service is not set up on your project yet. You can paste the recipe instead." and the Import button re-enabled. Not checked: the real browser behaviour against an undeployed function (it was seen on the live site before the function was deployed, which is what this wording is for), a phone.
+- SW cache bumped to v28. No other behaviour changed.
