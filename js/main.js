@@ -7,7 +7,9 @@ import { initDiary, renderDiary } from './ui/diary.js';
 import { initAddFood } from './ui/add-food.js';
 import { initExport } from './ui/export-view.js';
 import { initSettings } from './ui/settings-view.js';
-import { initSync } from './ui/sync-view.js';
+import { initSync, applySyncSetup, syncConfig } from './ui/sync-view.js';
+import { parseSetupLink, planSetupLinkApply } from './services/sync/setup-link.js';
+import { DEFAULT_SYNC } from './services/sync/defaults.js';
 import { initRecipes } from './ui/recipes-view.js';
 import { initPlan } from './ui/plan-view.js';
 import { initShop } from './ui/shop-view.js';
@@ -24,6 +26,20 @@ initSync();
 initRecipes();
 initPlan();
 initShop();
+
+// A setup link (#sync-setup=…) pre-fills Settings → Sync with the project URL + key. Always stripped from the address bar.
+// An invalid link is ignored; a device already signed in to another project asks first (never switched silently).
+async function handleSetupLink() {
+  if (!location.hash.includes('sync-setup=')) return;
+  const link = parseSetupLink(location.hash);
+  history.replaceState(null, '', location.pathname + location.search);
+  const plan = planSetupLinkApply(syncConfig().get(), link, DEFAULT_SYNC);
+  if (plan.action === 'ignore') return;
+  if (plan.action === 'confirm' && !confirm('This link points to a different sync project. Switch this device to it? You will be signed out of the current one.')) return;
+  await applySyncSetup(plan.patch);
+  toast('Sync settings added — now sign in');
+}
+handleSetupLink();
 
 applyTheme();
 showTab('diary');

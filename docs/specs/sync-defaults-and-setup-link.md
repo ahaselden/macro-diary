@@ -104,3 +104,8 @@ U1-U8 are regex checks over source text. They show strings and calls are present
 - Maximum accepted link length: tests only require 100 KB and 5 MB garbage to return null, not a specific limit.
 - Exact UI wording of "Add another device" help text: U2 asserts only a loose pattern; adjust the regex if the wording is reasonable but different.
 - `planSetupLinkApply` and the `defaults` option of `createSyncService` are this spec's own additions to the brief.
+
+## Implementation notes (added by the implementer, not the test-designer)
+- Manual checks run in the built-in browser on localhost: setup link applied + hash stripped; garbage link ignored + stripped; signed-in view shows "Add another device" with a link containing no secrets; with a temporary fake default in `defaults.js`: sign-in-only view, "Advanced: use my own project" reveals the form, "Use the built-in server instead" returns. Not run: the confirm prompt for a different project while signed in, Copy/Share on a phone, real sign-in against Supabase.
+- Deviation: when the device is on the built-in default, "Add another device" shows a short "just sign in on the other device" note instead of a link (the link would be identical to the default).
+- Open questions are answered as: own-project with empty values gives `none`; link applied also clears the device's `session` and `meta`.
