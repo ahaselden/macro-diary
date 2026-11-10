@@ -43,7 +43,7 @@ export async function fetchRecipePage(conn, pageUrl, fetchImpl = (...a) => globa
     clearTimeout(timer);
     const name = e && typeof e === 'object' ? e.name : '';
     if (name === 'AbortError' || name === 'TimeoutError') throw fail('The page took too long to load. Try again, or paste the recipe instead.');
-    throw fail('Network error: check your internet connection and try again.');
+    throw fail('Could not reach the import service. Your connection may be down, or the service is not set up on your project yet. You can paste the recipe instead.');   // a missing function fails the browser preflight, so it looks like a network failure
   }
   clearTimeout(timer);
 
