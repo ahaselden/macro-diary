@@ -58,6 +58,9 @@ A sync where nothing changed anywhere uploads nothing.
 - Everything that comes back from the server is treated as untrusted: records are validated and run through the same rules as a restored backup file before they touch your state, and anything rendered is escaped.
 - Passwords are never stored by the app; only the session tokens Supabase returns are.
 
+## Setup: built-in default project and setup link
+A device uses its own project if the user set one, else the built-in default in `js/services/sync/defaults.js` (empty until the owner decides), else nothing. A signed-in device can show a link (`#sync-setup=…`, URL + key only) that pre-fills Settings → Sync on another device. See D25.
+
 ## Known limits (honest list)
 
 - **Not verified against a real server yet.** The adapter and SQL were tested against a mock written from Supabase's documented behaviour. The first real run will be the owner's.

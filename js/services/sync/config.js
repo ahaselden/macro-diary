@@ -39,7 +39,7 @@ export function tokenRole(jwt) {
 }
 
 /** A key we are willing to store or share: a string longer than 20 chars that is not a service_role / secret key. */
-export const isUsableKey = k => typeof k === 'string' && k.length > 20 && !/service_role/i.test(k) && !k.startsWith('sb_secret_') && tokenRole(k) !== 'service_role';
+export const isUsableKey = k => typeof k === 'string' && k.length > 20 && !/service_role/i.test(k) && !/^sb_secret_/i.test(k) && tokenRole(k) !== 'service_role';
 
 export const isConfigured = cfg => !!(normalizeUrl(cfg.url) && cfg.anonKey && String(cfg.anonKey).length > 20);
 export const isSignedIn = cfg => !!(cfg.session && cfg.session.refresh_token);

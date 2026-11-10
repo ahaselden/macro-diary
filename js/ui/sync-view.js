@@ -49,7 +49,7 @@ function addDeviceHtml(conn) {
   if (!setupLink) return '';
   return `<h3 style="margin:14px 0 4px">Add another device</h3>
     <p class="muted" style="margin:0 0 6px">Open this link on your other device to fill in the server settings. The link holds the project URL and key only — never your password or sign-in. Then sign in there with the same email and password.</p>
-    <input id="syncLink" readonly value="${esc(setupLink)}" onfocus="this.select()"><button data-act="copylink" style="width:100%;margin-top:6px">Copy / share link</button>`;
+    <input id="syncLink" readonly value="${esc(setupLink)}"><button data-act="copylink" style="width:100%;margin-top:6px">Copy / share link</button>`;
 }
 
 /** Used by main.js for a setup link opened on this device (it decides apply/confirm/ignore first). */
