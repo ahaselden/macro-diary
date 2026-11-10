@@ -1,7 +1,7 @@
 // Caches the app shell so it opens offline. Food-database requests always go to the network.
 // Keep SHELL in sync with the files that ship: tests/sw.test.js fails if a js/css file is missing from it.
 // After changing ANY shipped file, bump CACHE so installed copies (phones) pick up the update.
-const CACHE = 'macro-diary-v8';
+const CACHE = 'macro-diary-v9';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png',
   'css/base.css',
@@ -21,6 +21,7 @@ const SHELL = [
   'js/domain/nutrition.js',
   'js/domain/reports.js',
   'js/domain/summary.js',
+  'js/domain/sync-records.js',
   'js/domain/units.js',
   'js/main.js',
   'js/services/barcode.js',
@@ -29,6 +30,11 @@ const SHELL = [
   'js/services/http.js',
   'js/services/off.js',
   'js/services/share.js',
+  'js/services/sync/config.js',
+  'js/services/sync/engine.js',
+  'js/services/sync/index.js',
+  'js/services/sync/memory-adapter.js',
+  'js/services/sync/supabase-adapter.js',
   'js/services/usda.js',
   'js/ui/add-food.js',
   'js/ui/amount-picker.js',
@@ -39,6 +45,7 @@ const SHELL = [
   'js/ui/restore-dialog.js',
   'js/ui/settings-view.js',
   'js/ui/share-result.js',
+  'js/ui/sync-view.js',
   'js/ui/tabs.js',
   'js/ui/theme.js',
 ];

@@ -7,6 +7,7 @@ import { initDiary, renderDiary } from './ui/diary.js';
 import { initAddFood } from './ui/add-food.js';
 import { initExport } from './ui/export-view.js';
 import { initSettings } from './ui/settings-view.js';
+import { initSync } from './ui/sync-view.js';
 
 store.onSaveError = () => toast('Could not save – storage full or blocked');
 
@@ -16,6 +17,7 @@ initDiary();
 initAddFood();
 initExport();
 initSettings();
+initSync();
 
 applyTheme();
 showTab('diary');

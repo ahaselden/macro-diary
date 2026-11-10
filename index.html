@@ -87,6 +87,10 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
       <input id="apiKey" placeholder="DEMO_KEY" autocapitalize="off" autocomplete="off">
       <p class="muted">The built-in DEMO_KEY is heavily rate-limited. Get a free key at fdc.nal.usda.gov/api-key-signup and paste it here.</p>
     </div>
+    <div class="card" id="syncCard">
+      <h2>Sync between devices</h2>
+      <div id="syncBox"></div>
+    </div>
     <div class="card">
       <h2>Backup</h2>
       <p class="muted">Your data is stored on this device only. Use backup/restore to move it between your phone and PC.</p>
