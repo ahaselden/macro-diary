@@ -74,7 +74,9 @@ export function isPrivateAddress(ip) {
   if (!g) return true;
   if (g.slice(0, 6).every(n => n === 0)) return true;                                   // ::, ::1 and the old IPv4-compatible range
   if (g.slice(0, 5).every(n => n === 0) && g[5] === 0xffff) return privateV4(embeddedV4(g[6], g[7]));   // IPv4-mapped
+  if (g.slice(0, 4).every(n => n === 0) && g[4] === 0xffff && g[5] === 0) return privateV4(embeddedV4(g[6], g[7]));   // IPv4-translated ::ffff:0:a.b.c.d
   if (g[0] === 0x64 && g[1] === 0xff9b && g.slice(2, 6).every(n => n === 0)) return privateV4(embeddedV4(g[6], g[7]));   // NAT64
+  if (g[0] === 0x64 && g[1] === 0xff9b && g[2] === 1) return true;                                                      // 64:ff9b:1::/48 local-use NAT64
   if (g[0] === 0x2002) return privateV4(embeddedV4(g[1], g[2]));                         // 6to4
   return (g[0] & 0xfe00) === 0xfc00                                                      // fc00::/7 unique local
     || (g[0] & 0xffc0) === 0xfe80                                                        // fe80::/10 link-local
