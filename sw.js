@@ -1,5 +1,5 @@
 // Caches the app shell so it opens offline. Food database requests always go to the network.
-const CACHE = 'macro-diary-v2';
+const CACHE = 'macro-diary-v3';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', e => {
