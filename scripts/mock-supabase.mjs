@@ -1,9 +1,13 @@
 // DEVELOPMENT ONLY: a tiny in-memory stand-in for the Supabase endpoints the sync adapter uses, so sync can be
 // tried end-to-end (two browser "devices") without a Supabase project. NOT a real database: data is lost on exit,
 // any email/password is accepted, and it mirrors the documented behaviour that docs/SYNC-SETUP.md's SQL implements.
-// Usage: node scripts/mock-supabase.mjs [port]   (default 54321) — then use http://localhost:54321 and any 20+ char "anon key".
+// It also answers POST /functions/v1/fetch-recipe with a Node stand-in for the recipe-import function (scripts/lib/fetch-recipe-core.mjs,
+// same rules as supabase/functions/fetch-recipe, real fetch and Node DNS), so Import by web address can be tried without deploying it.
+// Listens on 127.0.0.1 only. Usage: node scripts/mock-supabase.mjs [port]   (default 54321) — then use http://localhost:54321 and any 20+ char "anon key".
 import { createServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
+import { lookup } from 'node:dns/promises';
+import { createFetchRecipeHandler } from './lib/fetch-recipe-core.mjs';
 
 const port = Number(process.argv[2] || 54321);
 const users = new Map();              // email -> { id, password }
@@ -11,7 +15,8 @@ const tokens = new Map();             // access_token -> user id ; refresh_token
 const rows = new Map();               // `${uid}|${key}` -> { key, value, updated_at, rev, seq, uid }
 let seq = 0;
 
-const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'apikey, authorization, content-type, prefer', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' };
+const fetchRecipe = createFetchRecipeHandler({ resolveHost: async h => (await lookup(h, { all: true })).map(a => a.address) });
+const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'apikey, authorization, content-type, prefer, x-client-info', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS' };
 const send = (res, code, body) => { res.writeHead(code, { ...cors, 'Content-Type': 'application/json' }); res.end(body === undefined ? '' : JSON.stringify(body)); };
 const session = uid => {
   const access = 'acc_' + randomUUID(), refresh = 'ref_' + randomUUID();
@@ -23,6 +28,7 @@ createServer(async (req, res) => {
   if (req.method === 'OPTIONS') return send(res, 204);
   const url = new URL(req.url, 'http://x');
   let body = ''; for await (const c of req) body += c;
+  if (url.pathname === '/functions/v1/fetch-recipe') { const r = await fetchRecipe({ method: req.method, bodyText: body }); return send(res, r.status, r.json); }
   const json = body ? JSON.parse(body) : {};
   const uid = tokens.get((req.headers.authorization || '').replace(/^Bearer /, ''));
 
@@ -54,4 +60,4 @@ createServer(async (req, res) => {
     return send(res, 200, [{ accepted: true, rev }]);
   }
   send(res, 404, { message: 'not found' });
-}).listen(port, () => console.log(`Mock Supabase (dev only, in-memory) on http://localhost:${port}`));
+}).listen(port, '127.0.0.1', () => console.log(`Mock Supabase (dev only, in-memory) on http://127.0.0.1:${port} (use http://localhost:${port} in Settings)`));
