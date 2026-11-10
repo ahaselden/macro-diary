@@ -80,7 +80,6 @@ Current structure, for orientation (details in [ARCHITECTURE.md](ARCHITECTURE.md
 - **The user confirms every match** before anything is added; nothing is ever bought automatically. The user completes checkout in the store's own app or site.
 - **Fallback that needs no integration:** per-item store-search links and copy/share of the list (already built).
 - **Research done (2026-11-10): see [research/store-integration.md](research/store-integration.md).** Kroger's public API can add to a customer's cart (self-service, strict usage rules); Instacart's platform is the broadest but not accepting applications; Walmart, Target, Albertsons, H-E-B and Costco offer no cart API for ordinary apps. Recommendation and decisions needed are in that document.
-- **Honest uncertainty (older note, now superseded by the research).** Whether each store allows this was not yet checked. My understanding, to be verified before any work: Kroger offers a public developer API with product search and cart; Walmart's and H-E-B's public APIs may not allow carts for ordinary apps. Which stores are possible decides the scope. *(open question)*
 - Needs the backend (secrets and CORS) and the owner's developer accounts.
 
 ### 4.6 Families and households *(open question)*
