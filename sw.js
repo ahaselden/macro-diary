@@ -1,7 +1,7 @@
 // Caches the app shell so it opens offline. Food-database requests always go to the network.
 // Keep SHELL in sync with the files that ship: tests/sw.test.js fails if a js/css file is missing from it.
 // After changing ANY shipped file, bump CACHE so installed copies (phones) pick up the update.
-const CACHE = 'macro-diary-v14';
+const CACHE = 'macro-diary-v15';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png',
   'css/base.css',
@@ -19,6 +19,7 @@ const SHELL = [
   'js/domain/food.js',
   'js/domain/ingredient-parse.js',
   'js/domain/ingredient-tokens.js',
+  'js/domain/label-parse.js',
   'js/domain/merge.js',
   'js/domain/nutrition.js',
   'js/domain/plan.js',
