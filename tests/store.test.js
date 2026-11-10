@@ -92,11 +92,11 @@ test('migrate never removes data and never lowers the version', () => {
   assert.equal(migrate({ schemaVersion: 7 }).schemaVersion, 7);
 });
 
-test('v3 adds tombstones + settingsUpdatedAt to old data without touching entries', () => {
+test('v3+ adds tombstones + settingsUpdatedAt to old data without touching entries', () => {
   const v1 = fixture('state'), s = createStore(fakeStorage(JSON.stringify(v1)));
   assert.deepEqual(s.state.tombstones, {});
   assert.equal(s.state.settingsUpdatedAt, 0);
-  assert.equal(s.state.schemaVersion, 3);
+  assert.equal(s.state.schemaVersion, SCHEMA_VERSION);
   const first = Object.values(s.state.days)[0][0];
   assert.equal('updatedAt' in first, false);            // not rewritten: missing means 0
 });

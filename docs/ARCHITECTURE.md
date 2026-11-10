@@ -56,23 +56,26 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 3. Replacing everything (restore/wipe) goes through `replace()`, which keeps the same `state` object so every module's reference stays valid ([D4](DECISIONS.md#d4-application-state-is-one-mutable-object-state-replaced-via-replace)), then emits `settings:changed` and `diary:changed`.
 4. `save()` writes JSON to `localStorage`; if that fails (storage full/blocked) `store.onSaveError` shows a toast.
 
-## Data shape (schema v3)
+## Data shape (schema v4)
 
 ```
 state = {
-  schemaVersion: 3,
+  schemaVersion: 4,
   theme: 'auto' | 'dark' | …,   weightUnit: 'g' | 'oz',            // theme, apiKey, recent: per-device, never synced (D10)
   goals: { k, p, c, f },        apiKey, useUSDA, useOFF,
   settingsUpdatedAt: ms,                                             // stamps the synced settings as ONE record
   days: { 'YYYY-MM-DD': [ entry, … ] },
   tombstones: { entryId: deletedAtMs },                              // so deletions propagate between devices
   recent: [ food, … ],  custom: [ food (+updatedAt), … ],
-  measures: { foodKey: [ { label, g, updatedAt } ] }
+  measures: { foodKey: [ { label, g, updatedAt } ] },
+  recipes: { id: recipe },                                           // see recipe / ingredient below
+  plan: { 'YYYY-MM-DD': { updatedAt, slots: { Breakfast|Lunch|Dinner|Snacks: [ item ] } } },
+  shopping: { checks: { itemKey: { on, updatedAt } }, extras: { id: { id, text, on, updatedAt } } }
 }
 entry = { id, updatedAt, meal, name, brand, source, per100: {k,p,c,f}, servingG, servingLabel, fdcId, portions,
           grams, unitKey, amount, disp }
 ```
-History: v1 = original app, v2 = added `schemaVersion`, v3 = tombstones/`settingsUpdatedAt` and `updatedAt` on edited records. Missing `updatedAt` means 0 ("older than any real edit"), so upgrading rewrites nothing. Changes to entries must go through `domain/entries.js` so they are stamped and deletions leave tombstones.
+History: v1 = original app, v2 = added `schemaVersion`, v3 = tombstones/`settingsUpdatedAt` and `updatedAt` on edited records, v4 = recipes/plan/shopping ([D13](DECISIONS.md)). Planner shapes: `recipe = {id, name, description, source, servings, totalTime, tags[], steps[], ingredients[], updatedAt}`; `ingredient = {id, raw, name, qty, unit, prep, food|null, grams|null}`; plan `item = {id, type: "recipe"|"food", recipeId, servings, name, food, grams}`. Missing `updatedAt` means 0 ("older than any real edit"), so upgrading rewrites nothing. Changes to entries must go through `domain/entries.js` so they are stamped and deletions leave tombstones.
 
 Nutrition is stored **per 100 g** and an entry stores the grams eaten, so changing units never changes the calories. `disp` ("1.5 cup") remembers how the user entered it.
 

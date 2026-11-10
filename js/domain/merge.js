@@ -7,6 +7,9 @@
 //   • settings         → ONE record (goals, weightUnit, useUSDA, useOFF), stamped by `settingsUpdatedAt`
 //   • deletions        → `tombstones[id] = deletedAt`; a tombstone beats an entry last edited before it,
 //                        an edit made after the deletion beats the tombstone (resurrects the entry)
+//   • recipe           → record = one recipe (by id); tombstones apply to recipe ids too
+//   • plan             → record = one planned DAY (the newer edit replaces the whole day; clearing a day is an edit)
+//   • shopping         → ticked items (per key) and hand-added extras (per id; tombstones apply)
 // Never merged (stay as this device has them): theme, apiKey, recent  — see docs/DECISIONS.md D10.
 //
 // Properties (tested): commutative, associative, idempotent — so any number of devices syncing in any
@@ -86,12 +89,45 @@ export function mergeStates(local, remote, opts = {}) {
   const winner = pick();
   const settings = Object.fromEntries(SETTINGS_KEYS.map(k => [k, winner[k] !== undefined ? winner[k] : local[k]]));
 
+  // recipes (a deleted recipe stays deleted unless it was edited after the deletion)
+  const isRecipe = r => r && typeof r.id === 'string' && typeof r.name === 'string';
+  const recipes = {};
+  for (const id of [...new Set([...Object.keys(local.recipes || {}), ...Object.keys(remote.recipes || {})])].sort()) {
+    const cands = [local.recipes?.[id], remote.recipes?.[id]].filter(isRecipe);
+    if (!cands.length) continue;
+    const win = cands.length === 2 ? newer(cands[0], cands[1], pref) : cands[0];
+    if (id in tombstones && stamp(win) <= tombstones[id]) continue;
+    recipes[id] = win;
+  }
+
+  // plan: one record per day
+  const plan = {};
+  for (const date of [...new Set([...Object.keys(local.plan || {}), ...Object.keys(remote.plan || {})])].sort()) {
+    const cands = [local.plan?.[date], remote.plan?.[date]].filter(d => d && typeof d === 'object' && d.slots);
+    if (cands.length) plan[date] = cands.length === 2 ? newer(cands[0], cands[1], pref) : cands[0];
+  }
+
+  // shopping: ticks per item key, extras per id
+  const checks = {};
+  for (const k of [...new Set([...Object.keys(local.shopping?.checks || {}), ...Object.keys(remote.shopping?.checks || {})])].sort()) {
+    const cands = [local.shopping?.checks?.[k], remote.shopping?.checks?.[k]].filter(Boolean);
+    checks[k] = cands.length === 2 ? newer(cands[0], cands[1], pref) : cands[0];
+  }
+  const extras = {};
+  for (const id of [...new Set([...Object.keys(local.shopping?.extras || {}), ...Object.keys(remote.shopping?.extras || {})])].sort()) {
+    const cands = [local.shopping?.extras?.[id], remote.shopping?.extras?.[id]].filter(x => x && typeof x.text === 'string');
+    if (!cands.length) continue;
+    const win = cands.length === 2 ? newer(cands[0], cands[1], pref) : cands[0];
+    if (id in tombstones && stamp(win) <= tombstones[id]) continue;
+    extras[id] = win;
+  }
+
   return {
     ...local,                                              // theme, apiKey, recent… stay as this device has them
     ...settings,
     settingsUpdatedAt: Math.max(Number(local.settingsUpdatedAt) || 0, Number(remote.settingsUpdatedAt) || 0),
     schemaVersion: Math.max(Number(local.schemaVersion) || 0, Number(remote.schemaVersion) || 0),
-    days, custom, measures, tombstones,
+    days, custom, measures, tombstones, recipes, plan, shopping: { checks, extras },
   };
 }
 
