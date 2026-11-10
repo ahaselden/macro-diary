@@ -13,7 +13,7 @@ The queue of work, highest priority first. **When a feature is finished (PR merg
 
 ## Queue
 
-- [x] **1. Favourite recipes** (VISION 4.3, capability 9). Star on recipes, Favourites filter, `favorite` flag synced with the recipe. *In PR #10, awaiting merge.*
+- [x] **1. Favourite recipes** (VISION 4.3, capability 9). Star on recipes, Favourites filter, `favorite` flag synced with the recipe. *Merged as PR #10.*
 - [ ] **2. Auto-fill a week from existing recipes** (VISION 4.2, capability 8). Pure `domain/autoplan.js`: proposes a plan from recipes, favourites, the daily calorie goal and the slots to fill; the user accepts, tweaks or rerolls; never overwrites planned meals without asking; deterministic with a seed; handles recipes with incomplete nutrition explicitly. No backend. **Blocked by:** owner answer to VISION question 5 (which rules matter first). Default if unanswered: calorie goal per day, then no repeats within N days, then prefer favourites.
 - [ ] **3. Month view and auto-fill for a month** (capability 7/8). The planner is week-based today; extend the view and run the same auto-fill over more days. **Blocked by:** item 2.
 - [ ] **4. Recipe import from a website** (VISION 4.1, capability 6). Pure `domain/recipe-import.js` (schema.org JSON-LD and pasted text), plus the one small backend function that fetches the page (http/https only, no private addresses, size and time limits). Imported recipes open in the editor for review; keep the source URL. **Blocked by:** owner decisions on the backend (VISION question 3) and recipe copyright (question 6).
