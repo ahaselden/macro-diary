@@ -11,6 +11,7 @@ import { initSync, applySyncSetup, syncConfig } from './ui/sync-view.js';
 import { parseSetupLink, planSetupLinkApply } from './services/sync/setup-link.js';
 import { DEFAULT_SYNC } from './services/sync/defaults.js';
 import { initRecipes } from './ui/recipes-view.js';
+import { initRecipeImport } from './ui/recipe-import.js';
 import { initPlan } from './ui/plan-view.js';
 import { initShop } from './ui/shop-view.js';
 
@@ -24,6 +25,7 @@ initExport();
 initSettings();
 initSync();
 initRecipes();
+initRecipeImport();
 initPlan();
 initShop();
 

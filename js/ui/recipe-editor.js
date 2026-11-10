@@ -9,19 +9,22 @@ import { parseIngredient, formatQty } from '../domain/ingredient-parse.js';
 import { newRecipe, newIngredient, resolveGrams, recipeNutrition, saveRecipe, deleteRecipe, scaleIngredientText, setFavorite } from '../domain/recipes.js';
 import { searchAll } from '../services/foods.js';
 
-let draft = null, isNew = true;
+let draft = null, isNew = true, importNotes = [];
 
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
-export function openRecipeEditor(recipe) {
-  isNew = !recipe;
+/** recipe: a saved recipe to edit, null for a blank new one, or an UNSAVED draft (id not in the store, e.g. an import) shown as new.
+ *  notes: optional list of strings shown above the form ("check before saving"). */
+export function openRecipeEditor(recipe, notes) {
+  isNew = !recipe || !(state.recipes && Object.hasOwn(state.recipes, recipe.id));
+  importNotes = Array.isArray(notes) ? notes.filter(n => typeof n === 'string' && n).slice(0, 10) : [];
   draft = recipe ? structuredClone(recipe) : newRecipe(newId('r_'), Date.now());
   if (!Array.isArray(draft.ingredients)) draft.ingredients = [];
   const dlg = dialog();
   if (!dlg.open) dlg.showModal();
   renderForm();
   readFields();                                        // normalise defaults (servings, time…) BEFORE the snapshot, or an untouched form looks "changed"
-  initialSnapshot = JSON.stringify(draft);
+  initialSnapshot = recipe && isNew ? '' : JSON.stringify(draft);       // an imported draft is unsaved work: closing it asks first
   armGuard();
 }
 
@@ -50,6 +53,7 @@ function renderForm() {
   armGuard();
   const d = draft;
   $('#dBody').innerHTML = `<div class="rc-ed" id="rcRoot">
+    ${importNotes.length ? '<div class="rc-notes" role="note"><b>Check before saving</b><ul>' + importNotes.map(n => '<li>' + esc(n) + '</li>').join('') + '</ul></div>' : ''}
     <label for="reName">Name</label><input id="reName" value="${esc(d.name)}" autocomplete="off">
     <button type="button" id="reFav" class="fav-btn${d.favorite === true ? ' on' : ''}" aria-pressed="${d.favorite === true}" aria-label="Favourite recipe">${d.favorite === true ? '★ Favourite' : '☆ Add to favourites'}</button>
     <div class="row"><div><label for="reServ">Servings</label><input id="reServ" type="number" inputmode="decimal" step="any" min="0" value="${Number(d.servings) || 1}"></div>
