@@ -14,7 +14,9 @@ let ocrRun = 0;   // bumped on every render and every photo: a result from an ol
 export function renderCustom() {
   ocrRun++;
   $('#tabBody').innerHTML = `
-    <button class="fit" id="cLabel" style="width:100%">📷 Read a nutrition label from a photo</button>
+    <div class="muted">Fill this in from a nutrition label:</div>
+    <div class="row" style="margin-top:6px"><button id="cCam"><span aria-hidden="true">📷</span> Take a photo</button><button id="cPick"><span aria-hidden="true">🖼</span> Choose an image</button></div>
+    <input type="file" id="cFileCam" accept="image/*" capture="environment" hidden>
     <input type="file" id="cFile" accept="image/*" hidden>
     <div class="muted" id="cLabelMsg" style="margin:6px 0 10px" aria-live="polite"></div>
     <label>Name</label><input id="cName" placeholder="e.g. Homemade chili" autocomplete="off">
@@ -27,8 +29,10 @@ export function renderCustom() {
     <button class="primary" style="width:100%" id="cGo">Continue</button>`;
   // anything the user types is theirs: a later photo must not overwrite it, and it is no longer "from the photo"
   for (const id of NUMBER_FIELDS) $(id).addEventListener('input', e => { e.target.removeAttribute('data-ocr'); e.target.dataset.user = '1'; });
-  $('#cLabel').onclick = () => $('#cFile').click();
-  $('#cFile').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) readLabel(f); };
+  // "Take a photo" opens the camera on phones/tablets (capture); on a PC browser it falls back to the normal file picker.
+  $('#cCam').onclick = () => $('#cFileCam').click();
+  $('#cPick').onclick = () => $('#cFile').click();
+  for (const id of ['#cFile', '#cFileCam']) $(id).onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) readLabel(f); };
   $('#cGo').onclick = () => {
     const bar = $('#cBar').value.replace(/\s/g, '');
     if (bar && !isBarcode(bar)) { toast('Barcode must be 8 to 14 digits'); return; }
@@ -48,10 +52,10 @@ export function renderCustom() {
 
 /** Photo -> OCR text -> parsed numbers -> PREFILL the form. Nothing is saved or accepted automatically. */
 async function readLabel(file) {
-  const run = ++ocrRun, btn = $('#cLabel');
+  const run = ++ocrRun, setBusy = on => { for (const id of ['#cCam', '#cPick']) { const b = $(id); if (b) b.disabled = on; } };
   const msg = t => { const el = $('#cLabelMsg'); if (el && run === ocrRun) el.innerHTML = t; };
   if (file.size > 25e6) { msg('That photo is too large (max 25 MB).'); return; }
-  btn.disabled = true;
+  setBusy(true);
   try {
     const text = await readImageText(file, p => {
       const status = String(p.status || '');
@@ -72,5 +76,5 @@ async function readLabel(file) {
       r.missing.length ? `Not found, please type: ${esc(r.missing.join(', '))}.` : '', ...r.warnings.map(w => '⚠ ' + esc(w))].filter(Boolean);
     msg(lines.join('<br>'));
   } catch (err) { msg('Could not read the photo: ' + esc(err.message || err) + '. You can still type the numbers.'); }
-  finally { const b = $('#cLabel'); if (b) b.disabled = false; }
+  finally { if (run === ocrRun) setBusy(false); }   // a stale run must not re-enable the buttons while a newer read is in progress
 }
