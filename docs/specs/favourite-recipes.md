@@ -82,15 +82,17 @@ Covered: hostile `favorite` values from backups/sync (F4, F27, F29), hostile `on
 U1-U6 are regex checks on source text. They show that markup and calls exist, not that the handlers run, the click does not also open the editor, the filter hides cards, `aria-pressed` tracks state, or the re-render happens. U2's "no `.favorite =`" is a crude proxy for "goes through `setFavorite`". U5 expects the filter button text to be on one line with the tag. No fake DOM was written. Wording regexes may need loosening if the implementer's markup is reasonable but different (say so in the PR).
 
 ## Manual checklist
-- [ ] Recipes tab: each card shows a star button; tapping it toggles filled/empty, does NOT open the editor, list re-renders, state survives a reload.
-- [ ] Screen reader / keyboard: star and filter are focusable buttons, announce name plus pressed state, Space/Enter toggle.
-- [ ] "Favourites" filter next to the search box: pressed state visible; combined with a search text it narrows further; empty result shows a sensible message (not "No recipes yet" when recipes exist but none are favourites).
-- [ ] Editor: favourite toggle reflects the current state; for a NEW unsaved recipe it persists on Save; Cancel/discard of an existing recipe does not leave surprising state (see open question 1).
-- [ ] Recipe named `<img src=x onerror=alert(1)>` renders as text on card and in editor.
-- [ ] Two devices signed in to sync: star on one, sync, appears on the other; unstar wins when later.
-- [ ] Export a backup, restore it on a fresh browser: stars preserved. Restore an old backup file: no stars, nothing else changed.
-- [ ] Upgrade from the previous version with existing recipes: all still present, none starred, schema version in saved data is 5, key still `macrodiary.v1`.
-- [ ] After the update the phone picks up the new `CACHE` (reload twice).
+- [x] Recipes tab: each card shows a star button; tapping it toggles filled/empty, does NOT open the editor, list re-renders, state survives a reload.
+- [ ] (not tried; buttons with aria-pressed verified in the DOM only) Screen reader / keyboard: star and filter are focusable buttons, announce name plus pressed state, Space/Enter toggle.
+- [x] "Favourites" filter next to the search box: pressed state visible; combined with a search text it narrows further; empty result shows a sensible message (not "No recipes yet" when recipes exist but none are favourites).
+- [x] Editor: favourite toggle reflects the current state; for a NEW unsaved recipe it persists on Save; Cancel/discard of an existing recipe does not leave surprising state (see open question 1).
+- [x] Recipe named `<img src=x onerror=alert(1)>` renders as text on card and in editor.
+- [ ] (not tried by hand; covered by F30 in the engine test) Two devices signed in to sync: star on one, sync, appears on the other; unstar wins when later.
+- [ ] (not tried by hand; covered by F25-F27) Export a backup, restore it on a fresh browser: stars preserved. Restore an old backup file: no stars, nothing else changed.
+- [x] Upgrade from the previous version with existing recipes: all still present, none starred, schema version in saved data is 5, key still `macrodiary.v1`.
+- [ ] (not tried; needs a real phone) After the update the phone picks up the new `CACHE` (reload twice).
+
+*Ticked items were checked on 2026-11-10 in the desktop built-in browser against a seeded v4 save (desktop width only, not a phone).*
 
 ## Shipping checklist (implementer)
 - `sw.js`: bump `CACHE` (no new shipped files expected; if one is added, add it to `SHELL`).
