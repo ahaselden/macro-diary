@@ -1,5 +1,6 @@
 // Open Food Facts search.
 import { getJSON } from './http.js';
+import { isBarcode } from '../domain/food.js';
 
 const OFF_FIELDS = 'code,product_name,brands,nutriments,serving_quantity,serving_size';
 export function mapOFF(p){
@@ -10,7 +11,7 @@ export function mapOFF(p){
     per100:{k:+k, p:+n.proteins_100g||0, c:+n.carbohydrates_100g||0, f:+n.fat_100g||0}, servingG:+p.serving_quantity || 0, servingLabel:p.serving_size || ''};
 }
 export async function searchOFF(q){
-  if (/^\d{8,14}$/.test(q)) {
+  if (isBarcode(q)) {
     const j = await getJSON(`https://world.openfoodfacts.org/api/v2/product/${q}.json?fields=${OFF_FIELDS}`);
     const f = j.status === 1 && mapOFF(j.product); return f ? [f] : [];
   }

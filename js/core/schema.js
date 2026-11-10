@@ -35,6 +35,7 @@ export function sanitizeFood(f) {
     per100: { k: numOr(p.k, 0), p: numOr(p.p, 0), c: numOr(p.c, 0), f: numOr(p.f, 0) },
     servingG: numOr(f.servingG, 0), servingLabel: str(f.servingLabel, 100) };
   if (typeof f.fdcId === 'number' || typeof f.fdcId === 'string') out.fdcId = f.fdcId;
+  if (typeof f.barcode === 'string' && /^\d{8,14}$/.test(f.barcode)) out.barcode = f.barcode;   // set on custom foods so a scan finds them
   if (Array.isArray(f.portions)) out.portions = f.portions.filter(x => plainObject(x) && typeof x.label === 'string' && numOr(x.g, 0) > 0).slice(0, 30).map(x => ({ label: str(x.label, 100), g: +x.g }));
   return out;
 }

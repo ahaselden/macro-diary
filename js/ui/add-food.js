@@ -2,7 +2,7 @@
 import { state } from '../core/store.js';
 import { $, toast, dialog, head, canClose, setCloseGuard } from '../core/dom.js';
 import { esc, rd, r1 } from '../core/format.js';
-import { foodKey } from '../domain/food.js';
+import { foodKey, isBarcode, sameBarcode } from '../domain/food.js';
 import { searchAll } from '../services/foods.js';
 import { canScan, startScan, stopScan } from '../services/barcode.js';
 import { add } from './ctx.js';
@@ -19,7 +19,7 @@ export function initAddFood() {
 }
 
 export function openAdd(meal, edit) {
-  Object.assign(add, { meal, edit: edit || null, tab: 'search', results: [], q: '' });
+  Object.assign(add, { meal, edit: edit || null, tab: 'search', results: [], q: '', barcode: '', offer: '' });
   const dlg = dialog();
   if (!dlg.open) dlg.showModal();
   if (edit) showFood(edit, edit);
@@ -48,6 +48,7 @@ function renderSearchTab(fromTabs) {
 }
 
 function localMatches(q) {
+  if (isBarcode(q)) return state.custom.filter(f => sameBarcode(f.barcode, q)).map(f => ({ ...f, tag: 'My food' }));   // a scan finds foods you saved with that code
   q = q.toLowerCase();
   const all = [...state.custom.map(f => ({ ...f, tag: 'My food' })), ...state.recent.map(f => ({ ...f, tag: 'Recent' }))];
   const seen = new Set();
@@ -66,7 +67,10 @@ function renderResults(msg) {
   localList = localMatches(add.q);
   el.innerHTML = (localList.length ? `<div class="muted" style="margin-top:12px">Your foods</div>` + resHTML(localList, 'l') : '')
     + (msg ? `<p class="muted" style="margin-top:12px">${esc(msg)}</p>` : '')
+    + (add.offer && add.offer === add.q && !add.results.length && !localList.length
+        ? `<button class="primary" style="width:100%;margin-top:8px" id="mkBarcode">Not found. Create a custom food for ${esc(add.q)}</button>` : '')
     + (add.results.length ? `<div class="muted" style="margin-top:12px">Database results</div>` + resHTML(add.results, 'r') : '');
+  if ($('#mkBarcode')) $('#mkBarcode').onclick = () => { add.barcode = add.q; add.tab = 'custom'; renderAddTabs(); };
   el.onclick = ev => { const r = ev.target.closest('.res'); if (!r) return;
     showFood((r.dataset.from === 'l' ? localList : add.results)[+r.dataset.i]); };
 }
@@ -77,7 +81,7 @@ async function doSearch() {
   renderResults('Searching…'); add.results = [];
   const { results, errors } = await searchAll(q, { useUSDA: state.useUSDA, useOFF: state.useOFF, apiKey: state.apiKey });
   if ($('#q')?.value.trim() !== q) return;   // a newer search superseded this one
-  add.results = results;
+  add.results = results; add.offer = isBarcode(q) && !results.length ? q : '';
   renderResults(!results.length ? (errors.join(' · ') || 'No results found.') : errors.join(' · '));
 }
 

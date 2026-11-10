@@ -1,11 +1,12 @@
 // Combined food search: network + merge logic from the original doSearch (no DOM).
 import { searchOFF } from './off.js';
 import { searchUSDA } from './usda.js';
+import { isBarcode } from '../domain/food.js';
 
 export async function searchAll(q, { useUSDA, useOFF, apiKey } = {}){
   const jobs = [];
   if (useOFF) jobs.push(searchOFF(q).then(r => ({n:'Open Food Facts', r}), e => ({n:'Open Food Facts', e})));
-  if (useUSDA && !/^\d{8,14}$/.test(q)) jobs.push(searchUSDA(q, apiKey).then(r => ({n:'USDA', r}), e => ({n:'USDA', e})));
+  if (useUSDA && !isBarcode(q)) jobs.push(searchUSDA(q, apiKey).then(r => ({n:'USDA', r}), e => ({n:'USDA', e})));
   const out = await Promise.all(jobs);
   const errors = out.filter(o => o.e).map(o => `${o.n}: ${o.e.message}`);
   // interleave sources so both are visible
