@@ -28,9 +28,11 @@ const AISLE_WORDS = {
 };
 // Check the more specific aisles first so "frozen peas" is Frozen, "garlic powder" is Spices, "tomato paste" is Pantry.
 const AISLE_ORDER_CHECK = ['Frozen', 'Spices', 'Pantry', 'Meat & seafood', 'Dairy & eggs', 'Bakery', 'Produce'];
+// Whole-word matching (optional plural s), so 'egg' matches 'eggs' but not 'eggplant', 'ham' not 'graham', 'butter' not 'butternut'.
+const AISLE_RE = Object.fromEntries(AISLE_ORDER_CHECK.map(a => [a, new RegExp(`(?<![a-z])(?:${AISLE_WORDS[a].map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})(?:e?s)?(?![a-z])`)]));
 export function aisleOf(name) {
-  const n = ` ${String(name || '').toLowerCase()} `;
-  for (const a of AISLE_ORDER_CHECK) if (AISLE_WORDS[a].some(w => n.includes(` ${w}`) || n.includes(`${w} `) || n.includes(` ${w}s `) || n.trim() === w)) return a;
+  const n = String(name || '').toLowerCase();
+  for (const a of AISLE_ORDER_CHECK) if (AISLE_RE[a].test(n)) return a;
   return 'Other';
 }
 
@@ -46,8 +48,8 @@ const SIZE_WORDS = new Set(['small', 'medium', 'large', 'jumbo']);
 export const nameKey = n => String(n || '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim().split(' ').filter(w => !SIZE_WORDS.has(w)).map(sing).join(' ');
 
 function family(unit) {
-  if (unit in WEIGHT_G) return { fam: 'w', base: WEIGHT_G[unit] };
-  if (unit in VOLUME_ML) return { fam: 'v', base: VOLUME_ML[unit] };
+  if (Object.hasOwn(WEIGHT_G, unit)) return { fam: 'w', base: WEIGHT_G[unit] };       // own-property checks: a unit like 'toString' must not hit Object.prototype
+  if (Object.hasOwn(VOLUME_ML, unit)) return { fam: 'v', base: VOLUME_ML[unit] };
   return { fam: 'c:' + (unit || ''), base: 1 };
 }
 
@@ -92,7 +94,8 @@ const r2 = n => Math.round(n * 100) / 100;
 
 /**
  * The shopping list for plan days [from, to] (inclusive, 'YYYY-MM-DD'). Returns `{ items, skipped }`.
- * item = { key, name, display, qty, unit, from:[recipe names], aisle, checked }, ordered by aisle then name.
+ * item = { key, tick, name, display, qty, unit, from:[recipe names], aisle, checked }, ordered by aisle then name.
+ * `tick` is the key to pass to setChecked() (it includes the range start so ticks belong to one shopping trip).
  * Hand-added extras are appended as aisle 'Extras' (see `extrasList`).
  */
 export function buildShoppingList(state, from, to, weightUnit = 'g') {
@@ -106,8 +109,10 @@ export function buildShoppingList(state, from, to, weightUnit = 'g') {
   }
   const items = [...groups.values()].map(g => {
     let qty = null, unit = '', display = '';
-    if (g.any) { [qty, unit] = displayAmount(g.fam, g.total, weightUnit); qty = r2(qty); display = `${formatQty(qty)}${unit ? ' ' + plural(unit, qty) : ''}`; }
-    return { key: g.key, name: g.name, display, qty, unit, from: [...g.from].sort(), aisle: aisleOf(g.name), checked: !!state.shopping.checks[g.key]?.on };
+    if (g.any && g.total > 0) { [qty, unit] = displayAmount(g.fam, g.total, weightUnit); qty = r2(qty); display = `${formatQty(qty)}${unit ? ' ' + plural(unit, qty) : ''}`; }
+    // Ticks are scoped to the shopping range (`tick` = range start + item key): ticking onions this week must not tick them next week.
+    const tick = `${from}|${g.key}`;
+    return { key: g.key, tick, name: g.name, display, qty, unit, from: [...g.from].sort(), aisle: aisleOf(g.name), checked: !!state.shopping.checks[tick]?.on };
   });
   items.sort((a, b) => AISLES.indexOf(a.aisle) - AISLES.indexOf(b.aisle) || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
   return { items, skipped };

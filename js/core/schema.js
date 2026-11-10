@@ -20,7 +20,11 @@ export const defaults = () => ({
 const goalNum = (v, fallback) => (v !== null && v !== '' && v !== true && v !== false && Number.isFinite(+v) && +v >= 0 ? +v : fallback);
 const plainObject = v => !!v && typeof v === 'object' && !Array.isArray(v);
 const str = (v, max = 500) => (typeof v === 'string' ? v.slice(0, max) : '');
-const numOr = (v, fallback, min = 0) => (v !== null && v !== '' && v !== true && v !== false && Number.isFinite(+v) && +v >= min ? +v : fallback);
+// quantities are bounded (1e7) so a crafted value can't produce Infinity/NaN downstream; timestamps use `ts`
+const numOr = (v, fallback, min = 0, max = 1e7) => (v !== null && v !== '' && v !== true && v !== false && Number.isFinite(+v) && +v >= min && +v <= max ? +v : fallback);
+const ts = v => numOr(v, 0, 0, 8.64e15);
+// a unit is a short word like 'cup' or 'fl oz': keep letters, spaces and dots only (it is later used in a pattern match)
+const unitText = v => str(v, 40).toLowerCase().replace(/[^a-z .]/g, '').trim();
 const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
 
 /** A food as stored inside recipes/plans (same shape the diary uses). Returns null if unusable. */
@@ -37,7 +41,7 @@ export function sanitizeFood(f) {
 
 function sanitizeIngredient(i, recipeId, idx) {
   if (!plainObject(i)) return null;
-  return { id: str(i.id, 80) || `${recipeId}-i${idx}`, raw: str(i.raw, 300), name: str(i.name, 200), qty: numOr(i.qty, null), unit: str(i.unit, 40),
+  return { id: str(i.id, 80) || `${recipeId}-i${idx}`, raw: str(i.raw, 300), name: str(i.name, 200), qty: numOr(i.qty, null), unit: unitText(i.unit),
     prep: str(i.prep, 200), food: sanitizeFood(i.food), grams: numOr(i.grams, null) };
 }
 
@@ -48,7 +52,7 @@ export function sanitizeRecipe(r, id) {
   return { id, name: str(r.name, 200), description: str(r.description, 2000), source: str(r.source, 500),
     servings: numOr(r.servings, 4, 0.01), totalTime: numOr(r.totalTime, null), tags: list(r.tags, 40, 20), steps: list(r.steps, 2000, 100),
     ingredients: (Array.isArray(r.ingredients) ? r.ingredients : []).slice(0, 200).map((i, n) => sanitizeIngredient(i, id, n)).filter(Boolean),
-    updatedAt: numOr(r.updatedAt, 0) };
+    updatedAt: ts(r.updatedAt) };
 }
 
 /** One planned day: { updatedAt, slots: { Breakfast: [item], Lunch: [], Dinner: [], Snacks: [] } }. */
@@ -65,16 +69,16 @@ export function sanitizePlanDay(d) {
         entryId: str(it.entryId, 80) };   // diary entry this item was logged as ('' = not logged yet)
     }).filter(it => it && (it.type === 'recipe' ? it.recipeId : it.food));
   }
-  return { updatedAt: numOr(d.updatedAt, 0), slots };
+  return { updatedAt: ts(d.updatedAt), slots };
 }
 
 /** Shopping-list state the user controls: ticked items and hand-added extras. */
 export function sanitizeShopping(s) {
   const out = { checks: {}, extras: {} };
   if (!plainObject(s)) return out;
-  if (plainObject(s.checks)) for (const [k, v] of Object.entries(s.checks)) if (plainObject(v)) out.checks[str(k, 200)] = { on: v.on === true, updatedAt: numOr(v.updatedAt, 0) };
+  if (plainObject(s.checks)) for (const [k, v] of Object.entries(s.checks)) if (plainObject(v)) out.checks[str(k, 200)] = { on: v.on === true, updatedAt: ts(v.updatedAt) };
   if (plainObject(s.extras)) for (const [id, v] of Object.entries(s.extras)) {
-    if (plainObject(v) && typeof v.text === 'string' && v.text.trim()) out.extras[id] = { id, text: str(v.text, 200), on: v.on === true, updatedAt: numOr(v.updatedAt, 0) };
+    if (plainObject(v) && typeof v.text === 'string' && v.text.trim()) out.extras[id] = { id, text: str(v.text, 200), on: v.on === true, updatedAt: ts(v.updatedAt) };
   }
   return out;
 }
@@ -94,8 +98,10 @@ export function sanitize(d) {
   d.useOFF = d.useOFF !== false;
   if (!plainObject(d.days)) d.days = {};
   if (!plainObject(d.measures)) d.measures = {};
-  if (!Array.isArray(d.recent)) d.recent = [];
-  if (!Array.isArray(d.custom)) d.custom = [];
+  // foods the UI reads field-by-field: drop anything without a name and nutrition so a bad backup can't crash the screens
+  const usableFood = f => plainObject(f) && typeof f.name === 'string' && plainObject(f.per100);
+  d.recent = Array.isArray(d.recent) ? d.recent.filter(usableFood) : [];
+  d.custom = Array.isArray(d.custom) ? d.custom.filter(usableFood) : [];
   const tomb = {};
   if (plainObject(d.tombstones)) for (const [id, t] of Object.entries(d.tombstones)) if (Number.isFinite(+t) && +t >= 0) tomb[id] = +t;
   d.tombstones = tomb;

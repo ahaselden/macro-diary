@@ -142,3 +142,9 @@ test('scaleIngredientText', () => {
   assert.equal(scaleIngredientText(newIngredient('1 cup milk', 'h'), 0.3333), '1/3 cup milk');
 });
 test('formatQty re-exported behaviour used by scaling', () => assert.equal(formatQty(0.75), '3/4'));
+
+test('resolveGrams never throws on a hostile unit (it is used to build a pattern)', () => {
+  const food = { name: 'X', brand: '', source: 'x', per100: { k: 1, p: 0, c: 0, f: 0 }, servingG: 10, servingLabel: '1 serving' };
+  for (const unit of ['(', '[', '\\', '.*', '+', '?', '$^', 'a{1', '(?<x']) assert.doesNotThrow(() => resolveGrams({ id: 'i', name: 'x', qty: 1, unit, prep: '', food, grams: null }, {}), unit);
+  assert.doesNotThrow(() => recipeNutrition({ id: 'r', name: 'r', servings: 2, ingredients: [{ id: 'i', name: 'x', qty: 1, unit: '(', prep: '', food, grams: null }] }, {}));
+});

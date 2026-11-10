@@ -61,7 +61,7 @@ test('nameKey groups plurals', () => { assert.equal(nameKey('Tomatoes'), nameKey
 
 test('ticks and extras: stamped, persistent across rebuilds, and merge between devices', () => {
   const s = setup(); addPlanItem(s, '2025-11-17', 'Lunch', recipeItem('a', 'r1', 4), 1);
-  const key = find(buildShoppingList(s, '2025-11-17', '2025-11-17'), 'egg').key;
+  const key = find(buildShoppingList(s, '2025-11-17', '2025-11-17'), 'egg').tick;
   setChecked(s, key, true, 10);
   assert.equal(find(buildShoppingList(s, '2025-11-17', '2025-11-17'), 'egg').checked, true);                         // survives a rebuild (key is stable)
   addExtra(s, '  paper towels ', 'e1', 11); assert.equal(addExtra(s, '   ', 'e2', 12), null);
@@ -74,7 +74,7 @@ test('ticks and extras: stamped, persistent across rebuilds, and merge between d
 
 test('shoppingText groups by aisle with check boxes; CSV is spreadsheet-safe', () => {
   const s = setup(); addPlanItem(s, '2025-11-17', 'Lunch', recipeItem('a', 'r1', 4), 1);
-  const l = buildShoppingList(s, '2025-11-17', '2025-11-17'); setChecked(s, find(l, 'egg').key, true, 1); addExtra(s, '=HYPERLINK("x")', 'e1', 2);
+  const l = buildShoppingList(s, '2025-11-17', '2025-11-17'); setChecked(s, find(l, 'egg').tick, true, 1); addExtra(s, '=HYPERLINK("x")', 'e1', 2);
   const l2 = buildShoppingList(s, '2025-11-17', '2025-11-17'), text = shoppingText(s, l2, 'My list');
   assert.match(text, /^My list/); assert.match(text, /DAIRY & EGGS\n\[x\] 2 egg\n\[ \] 1 cup milk/); assert.match(text, /EXTRAS\n\[ \] =HYPERLINK/);
   const csv = shoppingCsv(s, l2); assert.ok(csv.startsWith('﻿Aisle,Item')); assert.ok(csv.includes("'=HYPERLINK"));   // formula injection neutralised
@@ -91,4 +91,27 @@ test('size words do not split a shopping line: "2 large eggs" + "3 eggs" = 5 egg
   const s = defaults(); s.recipes.a = rec('a', 'A', 1, [ing('large eggs', 2, '')]); s.recipes.b = rec('b', 'B', 1, [ing('eggs', 3, '')]);
   addPlanItem(s, '2025-11-17', 'Lunch', recipeItem('x', 'a', 1), 1); addPlanItem(s, '2025-11-17', 'Dinner', recipeItem('y', 'b', 1), 1);
   const items = buildShoppingList(s, '2025-11-17', '2025-11-17').items; assert.equal(items.length, 1); assert.equal(items[0].display, '5'); assert.deepEqual(items[0].from, ['A', 'B']);
+});
+
+test('ticks belong to one shopping trip: ticking this week does not tick next week', () => {
+  const s = setup(); addPlanItem(s, '2025-11-17', 'Lunch', recipeItem('a', 'r1', 4), 1); addPlanItem(s, '2025-11-24', 'Lunch', recipeItem('b', 'r1', 4), 1);
+  const thisWeek = buildShoppingList(s, '2025-11-17', '2025-11-23'), nextWeek = buildShoppingList(s, '2025-11-24', '2025-11-30');
+  setChecked(s, find(thisWeek, 'egg').tick, true, 5);
+  assert.equal(find(buildShoppingList(s, '2025-11-17', '2025-11-23'), 'egg').checked, true);
+  assert.equal(find(buildShoppingList(s, '2025-11-24', '2025-11-30'), 'egg').checked, false);
+  assert.notEqual(find(thisWeek, 'egg').tick, find(nextWeek, 'egg').tick);
+});
+
+test('aisles match whole words only: eggplant is not eggs, butternut is not butter, graham is not ham', () => {
+  assert.equal(aisleOf('eggplant'), 'Produce'); assert.equal(aisleOf('butternut squash'), 'Produce'); assert.equal(aisleOf('graham crackers'), 'Other');
+  assert.equal(aisleOf('eggs'), 'Dairy & eggs'); assert.equal(aisleOf('unsalted butter'), 'Dairy & eggs'); assert.equal(aisleOf('ham steak'), 'Meat & seafood'); assert.equal(aisleOf('tomatoes'), 'Produce');
+});
+
+test('hostile units and quantities cannot produce NaN, prototype hits or "0 cup" lines', () => {
+  const s = defaults(); s.recipes.r = rec('r', 'R', 1, [ing('thing', 2, 'toString'), ing('water', 0, 'cup'), ing('salt', 1, '(')]);
+  addPlanItem(s, '2025-11-17', 'Lunch', recipeItem('a', 'r', 1), 1);
+  const l = buildShoppingList(s, '2025-11-17', '2025-11-17');
+  for (const i of l.items) assert.ok(!i.display.includes('NaN'), i.display);
+  assert.equal(find(l, 'water').display, '');            // zero amount -> no amount shown rather than "0 cup"
+  assert.equal(find(l, 'thing').display, '2 tostring'.replace('tostring', 'toString'));   // an unknown unit is treated as a counted unit word
 });

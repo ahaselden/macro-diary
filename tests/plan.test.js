@@ -94,3 +94,9 @@ test('logDay logs every unlogged item and reports how many', () => {
   assert.equal(logDay(s, 'd', 10, idGen), 2); assert.equal(logDay(s, 'd', 11, idGen), 0);
   assert.equal(Math.round(totals(s.days.d).k), 200);
 });
+
+test('copyDay onto the same day is a no-op (it must not wipe the day)', () => {
+  const s = mk(); addPlanItem(s, '2025-11-17', 'Lunch', recipeItem('a', 'r1', 2), 10);
+  copyDay(s, '2025-11-17', '2025-11-17', 50, idGen);
+  assert.equal(s.plan['2025-11-17'].slots.Lunch.length, 1); assert.equal(s.plan['2025-11-17'].slots.Lunch[0].id, 'a');
+});

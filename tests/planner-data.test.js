@@ -147,3 +147,11 @@ test('removeEntry style tombstones still work alongside planner data (diary regr
   const s = base({ days: { d: [{ id: 'a', meal: 'Lunch', name: 'a', per100, grams: 100 }] }, recipes: { r1: recipe('r1') } });
   removeEntry(s, 'd', 'a', 9); assert.deepEqual(s.days, {}); assert.deepEqual(Object.keys(s.recipes), ['r1']);
 });
+
+test('sanitize: units are reduced to letters/spaces/dots, absurd quantities are rejected, unusable custom/recent foods are dropped', () => {
+  const r = sanitizeRecipe({ name: 'x', servings: 1e30, ingredients: [{ raw: 'r', unit: 'cup(?<x\\', qty: 1e300, grams: Infinity }] }, 'r1');
+  assert.equal(r.ingredients[0].unit, 'cupx'); assert.equal(r.ingredients[0].qty, null); assert.equal(r.ingredients[0].grams, null); assert.equal(r.servings, 4);
+  assert.equal(sanitizeRecipe({ name: 'x', updatedAt: 1.7e12 }, 'r').updatedAt, 1.7e12);          // real timestamps still pass
+  const d = sanitize({ custom: [{ name: 'ok', per100 }, { name: 'no nutrition' }, null, 5], recent: [{ per100 }, { name: 'r', per100 }] });
+  assert.deepEqual(d.custom.map(f => f.name), ['ok']); assert.deepEqual(d.recent.map(f => f.name), ['r']);
+});

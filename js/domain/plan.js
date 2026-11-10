@@ -39,7 +39,8 @@ export function clearDay(state, date, now) { const d = touch(state, date, now); 
 
 /** Replace `to` with a copy of `from` (fresh item ids, nothing marked as logged). */
 export function copyDay(state, from, to, now, idGen) {
-  const src = getDay(state, from), d = clearDay(state, to, now);
+  if (from === to) return getDay(state, to);                       // copying onto itself is a no-op (it would clear the source)
+  const src = structuredClone(getDay(state, from)), d = clearDay(state, to, now);
   for (const m of MEALS) d.slots[m] = src.slots[m].map(i => ({ ...structuredClone(i), id: idGen(), entryId: '' }));
   return d;
 }

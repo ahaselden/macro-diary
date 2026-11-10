@@ -100,7 +100,7 @@ export function resolveGrams(ingredient, measures) {
 
   if (PINCH_G[unit] && !hasQty && !candidates.length) return null;
   if (unit) {
-    const re = new RegExp(`\\b${unit}(?:s|es)?\\b`, 'i');
+    const re = new RegExp(`\\b${unit.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:s|es)?\\b`, 'i');   // unit comes from data: escape it
     const g = find(c => re.test(c.label));
     if (g !== null) return g;
     if (PINCH_G[unit]) return hasQty ? qty * PINCH_G[unit] : null;
