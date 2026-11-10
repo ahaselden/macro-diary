@@ -60,12 +60,15 @@ Model (ported in spirit from `MealPlannerPC/Models`): `Recipe{id,name,descriptio
 - Nothing is pushed to GitHub or deployed by the agent; the owner reviews the branch first.
 
 ## Status
-| Stage | State |
-|-------|-------|
-| 0 Refactor | in progress |
-| 1 Data foundation | not started |
-| 2 Sync engine | not started |
-| 3 Recipes | not started |
-| 4 Meal plan | not started |
-| 5 Shopping lists | not started |
-| Part 4 integrations | research notes only |
+(Updated as stages land; see `git log` for the commit group of each.)
+
+| Stage | State | Notes |
+|-------|-------|-------|
+| 0 Refactor | **done** | Layered ES modules, golden tests, CI, SW drift test. |
+| 1 Data foundation | **done** | Schema v3, LWW merge with tombstones (D9-D12). |
+| 2 Sync engine | **done, not yet run against a real Supabase** | Engine/adapter/UI verified against a mock server end to end (two browser origins); the SQL in SYNC-SETUP.md has never run on Postgres. |
+| 3a Planner data model | **done** | Schema v4 (D13): recipes/plan/shopping sanitised, merged, synced. |
+| 3 Recipes | in progress | |
+| 4 Meal plan | not started | |
+| 5 Shopping lists | not started | |
+| Part 4 integrations | research notes only | Not built, by design. |
