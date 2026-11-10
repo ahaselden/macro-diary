@@ -78,10 +78,10 @@ function renderResults(msg) {
 async function doSearch() {
   const q = $('#q').value.trim(); add.q = q; if (!q) return;
   if (!state.useUSDA && !state.useOFF) { renderResults('Enable a food database in Settings.'); return; }
-  renderResults('Searching…'); add.results = [];
+  add.offer = ''; add.results = []; renderResults('Searching…');
   const { results, errors } = await searchAll(q, { useUSDA: state.useUSDA, useOFF: state.useOFF, apiKey: state.apiKey });
   if ($('#q')?.value.trim() !== q) return;   // a newer search superseded this one
-  add.results = results; add.offer = isBarcode(q) && !results.length ? q : '';
+  add.results = results; add.offer = isBarcode(q) && !results.length && !errors.length ? q : '';   // only a REAL "not found": a failed lookup (offline, rate limit) is not
   renderResults(!results.length ? (errors.join(' · ') || 'No results found.') : errors.join(' · '));
 }
 
@@ -89,5 +89,5 @@ async function doSearch() {
 async function scan() {
   $('#results').innerHTML = '<video id="vid" playsinline muted></video><p class="muted">Starting camera… then point at a barcode.</p>';
   try { await startScan($('#vid'), code => { $('#q').value = code; add.q = code; doSearch(); }); }
-  catch { toast('Camera unavailable (needs HTTPS and permission)'); renderResults(); }
+  catch (err) { toast(err && err.decoder ? err.message : 'Camera unavailable (needs HTTPS and permission)'); renderResults(); }
 }

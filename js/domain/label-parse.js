@@ -38,9 +38,18 @@ export function parseLabel(text) {
   // Calories (NOT "Calories from Fat"): "Calories 190", "Calories: 190", "Energy 190 kcal", "190 kcal"
   const cal = t.match(new RegExp(`calories(?!\\s*from)[^\\n\\d]{0,6}?${NUM}`, 'i')) || t.match(new RegExp(`energy[^\\n\\d]{0,6}?${NUM}\\s*kcal`, 'i')) || t.match(new RegExp(`${NUM}\\s*kcal`, 'i'));
   if (cal) out.k = num(cal[1]);
-  out.f = grams(t, 'total\\s*fat');
-  out.c = grams(t, 'total\\s*carb\\w*');
+  // US wording first ("Total Fat"), then the common EU/UK wording at the start of a line ("Fat", "Carbohydrate", "Carbs")
+  const firstOf = (...labels) => { for (const l of labels) { const v = grams(t, l); if (v != null) return v; } return null; };
+  out.f = firstOf('total\\s*fat', '(?:^|\\n)[ \\t]*fat');
+  out.c = firstOf('total\\s*carb\\w*', '(?:^|\\n)[ \\t]*carb\\w*');
   out.p = grams(t, 'protein');
+  // Many EU/UK labels print "per 100 g" FIRST and "per serving" second. We read the first number after each name, i.e. the first
+  // column, so in that case the values are per 100 g: say so and set the serving to 100 g so the numbers stay correct.
+  const i100 = t.search(/per\s*100\s*(?:g|ml)\b/i), iServ = t.search(/per\s*(?:serving|portion)\b/i);
+  if (i100 >= 0 && (iServ < 0 || i100 < iServ)) {
+    out.servingG = 100; out.servingLabel = '100 g';
+    out.warnings.push('This label lists values "per 100 g" first, so those were read and the serving size is set to 100 g. If you eat a different amount, choose it on the next screen.');
+  }
   for (const [key, name] of [['k', 'calories'], ['f', 'fat'], ['c', 'carbs'], ['p', 'protein']]) (out[key] == null ? out.missing : out.found).push(name);
   if (out.servingG == null) out.missing.push('serving size (g)');
 

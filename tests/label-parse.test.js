@@ -71,3 +71,17 @@ test('macros heavier than the serving (sum) warn even when each one alone fits',
   const r = parseLabel('Serving size 1 bar (30g)\nCalories 300\nTotal Fat 12g\nTotal Carbohydrate 20g\nProtein 20g');
   assert.ok(r.warnings.some(w => /Protein \+ carbs \+ fat/.test(w)));
 });
+test('EU/UK wording: "Fat", "Carbohydrate", "Protein" without "Total", and kJ/kcal energy', () => {
+  const r = parseLabel('Typical values\nEnergy 1590kJ / 380kcal\nFat 12 g\nof which saturates 5 g\nCarbohydrate 34 g\nof which sugars 4 g\nProtein 40 g');
+  assert.deepEqual([r.k, r.f, r.c, r.p], [380, 12, 34, 40]);        // saturates (5 g) is not mistaken for fat
+});
+test('"per 100 g" column first: values are taken as per 100 g and the serving becomes 100 g, with a warning', () => {
+  const r = parseLabel('Nutrition per 100 g   per bar (50 g)\nEnergy 1590kJ / 380kcal   795kJ / 190kcal\nFat 12 g   6 g\nCarbohydrate 34 g   17 g\nProtein 40 g   20 g');
+  assert.deepEqual([r.k, r.f, r.c, r.p, r.servingG, r.servingLabel], [380, 12, 34, 40, 100, '100 g']);
+  assert.ok(r.warnings.some(w => /per 100 g/.test(w)));
+});
+test('"per serving" first is not treated as per 100 g', () => {
+  const r = parseLabel('Per serving (50 g)   per 100 g\nCalories 190   380\nFat 6 g   12 g\nCarbohydrate 17 g   34 g\nProtein 20 g   40 g');
+  assert.deepEqual([r.k, r.f, r.c, r.p], [190, 6, 17, 20]);
+  assert.ok(!r.warnings.some(w => /per 100 g/.test(w)));
+});
