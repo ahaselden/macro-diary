@@ -22,6 +22,7 @@ Deploys as static files (GitHub Pages). After changing a shipped file, bump `CAC
 | More | Export (daily/weekly/monthly/yearly CSV, JSON) and Settings (goals, units, themes, API key, **Sync**, backup/restore) |
 
 ## Documentation (read in this order)
+0. [docs/VISION.md](docs/VISION.md) — what the project is for and what it should eventually do (draft for the owner to review).
 1. [docs/ROADMAP.md](docs/ROADMAP.md) — what was asked, what was built, **what you need to do next**.
 2. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — layers, file map, data shape, how to add things.
 3. [docs/DECISIONS.md](docs/DECISIONS.md) — every non-obvious choice and why; items marked *made without the owner* are the ones to challenge.
