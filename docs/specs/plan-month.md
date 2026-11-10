@@ -72,18 +72,20 @@ Domain tests: `tests/plan-month.test.js` (ids match titles). UI: `tests/plan-mon
 Leap Feb 2028/2100/2000, Feb 2027, 6-row months, year boundary, `'2025-02-30'`, `''`, null, numbers, Date objects, `'__proto__'`, week containing Dec 31/Jan 1, DST days (2025-03-09, 2025-11-02 US; 2025-03-30, 2025-10-26 EU), null/odd state, malformed day records, deep-frozen state, prototype keys, non-integer/NaN `n`, hostile range values.
 
 ## Cannot be tested automatically (manual checklist)
-- [ ] Week | Month toggle switches views; the pressed state is announced by a screen reader; keyboard Tab/Enter/Space work on toggle, day cells and prev/next.
-- [ ] Month grid looks right on a phone width (7 columns, no horizontal scroll, 6-row months fit), padding days are visibly dimmed and today is marked.
-- [ ] Day cell shows kcal (rounded) and item count; empty days look empty; incomplete days are flagged.
-- [ ] Tapping a day (also a padding day) switches to the week view containing it.
-- [ ] Prev/next month cross year boundaries (Dec <-> Jan) and Feb 2028 shows 29 days.
-- [ ] Auto-fill dialog: range defaults to the current view; switching Week/Month regenerates; "N past days skipped" shows when applicable; with everything past, the dialog says nothing to fill.
-- [ ] Month auto-fill accepted: planned meals are not overwritten, reload keeps the plan, Accept twice adds nothing.
-- [ ] A recipe named `<img src=x onerror=alert(1)>` renders as text in the dialog and in the grid aria-labels.
+- [x] Week | Month toggle switches views; the pressed state is announced by a screen reader; keyboard Tab/Enter/Space work on toggle, day cells and prev/next.
+- [x] Month grid looks right on a phone width (7 columns, no horizontal scroll, 6-row months fit), padding days are visibly dimmed and today is marked.
+- [x] Day cell shows kcal (rounded) and item count; empty days look empty; incomplete days are flagged.
+- [x] Tapping a day (also a padding day) switches to the week view containing it.
+- [x] Prev/next month cross year boundaries (Dec <-> Jan) and Feb 2028 shows 29 days.
+- [x] Auto-fill dialog: range defaults to the current view; switching Week/Month regenerates; "N past days skipped" shows when applicable; with everything past, the dialog says nothing to fill.
+- [x] Month auto-fill accepted: planned meals are not overwritten, reload keeps the plan, Accept twice adds nothing.
+- [ ] (not tried for month; escaping is by esc() and PU5) A recipe named `<img src=x onerror=alert(1)>` renders as text in the dialog and in the grid aria-labels.
 - [ ] Phone picks up the new `CACHE` (reload twice), works offline, month plan syncs to a second device.
 
 ## How weak the UI tests are
 PU1-PU8 are regexes over source text: they show markup, imports and calls exist, not that the grid renders, that a tap changes the view, or that the dialog's range choice works. PU5/PU6/PU7 look at a text window near a call and are fragile to refactoring (loosen the regex and say so in the PR). PU9 is better than a pattern check because it executes the extracted `newId` definition, but it is still not the real module (it assumes `newId` is a `const` arrow/expression defined at top level and any counter is a top-level `let x = 0`; a `function newId` declaration needs the test updated). The domain tests M1-M31 are real behavioural tests.
+
+*Ticked items were checked on 2026-11-10 in the desktop built-in browser at desktop width only (Nov 2026; Dec/Jan crossing, Feb 2028 and a phone width were not tried; screen reader not tried).*
 
 ## Open questions
 1. `autofillDates` with `today` invalid returns empty (decided here); the UI always passes a valid today so this is only defensive.
