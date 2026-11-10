@@ -1,0 +1,22 @@
+{
+  "sourceUrl": "https://bowls.example.test/mains/synthetic-taco-bowl",
+  "fetchedAt": "2026-01-01T00:00:00.000Z",
+  "node": {
+    "@type": "Recipe",
+    "name": "Test Kitchen Taco Bowl",
+    "description": "An invented bowl used only for tests.",
+    "recipeIngredient": [
+      "1 can black beans",
+      "Garnish Ideas:",
+      "sour cream, salsa, olives, pickled radish, shredded lettuce",
+      "Salt, plus more to taste",
+      "Extras:",
+      "Lime wedges, hot sauce (any kind, any heat), pickled onions",
+      "2 tbsp water",
+      "Fresh herbs, spices, seeds"
+    ],
+    "recipeInstructions": ["Warm the beans.", "Build the bowl."],
+    "recipeYield": "2 servings",
+    "totalTime": "PT20M"
+  }
+}

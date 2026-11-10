@@ -164,10 +164,45 @@ function finish(r, servingsKnown, nutrition) {
   return r;
 }
 
+// A line that only labels a group ("Optional Toppings:", "For the sauce:") ends with a colon and has no quantity: it is not an ingredient.
+const isLabel = l => l.endsWith(':') && !/\d/.test(l);
+
+/** Split on commas that are outside (...) and [...]; parts are trimmed and empty ones dropped. One pass; an unclosed bracket swallows later commas. */
+function commaParts(line) {
+  const parts = [];
+  let depth = 0, start = 0;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '(' || c === '[') depth++;
+    else if ((c === ')' || c === ']') && depth > 0) depth--;
+    else if (c === ',' && depth === 0) { parts.push(line.slice(start, i)); start = i + 1; }
+  }
+  parts.push(line.slice(start));
+  return parts.map(x => x.trim()).filter(Boolean);
+}
+
+/**
+ * Collects ingredient lines into `out` (capped). Group labels are dropped. After a label, a line with no digit and at least 3 comma parts
+ * ("sour cream, salsa, olives, lime wedges") is a list of separate items and is split; the rule lasts until a line with a digit or the next
+ * label. Everything else is kept as one line.
+ */
+function ingredientSink(out) {
+  let run = false;
+  return (line, dropIt = false) => {                    // dropIt: the caller discards this line (it still counts as a digit line and ends the rule)
+    if (!line) return;
+    if (isLabel(line)) { run = true; return; }
+    if (/\d/.test(line)) { run = false; if (dropIt) return; }
+    else if (run) {
+      const parts = commaParts(line);
+      if (parts.length >= 3) { for (const part of parts) if (out.length < LIM.ingredients) out.push(part.slice(0, LIM.ingredient)); return; }
+    }
+    if (out.length < LIM.ingredients) out.push(line.slice(0, LIM.ingredient));
+  };
+}
+
 /** A lone string is split into lines (one ingredient per line); each array element is ONE ingredient, its own line breaks joined. */
 function ingredientList(v) {
-  // a line that only labels a group ("Optional Toppings:", "For the sauce:") ends with a colon and has no quantity: it is not an ingredient
-  const out = [], push = l => { if (l && !(l.endsWith(':') && !/\d/.test(l)) && out.length < LIM.ingredients) out.push(l.slice(0, LIM.ingredient)); };
+  const out = [], push = ingredientSink(out);
   if (typeof v === 'string') for (const l of toLines(v, 400000)) push(l);
   else if (Array.isArray(v)) for (let i = 0; i < v.length && out.length < LIM.ingredients; i++) if (typeof v[i] === 'string') push(clean(v[i], 6000));
   return out;
@@ -252,6 +287,7 @@ export function importFromText(text) {
     if (typeof text !== 'string') return finish(r, false, false);
     const lines = toLines(text, 2000000);
     let mode = 'pre', title = '', servings = null, total = null, prep = null, cook = null;
+    const addIngredient = ingredientSink(r.ingredients);
     const intro = [];
     for (const raw of lines) {
       const h = header(raw);
@@ -270,7 +306,7 @@ export function importFromText(text) {
       }
       const item = stripMark(raw);
       if (!item) continue;
-      if (mode === 'ing') { if (!item.endsWith(':') && r.ingredients.length < LIM.ingredients) r.ingredients.push(item.slice(0, LIM.ingredient)); }
+      if (mode === 'ing') addIngredient(item, item.endsWith(':') && /\d/.test(item));   // a colon line WITH a number is dropped, as before (but it ends a label's list); one without is a group label
       else if (r.steps.length < LIM.steps) r.steps.push(item.slice(0, LIM.step));
     }
     r.name = title.slice(0, LIM.name);

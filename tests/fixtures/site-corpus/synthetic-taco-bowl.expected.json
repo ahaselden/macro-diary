@@ -1,0 +1,23 @@
+{
+  "name": "Test Kitchen Taco Bowl",
+  "description": "An invented bowl used only for tests.",
+  "servings": 2,
+  "totalTime": 20,
+  "tags": [],
+  "steps": ["Warm the beans.", "Build the bowl."],
+  "ingredients": [
+    "1 can black beans",
+    "sour cream",
+    "salsa",
+    "olives",
+    "pickled radish",
+    "shredded lettuce",
+    "Salt, plus more to taste",
+    "Lime wedges",
+    "hot sauce (any kind, any heat)",
+    "pickled onions",
+    "2 tbsp water",
+    "Fresh herbs, spices, seeds"
+  ],
+  "warnings": []
+}
