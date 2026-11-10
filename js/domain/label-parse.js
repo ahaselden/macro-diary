@@ -46,6 +46,10 @@ export function parseLabel(text) {
 
   // Safety nets: things a correct label can never do, and the energy balance.
   const w = out.servingG;
+  // Measured on real OCR runs: "(50g)" is often read as "(509g)" or "(509)". We cannot repair it (249 g is a real serving),
+  // so a 3-digit serving weight ending in 9 is flagged, and one with no "g" at all is left empty (see `missing`).
+  if (w != null && /^\d{2,}9$/.test(String(w))) out.warnings.push(`Serving size was read as ${w} g. OCR often turns "g" into a 9 (50g becomes 509): please check it.`);
+  if (w && out.p != null && out.c != null && out.f != null && out.p + out.c + out.f > w + 0.5) out.warnings.push(`Protein + carbs + fat (${Math.round((out.p + out.c + out.f) * 10) / 10} g) is more than the serving weight (${w} g): check the serving size.`);
   if (w) for (const [key, name] of [['f', 'Fat'], ['c', 'Carbs'], ['p', 'Protein']]) if (out[key] > w + 0.5) out.warnings.push(`${name} (${out[key]} g) is more than the serving weight (${w} g): a digit was probably misread.`);
   if (out.p != null && out.c != null && out.f != null && out.k != null) {
     const est = 4 * out.p + 4 * out.c + 9 * out.f;

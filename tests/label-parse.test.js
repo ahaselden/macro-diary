@@ -59,3 +59,15 @@ test('only the first serving column is read from a two-column "per serving / per
   const r = parseLabel('Serving size 1 bar (50g)\nCalories 190 380\nTotal Fat 6g 12g\nTotal Carbohydrate 17g 34g\nProtein 20g 40g');
   assert.deepEqual([r.k, r.f, r.c, r.p], [190, 6, 17, 20]);
 });
+test('measured OCR slip: "(50g)" read as "(509g)" is flagged, "(509)" is left empty', () => {
+  const L = '\nCalories 190\nTotal Fat 6g\nTotal Carbohydrate 17g\nProtein 20g';
+  const a = parseLabel('Serving size 1 bar (509g)' + L);
+  assert.equal(a.servingG, 509); assert.ok(a.warnings.some(w => /read as 509 g/.test(w)));
+  const b = parseLabel('Serving size 1 bar (509)' + L);
+  assert.equal(b.servingG, null); assert.ok(b.missing.includes('serving size (g)'));
+  assert.deepEqual(parseLabel('Serving size 1 cup (240g)\nCalories 150').warnings.filter(w => /read as/.test(w)), []);   // a normal weight is not flagged
+});
+test('macros heavier than the serving (sum) warn even when each one alone fits', () => {
+  const r = parseLabel('Serving size 1 bar (30g)\nCalories 300\nTotal Fat 12g\nTotal Carbohydrate 20g\nProtein 20g');
+  assert.ok(r.warnings.some(w => /Protein \+ carbs \+ fat/.test(w)));
+});

@@ -2,6 +2,7 @@
 // Uses the browser's native BarcodeDetector when it exists (Chrome on Android/Mac). Everywhere else
 // (Firefox, Safari/iPhone, Chrome/Edge on Windows) it falls back to ZXing (js/vendor/zxing.min.js, MIT),
 // which is loaded only when a scan is started.
+import { loadScript } from './script.js';
 let scanStream = null, scanTimer = null;
 
 const nativeDetector = () => 'BarcodeDetector' in window;
@@ -28,17 +29,7 @@ export function makeDecoder(Z) {
   };
 }
 
-let zxPromise = null;
-function loadZXing() {
-  if (globalThis.ZXing) return Promise.resolve(globalThis.ZXing);
-  return zxPromise || (zxPromise = new Promise((resolve, reject) => {
-    const s = document.createElement('script');
-    s.src = 'js/vendor/zxing.min.js';
-    s.onload = () => resolve(globalThis.ZXing);
-    s.onerror = () => { zxPromise = null; reject(new Error('Scanner library failed to load')); };
-    document.head.appendChild(s);
-  }));
-}
+const loadZXing = () => loadScript('js/vendor/zxing.min.js', 'ZXing');
 
 /** Throws if the camera is unavailable. Calls onCode(rawValue) once, after stopping the scan. */
 export async function startScan(video, onCode) {
