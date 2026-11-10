@@ -1,14 +1,18 @@
-// "Custom" tab of the add-food dialog: enter a food by hand.
+// "Custom" tab of the add-food dialog: enter a food by hand, or prefill it from a photo of a nutrition label.
 import { state, save } from '../core/store.js';
 import { $, toast } from '../core/dom.js';
-import { foodKey, isBarcode } from '../domain/food.js';
+import { isBarcode, replacesCustom } from '../domain/food.js';
 import { esc } from '../core/format.js';
 import { add } from './ctx.js';
 import { parseLabel } from '../domain/label-parse.js';
 import { readImageText } from '../services/ocr.js';
 import { showFood } from './amount-picker.js';
 
+const NUMBER_FIELDS = ['#cSize', '#cK', '#cP', '#cC', '#cF'];
+let ocrRun = 0;   // bumped on every render and every photo: a result from an older run is ignored
+
 export function renderCustom() {
+  ocrRun++;
   $('#tabBody').innerHTML = `
     <button class="fit" id="cLabel" style="width:100%">📷 Read a nutrition label from a photo</button>
     <input type="file" id="cFile" accept="image/*" hidden>
@@ -21,34 +25,52 @@ export function renderCustom() {
     <p class="muted">Values are per serving above.</p>
     <div class="chk"><input type="checkbox" id="cSave" checked><label style="margin:0;color:inherit" for="cSave">Save to My foods</label></div>
     <button class="primary" style="width:100%" id="cGo">Continue</button>`;
+  // anything the user types is theirs: a later photo must not overwrite it, and it is no longer "from the photo"
+  for (const id of NUMBER_FIELDS) $(id).addEventListener('input', e => { e.target.removeAttribute('data-ocr'); e.target.dataset.user = '1'; });
   $('#cLabel').onclick = () => $('#cFile').click();
   $('#cFile').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) readLabel(f); };
   $('#cGo').onclick = () => {
-    const name = $('#cName').value.trim() || 'Quick add', size = +$('#cSize').value || 100, k = +$('#cK').value;
+    const bar = $('#cBar').value.replace(/\s/g, '');
+    if (bar && !isBarcode(bar)) { toast('Barcode must be 8 to 14 digits'); return; }
+    const typed = $('#cName').value.trim();
+    if (bar && !typed) { toast('Give this product a name so it can be found by its barcode'); return; }
+    const name = typed || 'Quick add', size = +$('#cSize').value || 100, k = +$('#cK').value;
     if (!(k >= 0) || $('#cK').value === '') { toast('Enter calories'); return; }
     const s = 100 / size, food = { name, brand: '', source: 'Custom', servingG: size,
       per100: { k: k * s, p: (+$('#cP').value || 0) * s, c: (+$('#cC').value || 0) * s, f: (+$('#cF').value || 0) * s } };
     food.updatedAt = Date.now();
-    const bar = $('#cBar').value.replace(/\s/g, ''); if (isBarcode(bar)) food.barcode = bar; else if (bar) { toast('Barcode must be 8 to 14 digits'); return; }
+    if (bar) food.barcode = bar;
     add.barcode = '';
-    if ($('#cSave').checked) { state.custom = [food, ...state.custom.filter(f => foodKey(f) !== foodKey(food))].slice(0, 100); save(); }
+    if ($('#cSave').checked) { state.custom = [food, ...state.custom.filter(f => !replacesCustom(f, food))].slice(0, 100); save(); }
     showFood(food);
   };
 }
 
 /** Photo -> OCR text -> parsed numbers -> PREFILL the form. Nothing is saved or accepted automatically. */
 async function readLabel(file) {
-  const msg = t => { const el = $('#cLabelMsg'); if (el) el.innerHTML = t; };
+  const run = ++ocrRun, btn = $('#cLabel');
+  const msg = t => { const el = $('#cLabelMsg'); if (el && run === ocrRun) el.innerHTML = t; };
   if (file.size > 25e6) { msg('That photo is too large (max 25 MB).'); return; }
+  btn.disabled = true;
   try {
-    const text = await readImageText(file, p => msg(`${esc(p.status)}… ${p.progress ? Math.round(p.progress * 100) + '%' : ''}${p.status.startsWith('load') ? ' (first use downloads about 7 MB)' : ''}`));
-    if (!$('#cK')) return;                                      // the dialog was closed while reading
-    const r = parseLabel(text);
-    const put = (id, v) => { const el = $(id); if (v != null) { el.value = String(Math.round(v * 100) / 100); el.setAttribute('data-ocr', ''); el.addEventListener('input', () => el.removeAttribute('data-ocr'), { once: true }); } };
-    put('#cSize', r.servingG); put('#cK', r.k); put('#cP', r.p); put('#cC', r.c); put('#cF', r.f);
+    const text = await readImageText(file, p => {
+      const status = String(p.status || '');
+      msg(`${esc(status)}… ${p.progress ? Math.round(p.progress * 100) + '%' : ''}${status.startsWith('load') ? ' (first use downloads about 7 MB)' : ''}`);
+    });
+    if (run !== ocrRun || !$('#cK')) return;                    // the tab was re-rendered or the dialog closed while reading
+    const r = parseLabel(text), kept = [];
+    for (const id of NUMBER_FIELDS) { const el = $(id); if (el.dataset.user !== '1') { el.removeAttribute('data-ocr'); if (el.hasAttribute('data-ocr-set')) el.value = id === '#cSize' ? '100' : ''; el.removeAttribute('data-ocr-set'); } }
+    const put = (id, v, label) => {
+      const el = $(id); if (v == null) return;
+      if (el.dataset.user === '1') { kept.push(label); return; }  // never overwrite what the user typed
+      el.value = String(Math.round(v * 100) / 100); el.setAttribute('data-ocr', ''); el.setAttribute('data-ocr-set', '');
+    };
+    put('#cSize', r.servingG, 'serving size'); put('#cK', r.k, 'calories'); put('#cP', r.p, 'protein'); put('#cC', r.c, 'carbs'); put('#cF', r.f, 'fat');
     if (r.servingLabel && !$('#cName').value) $('#cName').placeholder = r.servingLabel;
     const lines = [r.found.length ? `Filled in: ${esc(r.found.join(', '))}. <b>Check every number against the label before continuing.</b>` : '',
+      kept.length ? `Kept what you typed for: ${esc(kept.join(', '))}.` : '',
       r.missing.length ? `Not found, please type: ${esc(r.missing.join(', '))}.` : '', ...r.warnings.map(w => '⚠ ' + esc(w))].filter(Boolean);
     msg(lines.join('<br>'));
   } catch (err) { msg('Could not read the photo: ' + esc(err.message || err) + '. You can still type the numbers.'); }
+  finally { const b = $('#cLabel'); if (b) b.disabled = false; }
 }

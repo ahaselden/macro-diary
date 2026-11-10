@@ -10,7 +10,12 @@ const abs = p => new URL(p, document.baseURI).href;
  * a ~1800 px high-contrast greyscale image is both faster and more accurate for the OCR engine.
  */
 export async function prepareImage(file, maxSide = 1800) {
-  const bmp = await createImageBitmap(file, { imageOrientation: 'from-image' });
+  // Ask the browser to decode at reduced size: a 48 MP phone photo is ~190 MB as RGBA and can crash a low-memory tab.
+  // (Not measured on a real phone. Older Safari may reject imageOrientation, hence the fallback.)
+  const size = { resizeWidth: maxSide, resizeQuality: 'medium' };
+  let bmp;
+  try { bmp = await createImageBitmap(file, { imageOrientation: 'from-image', ...size }); }
+  catch { bmp = await createImageBitmap(file, size); }
   const k = Math.min(1, maxSide / Math.max(bmp.width, bmp.height)), w = Math.round(bmp.width * k), h = Math.round(bmp.height * k);
   const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
   const ctx = cv.getContext('2d', { willReadFrequently: true }); ctx.drawImage(bmp, 0, 0, w, h); bmp.close?.();
@@ -31,7 +36,8 @@ export async function readImageText(file, onProgress = () => {}) {
   const canvas = await prepareImage(file);
   const T = await loadScript(BASE + 'tesseract.min.js', 'Tesseract');
   const worker = await T.createWorker('eng', 1, {
-    workerPath: abs(BASE + 'worker.min.js'), corePath: abs(BASE), langPath: abs(BASE), workerBlobURL: false,
+    workerPath: abs(BASE + 'worker.min.js'), corePath: abs(BASE), langPath: abs(BASE), workerBlobURL: false, cacheMethod: 'none',   // the service worker already caches the language data; skip Tesseract's own IndexedDB copy
+   
     logger: m => onProgress({ status: m.status, progress: m.progress || 0 }),
   });
   try {

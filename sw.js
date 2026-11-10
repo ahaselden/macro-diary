@@ -1,7 +1,7 @@
 // Caches the app shell so it opens offline. Food-database requests always go to the network.
 // Keep SHELL in sync with the files that ship: tests/sw.test.js fails if a js/css file is missing from it.
 // After changing ANY shipped file, bump CACHE so installed copies (phones) pick up the update.
-const CACHE = 'macro-diary-v16';
+const CACHE = 'macro-diary-v17';
 const OCR_CACHE = 'macro-diary-ocr-v1';   // ~7 MB OCR engine, fetched on first label scan; survives CACHE bumps. Change the name if /vendor/tesseract/ is ever updated.
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png',
@@ -75,7 +75,12 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET' || url.origin !== location.origin) return;
   // OCR files never change for a given cache name: cache-first, so the big download happens once.
   if (url.pathname.includes('/vendor/tesseract/')) {
-    e.respondWith(caches.open(OCR_CACHE).then(c => c.match(e.request).then(hit => hit || fetch(e.request).then(r => { if (r.ok) c.put(e.request, r.clone()); return r; }))));
+    e.respondWith(caches.open(OCR_CACHE).then(async c => {
+      const hit = await c.match(e.request); if (hit) return hit;
+      const r = await fetch(e.request);
+      if (r.ok) e.waitUntil(c.put(e.request, r.clone()).catch(() => {}));   // waitUntil: the worker must not be stopped mid-write
+      return r;
+    }));
     return;
   }
   // network first so updates show up, fall back to cache when offline

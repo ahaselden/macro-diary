@@ -1,6 +1,6 @@
 // DOM-free-ish barcode scanner. The UI supplies the <video> element and shows any errors.
 // Uses the browser's native BarcodeDetector when it exists (Chrome on Android/Mac). Everywhere else
-// (Firefox, Safari/iPhone, Chrome/Edge on Windows) it falls back to ZXing (js/vendor/zxing.min.js, MIT),
+// (Firefox, Safari/iPhone, Chrome/Edge on Windows) it falls back to ZXing (js/vendor/zxing.min.js, see vendor/licenses/),
 // which is loaded only when a scan is started.
 import { loadScript } from './script.js';
 let scanStream = null, scanTimer = null;
@@ -34,7 +34,7 @@ const loadZXing = () => loadScript('js/vendor/zxing.min.js', 'ZXing');
 /** Throws if the camera is unavailable. Calls onCode(rawValue) once, after stopping the scan. */
 export async function startScan(video, onCode) {
   const stream = scanStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-  video.srcObject = stream; await video.play();
+  try { video.srcObject = stream; await video.play(); } catch (e) { stopScan(); throw e; }   // never leave the camera on after a failure
   const found = c => { stopScan(); onCode(c); };
   if (nativeDetector()) {
     const det = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] });
@@ -43,7 +43,9 @@ export async function startScan(video, onCode) {
     }, 400);
     return;
   }
-  const Z = await loadZXing();
+  let Z;
+  try { Z = await loadZXing(); }
+  catch (e) { stopScan(); throw Object.assign(new Error("Scanner couldn't load (offline?). Type the barcode digits instead."), { decoder: true }); }
   if (scanStream !== stream) return;                         // the user closed the scanner while the library loaded
   const decode = makeDecoder(Z), canvas = document.createElement('canvas'), ctx = canvas.getContext('2d', { willReadFrequently: true });
   let busy = false;

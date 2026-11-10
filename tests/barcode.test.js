@@ -20,3 +20,15 @@ test('sanitizeFood keeps a valid barcode and drops junk', () => {
   for (const bad of ['abc', '123', 12345678, '<img src=x>', '1234567890123456']) assert.equal('barcode' in sanitizeFood({ ...base, barcode: bad }), false, String(bad));
   assert.equal('barcode' in sanitizeFood(base), false);
 });
+
+import { replacesCustom } from '../js/domain/food.js';
+test('replacesCustom: same product replaces; different barcodes or a code-less newcomer never erase a coded food', () => {
+  const f = (name, barcode) => ({ name, brand: '', source: 'Custom', ...(barcode ? { barcode } : {}) });
+  assert.equal(replacesCustom(f('Bar', '012345678905'), f('Bar', '0012345678905')), true);     // same product (leading zero)
+  assert.equal(replacesCustom(f('Bar', '012345678905'), f('Bar', '012345678912')), false);     // same name, different product
+  assert.equal(replacesCustom(f('Bar', '012345678905'), f('Bar')), false);                     // newcomer without a code keeps the coded one
+  assert.equal(replacesCustom(f('Bar'), f('Bar', '012345678905')), true);                      // coding an old uncoded food upgrades it
+  assert.equal(replacesCustom(f('Bar'), f('Bar')), true);                                      // the old behaviour for plain foods
+  assert.equal(replacesCustom(f('Bar'), f('Other')), false);
+  assert.equal(replacesCustom(f('A', '012345678905'), f('B', '012345678905')), true);          // renamed, same barcode
+});
