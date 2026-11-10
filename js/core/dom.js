@@ -17,5 +17,6 @@ let closeGuard = null;
 export const setCloseGuard = fn => { closeGuard = fn; };
 export const canClose = () => !closeGuard || closeGuard() !== false;
 
-/** Set the dialog title and whether the ‹ back button shows. */
-export function head(title, back) { $('#dTitle').textContent = title; $('#dBack').hidden = !back; }
+/** Set the dialog title and whether the ‹ back button shows. Every screen shown in the dialog calls this first, so it also drops
+ *  any close guard left by the previous screen (the dialog's 'close' event is not a reliable place to do that). */
+export function head(title, back) { closeGuard = null; $('#dTitle').textContent = title; $('#dBack').hidden = !back; }

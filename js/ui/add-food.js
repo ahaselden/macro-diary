@@ -12,7 +12,7 @@ import { showFood } from './amount-picker.js';
 export function initAddFood() {
   const dlg = dialog();
   $('#dClose').onclick = () => { if (canClose()) { stopScan(); dlg.close(); } };
-  dlg.addEventListener('close', () => { stopScan(); setCloseGuard(null); });
+  dlg.addEventListener('close', () => { stopScan(); if (!dlg.open) setCloseGuard(null); });
   dlg.addEventListener('cancel', e => { if (!canClose()) e.preventDefault(); });          // Esc key
   dlg.addEventListener('click', e => { if (e.target === dlg && canClose()) { stopScan(); dlg.close(); } });
   $('#dBack').onclick = () => { stopScan(); renderSearchTab(); };

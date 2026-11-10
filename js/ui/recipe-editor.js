@@ -19,9 +19,16 @@ export function openRecipeEditor(recipe) {
   if (!Array.isArray(draft.ingredients)) draft.ingredients = [];
   const dlg = dialog();
   if (!dlg.open) dlg.showModal();
-  const initial = JSON.stringify(draft);
-  setCloseGuard(() => { readFields(); return JSON.stringify(draft) === initial || confirm('Discard your changes to this recipe?'); });
   renderForm();
+  readFields();                                        // normalise defaults (servings, time…) BEFORE the snapshot, or an untouched form looks "changed"
+  initialSnapshot = JSON.stringify(draft);
+  armGuard();
+}
+
+// Esc / backdrop / ✕ ask before discarding unsaved edits. head() clears the guard on every render, so each editor view re-arms it.
+let initialSnapshot = '';
+function armGuard() {
+  setCloseGuard(() => { readFields(); return JSON.stringify(draft) === initialSnapshot || confirm('Discard your changes to this recipe?'); });
 }
 
 const qtyUnit = i => ((i.qty == null || i.qty === '' ? '' : formatQty(i.qty)) + ' ' + (i.unit || '')).trim();
@@ -40,6 +47,7 @@ function ingInfo(i) {
 
 function renderForm() {
   head(isNew ? 'New recipe' : 'Edit recipe', false);
+  armGuard();
   const d = draft;
   $('#dBody').innerHTML = `<div class="rc-ed" id="rcRoot">
     <label for="reName">Name</label><input id="reName" value="${esc(d.name)}" autocomplete="off">
@@ -148,6 +156,7 @@ function localMatches(q) {
 
 function renderPicker(ing) {
   head('Link food', false);
+  armGuard();
   let local = [], remote = [], msg = '';
   $('#dBody').innerHTML = `<div class="rc-ed" id="rcPick"><button class="ghost" id="pkBack" style="min-height:44px">‹ Back to recipe</button>
     <p class="muted">${esc(ing.raw)}</p>
