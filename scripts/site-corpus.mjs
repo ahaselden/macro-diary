@@ -3,6 +3,7 @@
 //   node scripts/site-corpus.mjs add <url> [name] [--force]   fetch one page, save its recipe data + the parser's result for REVIEW
 //   node scripts/site-corpus.mjs check                         re-run the parser on every saved site (npm run test:sites)
 import { writeFile, mkdir } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import { lookup } from 'node:dns/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -35,6 +36,7 @@ if (command === 'add') {
   const slug = label ? (slugPart(label) || 'site') : siteSlug(r.json.finalUrl);   // the file name never comes straight from what was typed
   const flag = force ? 'w' : 'wx';                                                // 'wx' refuses to overwrite an existing file
   const fixturePath = join(LOCAL_DIR, `${slug}.json`), expectedPath = join(LOCAL_DIR, `${slug}.expected.json`);
+  if (!force && (existsSync(fixturePath) || existsSync(expectedPath))) die(`tests/local-sites/${slug}.json (or its .expected.json) already exists. Use --force to replace it.`);   // never leave a half-written pair
   await mkdir(LOCAL_DIR, { recursive: true });
   try {
     await writeFile(fixturePath, JSON.stringify(fixture, null, 2) + '\n', { flag });
