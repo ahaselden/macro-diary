@@ -9,6 +9,7 @@ import { fmt, addDays, parse } from '../core/dates.js';
 import { foodKey } from '../domain/food.js';
 import { searchRecipes, recipeNutrition } from '../domain/recipes.js';
 import { weekStart, weekDates, getDay, recipeItem, foodItem, addPlanItem, updatePlanItem, removePlanItem, clearDay, copyDay, copyWeek, itemNutrition, dayNutrition, logItem, logDay } from '../domain/plan.js';
+import { proposePlan, applyProposal } from '../domain/autoplan.js';
 import { searchAll } from '../services/foods.js';
 import { registerTab } from './tabs.js';
 
@@ -65,6 +66,7 @@ export function renderPlan() {
   const lbl = parse(weekStartDate).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
   root.innerHTML = `<div class="datebar pl-week"><button data-wk="-1" aria-label="Previous week">‹</button><div class="lbl">Week of ${esc(lbl)}</div><button data-wk="1" aria-label="Next week">›</button></div>
     <div class="row pl-weekbtns"><button data-thisweek>This week</button><button data-copyweek>Copy week to next week</button></div>
+    <div class="row pl-weekbtns"><button data-autofill>Auto-fill week</button></div>
     ${dates.map(d => dayHtml(d, today)).join('')}`;
 }
 
@@ -78,6 +80,7 @@ function onClick(ev) {
     if (!confirm("Copy this week's plan to next week? This replaces everything planned next week.")) return;
     copyWeek(state, weekStartDate, next, Date.now(), newId); changed(false); toast('Week copied'); return;
   }
+  if (t.closest('[data-autofill]')) { openAutofill(); return; }
   const dayEl = t.closest('.pl-day'); if (!dayEl) return;
   const date = dayEl.dataset.date;
   const addBtn = t.closest('[data-add]');
@@ -132,6 +135,44 @@ export function initPlan() {
   // a background sync must not wipe what the user is typing: wait until the field loses focus
   const again = () => { if (!root.classList.contains('on')) return; if (typing(root)) { root.addEventListener('focusout', () => setTimeout(renderPlan, 0), { once: true }); return; } renderPlan(); };
   on('plan:changed', again); on('recipes:changed', again); on('settings:changed', again);
+}
+
+/* ---------- auto-fill preview (shared dialog): nothing is saved until Accept ---------- */
+function openAutofill() {
+  head('Auto-fill week', false);
+  const dlg = dialog(); if (!dlg.open) dlg.showModal();
+  const dates = weekDates(weekStartDate);
+  let seed = 1;
+  $('#dBody').innerHTML = `<div class="rc-ed" id="apRoot">
+    <p class="muted">Fills only empty meals, using your recipes to fit your calorie goal, avoid repeats and prefer favourites. Nothing changes until you press Accept.</p>
+    <div class="row ap-slots">${MEALS.map(m => `<label class="ap-slot"><input type="checkbox" data-slot="${esc(m)}"${m === 'Lunch' || m === 'Dinner' ? ' checked' : ''}> ${esc(m)}</label>`).join('')}</div>
+    <div id="apList"></div>
+    <div class="rc-actions"><button class="primary" id="apAccept">Accept</button><button id="apReroll">Reroll</button><button id="apCancel">Cancel</button></div>
+  </div>`;
+  const root = $('#apRoot');
+  let proposal = { days: {}, notes: [] };
+  const draw = () => {
+    const slots = [...root.querySelectorAll('[data-slot]')].filter(c => c.checked).map(c => c.dataset.slot);
+    proposal = proposePlan(state, { dates, slots, seed });
+    const days = Object.keys(proposal.days).sort();
+    $('#apList').innerHTML = (days.length ? days.map(d => `<div class="card"><h3>${esc(dayLabel(d))}</h3>${MEALS.filter(m => proposal.days[d][m]).map(m => proposal.days[d][m].map(p => {
+      const r = state.recipes[p.recipeId];
+      return `<div class="ap-pick"><b>${esc(m)}</b>: ${esc(r ? r.name : '')} · ${rd(p.servings * 100) / 100} serving${p.servings === 1 ? '' : 's'}${p.complete ? '' : ' <span class="badge warn">incomplete</span>'}<div class="muted">${esc(p.why)}</div></div>`;
+    }).join('')).join('')}</div>`).join('') : '<p class="muted">Nothing to fill: every chosen meal is already planned, or there are no recipes with known nutrition.</p>')
+      + proposal.notes.map(n => `<p class="muted">${esc(n)}</p>`).join('');
+    $('#apAccept').disabled = !days.length;
+  };
+  root.onchange = ev => { if (ev.target.closest('[data-slot]')) draw(); };
+  root.onclick = ev => {
+    const id = ev.target.id;
+    if (id === 'apReroll') { seed++; draw(); }
+    else if (id === 'apCancel') dialog().close();
+    else if (id === 'apAccept') {
+      const n = applyProposal(state, proposal, Date.now(), newId);
+      changed(false); dialog().close(); toast(n ? `${n} meal${n === 1 ? '' : 's'} added to the plan` : 'Nothing added');
+    }
+  };
+  draw();
 }
 
 /* ---------- add-item picker (shared dialog) ---------- */
