@@ -7,8 +7,10 @@ import { checkUrl, MAX_BYTES, TIMEOUT_MS } from '../supabase/functions/fetch-rec
 
 const PUBLIC = async () => ['93.184.216.34'];
 const post = (obj) => ({ method: 'POST', bodyText: JSON.stringify(obj) });
-const page = (body = '<html>ok</html>', type = 'text/html; charset=utf-8', status = 200) =>
-  new Response(body, { status, headers: type === null ? {} : { 'content-type': type } });
+// type === null builds a response with NO content-type header: a string body would add text/plain automatically, a stream body does not.
+const page = (body = '<html>ok</html>', type = 'text/html; charset=utf-8', status = 200) => (type === null
+  ? new Response(new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode(body)); c.close(); } }), { status })
+  : new Response(body, { status, headers: { 'content-type': type } }));
 const redirect = (to, status = 302) => new Response(null, { status, headers: { location: to } });
 
 /** fetchImpl that answers from a list (one entry per call) and records every call. */

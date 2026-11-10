@@ -166,7 +166,8 @@ function finish(r, servingsKnown, nutrition) {
 
 /** A lone string is split into lines (one ingredient per line); each array element is ONE ingredient, its own line breaks joined. */
 function ingredientList(v) {
-  const out = [], push = l => { if (l && out.length < LIM.ingredients) out.push(l.slice(0, LIM.ingredient)); };
+  // a line that only labels a group ("Optional Toppings:", "For the sauce:") ends with a colon and has no quantity: it is not an ingredient
+  const out = [], push = l => { if (l && !(l.endsWith(':') && !/\d/.test(l)) && out.length < LIM.ingredients) out.push(l.slice(0, LIM.ingredient)); };
   if (typeof v === 'string') for (const l of toLines(v, 400000)) push(l);
   else if (Array.isArray(v)) for (let i = 0; i < v.length && out.length < LIM.ingredients; i++) if (typeof v[i] === 'string') push(clean(v[i], 6000));
   return out;
@@ -193,7 +194,7 @@ function tagList(node) {
   const raw = [];
   for (const k of ['recipeCategory', 'recipeCuisine']) {
     const v = field(node, k);
-    for (const s of Array.isArray(v) ? v.slice(0, 50) : [v]) if (typeof s === 'string') raw.push(clean(s, 400));
+    for (const s of Array.isArray(v) ? v.slice(0, 50) : [v]) if (typeof s === 'string') raw.push(...clean(s, 2000).split(','));
   }
   const kw = field(node, 'keywords');
   if (typeof kw === 'string') raw.push(...clean(kw, 20000).split(','));

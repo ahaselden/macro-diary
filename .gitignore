@@ -1,1 +1,3 @@
 .vs/
+# Real-site recipe snapshots (third-party text): local only, never committed. See docs/specs/import-dev-tools.md.
+tests/local-sites/
