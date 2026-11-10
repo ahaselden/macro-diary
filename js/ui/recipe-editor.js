@@ -6,7 +6,7 @@ import { emit } from '../core/bus.js';
 import { esc, rd, r1 } from '../core/format.js';
 import { foodKey } from '../domain/food.js';
 import { parseIngredient, formatQty } from '../domain/ingredient-parse.js';
-import { newRecipe, newIngredient, resolveGrams, recipeNutrition, saveRecipe, deleteRecipe, scaleIngredientText } from '../domain/recipes.js';
+import { newRecipe, newIngredient, resolveGrams, recipeNutrition, saveRecipe, deleteRecipe, scaleIngredientText, setFavorite } from '../domain/recipes.js';
 import { searchAll } from '../services/foods.js';
 
 let draft = null, isNew = true;
@@ -51,6 +51,7 @@ function renderForm() {
   const d = draft;
   $('#dBody').innerHTML = `<div class="rc-ed" id="rcRoot">
     <label for="reName">Name</label><input id="reName" value="${esc(d.name)}" autocomplete="off">
+    <button type="button" id="reFav" class="fav-btn${d.favorite === true ? ' on' : ''}" aria-pressed="${d.favorite === true}" aria-label="Favourite recipe">${d.favorite === true ? '★ Favourite' : '☆ Add to favourites'}</button>
     <div class="row"><div><label for="reServ">Servings</label><input id="reServ" type="number" inputmode="decimal" step="any" min="0" value="${Number(d.servings) || 1}"></div>
     <div><label for="reTime">Total time (min)</label><input id="reTime" type="number" inputmode="numeric" min="0" value="${Number(d.totalTime) > 0 ? Number(d.totalTime) : ''}"></div></div>
     <label for="reDesc">Description</label><textarea id="reDesc">${esc(d.description)}</textarea>
@@ -100,7 +101,8 @@ function renderForm() {
       const i = find(t); if (i) { draft.ingredients = draft.ingredients.filter(x => x !== i); renderForm(); }
     } else if (t.closest('[data-link]')) {
       const i = find(t); if (i) renderPicker(i);
-    } else if (t.id === 'reSave') doSave();
+    } else if (t.closest('#reFav')) toggleFav();
+    else if (t.id === 'reSave') doSave();
     else if (t.id === 'reCancel') { if (canClose()) dialog().close(); }
     else if (t.id === 'reDel') {
       if (!confirm('Delete this recipe?')) return;
@@ -138,8 +140,21 @@ function readFields() {
   if (val('reSteps') !== null) draft.steps = val('reSteps').split('\n').map(x => x.trim()).filter(Boolean);
 }
 
+// A saved recipe's star applies at once (like the star on the card, Cancel does not undo it); a new recipe keeps it in the draft until Save.
+function toggleFav() {
+  const want = draft.favorite !== true;
+  if (!isNew && setFavorite(state, draft.id, want, Date.now())) {
+    save(); emit('recipes:changed');
+    try { const snap = JSON.parse(initialSnapshot); snap.favorite = want; initialSnapshot = JSON.stringify(snap); } catch { /* guard just asks once more */ }
+  }
+  draft.favorite = want;
+  const b = $('#reFav');
+  if (b) { b.classList.toggle('on', want); b.setAttribute('aria-pressed', String(want)); b.textContent = want ? '★ Favourite' : '☆ Add to favourites'; }
+}
+
 function doSave() {
   readFields();
+  if (!isNew && state.recipes[draft.id]) draft.favorite = state.recipes[draft.id].favorite === true;   // never overwrite a newer star (e.g. from sync) with a stale draft
   draft.name = String(draft.name || '').trim();
   if (!draft.name) { toast('Enter a recipe name'); return; }
   if (!(Number(draft.servings) > 0)) draft.servings = 1;
