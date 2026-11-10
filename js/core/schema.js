@@ -6,9 +6,10 @@
 //            3 = sync-ready: tombstones (deleted entry ids) + settingsUpdatedAt; entries gain `updatedAt` when edited
 //                (missing updatedAt means 0 = "older than any real edit", so old data needs no rewrite)
 //            4 = meal planner data: recipes {id: recipe}, plan {date: {updatedAt, slots}}, shopping {checks, extras}
+//            5 = recipes gain `favorite` (boolean; missing = false)
 import { MEALS } from './constants.js';
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export const defaults = () => ({
   schemaVersion: SCHEMA_VERSION, theme: 'auto', weightUnit: 'g', measures: {}, goals: { k: 2000, p: 150, c: 200, f: 65 },
@@ -53,7 +54,7 @@ export function sanitizeRecipe(r, id) {
   return { id, name: str(r.name, 200), description: str(r.description, 2000), source: str(r.source, 500),
     servings: numOr(r.servings, 4, 0.01), totalTime: numOr(r.totalTime, null), tags: list(r.tags, 40, 20), steps: list(r.steps, 2000, 100),
     ingredients: (Array.isArray(r.ingredients) ? r.ingredients : []).slice(0, 200).map((i, n) => sanitizeIngredient(i, id, n)).filter(Boolean),
-    updatedAt: ts(r.updatedAt) };
+    favorite: r.favorite === true, updatedAt: ts(r.updatedAt) };
 }
 
 /** One planned day: { updatedAt, slots: { Breakfast: [item], Lunch: [], Dinner: [], Snacks: [] } }. */
@@ -123,6 +124,7 @@ export function migrate(d) {
   if (v < 2) d.schemaVersion = 2;        // v1 -> v2: no structural change, just versioning
   if (v < 3) d.schemaVersion = 3;        // v2 -> v3: tombstones + settingsUpdatedAt (added by sanitize with empty defaults)
   if (v < 4) d.schemaVersion = 4;        // v3 -> v4: recipes / plan / shopping (added by sanitize, empty)
-  // future: if (v < 5) { ...; d.schemaVersion = 5; }
+  if (v < 5) d.schemaVersion = 5;        // v4 -> v5: recipe.favorite (added by sanitize, false)
+  // future: if (v < 6) { ...; d.schemaVersion = 6; }
   return sanitize(d);
 }

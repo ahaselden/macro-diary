@@ -4,7 +4,7 @@ import { unitsFor, volOf } from './units.js';
 import { parseIngredient, formatQty } from './ingredient-parse.js';
 
 export function newRecipe(id, now) {
-  return { id, name: '', description: '', source: '', servings: 4, totalTime: null, tags: [], steps: [], ingredients: [], updatedAt: now };
+  return { id, name: '', description: '', source: '', servings: 4, totalTime: null, tags: [], steps: [], ingredients: [], favorite: false, updatedAt: now };
 }
 
 export function newIngredient(text, id) {
@@ -178,8 +178,18 @@ export function deleteRecipe(state, id, now) {
   return true;
 }
 
-export function searchRecipes(state, q) {
-  const all = Object.values(state.recipes || {});
+/** Star/unstar a recipe. Stamps updatedAt so sync and merge treat it like any edit. False (no change) for an unknown id. */
+export function setFavorite(state, id, on, now) {
+  const r = state && state.recipes && typeof id === 'string' && Object.hasOwn(state.recipes, id) ? state.recipes[id] : null;
+  if (!r || typeof r !== 'object') return false;
+  r.favorite = on === true;
+  r.updatedAt = now;
+  return true;
+}
+
+export function searchRecipes(state, q, opts) {
+  const favOnly = !!opts && opts.favoritesOnly === true;
+  const all = Object.values(state.recipes || {}).filter(r => !favOnly || r.favorite === true);
   const words = String(q || '').toLowerCase().split(/\s+/).filter(Boolean);
   const hit = r => {
     if (!words.length) return true;

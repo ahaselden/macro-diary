@@ -48,6 +48,7 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
   <section class="view" id="v-recipes">
     <div class="row rc-bar">
       <input id="rcQ" type="search" placeholder="Search recipes" autocomplete="off" aria-label="Search recipes">
+      <button type="button" class="fit" id="rcFav" aria-pressed="false">☆ Favourites</button>
       <button class="primary fit" id="rcNew">+ New recipe</button>
     </div>
     <div id="rcList"></div>
