@@ -5,7 +5,7 @@ Live on GitHub Pages (`ahaselden/macro-diary`). Data lives in the browser (`loca
 
 ## Commands
 - `npm start` — local dev server on http://localhost:8080 (ES modules do not load from `file://`)
-- `npm test` — `node --test tests/` (no deps)
+- `npm test` — `node --test "tests/**/*.test.js"` (no deps; CI runs the same on every push)
 
 ## Architecture (layers; imports only point downward)
 `ui → services, domain, core` · `services → domain, core` · `domain → core/{constants,format,dates,schema} + domain only` · `core → nothing`
@@ -23,5 +23,10 @@ Live on GitHub Pages (`ahaselden/macro-diary`). Data lives in the browser (`loca
 - Service worker (`sw.js`): after changing any shipped file, bump `CACHE` so phones pick up the update, and keep the precache list in sync.
 - Do not commit secrets. The USDA key is entered by the user in Settings and stays in their browser.
 
-## Status
-Mid-refactor from a single `index.html` into modules (branch `refactor/modules`). See the approved plan in the session history; meal planner is deferred.
+## Working rules added by the refactor
+- Diary changes go through `js/domain/entries.js` (`addEntry/updateEntry/removeEntry/touchSettings`) so records are timestamped and deletions leave tombstones (sync depends on it).
+- Saved-shape changes: bump `SCHEMA_VERSION` in `js/core/schema.js`, add a `migrate` step + a test that old data survives. `STORAGE_KEY` never changes.
+- New shipped file under `js/` or `css/` → add it to `SHELL` in `sw.js` and bump `CACHE` (`tests/sw.test.js` enforces the list).
+- Non-obvious design choices are recorded in `docs/DECISIONS.md`; open problems in `docs/KNOWN-ISSUES.md`; the plan in `docs/ROADMAP.md`; the structure in `docs/ARCHITECTURE.md`. Keep them current in the same commit as the change.
+- Reviews/refactors: `.claude/agents/module-extractor.md` (creates only new files) and `regression-reviewer.md` (read-only).
+- Nothing is pushed or deployed by an agent; the owner reviews the branch first.
