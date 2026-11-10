@@ -1,0 +1,17 @@
+---
+name: ship-feature
+description: The Macro Diary feature workflow. Use for any new feature or non-trivial change - a separate test-designer agent writes the spec and failing tests first, you implement to green, push the feature branch, open a PR, then a separate pr-reviewer agent reviews it. Never merges.
+---
+
+# Ship a feature (Macro Diary)
+
+Roles are kept separate on purpose: the **test-designer** defines "done", **you** implement, the **pr-reviewer** judges. You may not edit the designer's tests to make them pass.
+
+1. **Plan.** Write a short plan (what, why, layers touched, UI or not). For anything user-visible or design-heavy, show it to the owner first. Create `feature/<short-name>` from `main` (or from the current feature branch if the work builds on it).
+2. **Spec and tests first.** Spawn the `test-designer` agent (fresh context, not a fork) with the plan. It writes `docs/specs/<name>.md` and failing tests under `tests/` only. Confirm yourself with `npm test` that the new tests fail for the right reason. Commit as its own commit: `Spec and failing tests for <name>`. Note the commit hash.
+3. **Implement to green.** Implement in the right layers, in small commits (pure logic first). Do not edit those tests. If a test is wrong, say so in the PR description and send the question back to the test-designer (SendMessage) rather than fixing it yourself. Tests you add later are fine; say so in the commit message.
+4. **Verify.** `npm test` all green. For UI changes drive the real page in the built-in browser. Update `sw.js` (SHELL and CACHE), `docs/DECISIONS.md`, `docs/KNOWN-ISSUES.md`, and the spec's manual checklist. State what you could not verify.
+5. **Push and open the PR** (the owner authorised this; see CLAUDE.md): `git push -u origin feature/<name>`, then `gh pr create --base main --head feature/<name> --title ... --body ...` (gh is at `C:\Program Files\GitHub CLI\gh.exe` if not on PATH). The body has: what and why, a link to the spec, a test summary (counts, which came from the designer), changes to designer tests (should be "none"), and what is unverified. **Never** merge, never push `main`, never force-push, and add no `Co-Authored-By` or "Generated with" lines.
+6. **Review.** Spawn the `pr-reviewer` agent on the branch with the spec path. Post its report on the PR with `gh pr comment <n> --body-file <file>`. Fix blocking findings in new commits, push, and ask for one re-review. Then tell the owner the PR link, the verdict and the unverified list, and stop: the owner merges.
+
+If a push or `gh` call is blocked by permissions, do not work around it: give the owner the exact command to run.

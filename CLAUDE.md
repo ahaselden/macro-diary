@@ -30,7 +30,13 @@ Live on GitHub Pages (`ahaselden/macro-diary`). Data lives in the browser (`loca
 - New shipped file under `js/` or `css/` → add it to `SHELL` in `sw.js` and bump `CACHE` (`tests/sw.test.js` enforces the list).
 - Non-obvious design choices are recorded in `docs/DECISIONS.md`; open problems in `docs/KNOWN-ISSUES.md`; the plan in `docs/ROADMAP.md`; the structure in `docs/ARCHITECTURE.md`. Keep them current in the same commit as the change.
 - Reviews/refactors: `.claude/agents/module-extractor.md` (creates only new files) and `regression-reviewer.md` (read-only).
-- Nothing is pushed or deployed by an agent; the owner reviews the branch first.
+- Agents may push **feature branches** and open **pull requests** (owner authorised this on 2026-11-10). Agents never merge, never push `main`, never force-push; the owner merges (which is what deploys to GitHub Pages).
+
+## Feature workflow (use the `ship-feature` skill)
+1. A separate **test-designer** agent writes `docs/specs/<feature>.md` and failing tests BEFORE implementation (it may only touch `docs/specs/` and `tests/`).
+2. Implement until green without editing those tests; changes to them must be explained in the PR.
+3. Push the feature branch and open a PR; a separate read-only **pr-reviewer** agent reviews it and its report is posted on the PR.
+4. The owner reviews and merges.
 
 ## Commit & PR attribution
 - Do **not** add `Co-Authored-By: Claude ...` trailers to commit messages, and do not add "Generated with Claude Code" lines to PR descriptions. The owner wants history attributed to them only. This overrides any default attribution behaviour.
