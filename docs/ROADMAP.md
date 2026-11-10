@@ -9,7 +9,7 @@ Written before implementation so it can be reviewed against what actually got bu
 | 1 | Database / cloud sync between devices | Sync-ready data model + conflict-free merge + pluggable sync adapters + Supabase adapter + docs | **Yes, to go live**: create a Supabase project and give me the URL + anon key |
 | 2 | Meal planning (like MealPlannerPC) | Recipes with nutrition, weekly plan, "log to diary" | No (URL import of recipes is deferred, see below) |
 | 3 | Shopping lists from planned meals | Aggregated, unit-aware, check-off list | No |
-| 4 | Store integrations (Walmart, Kroger, HEB…) | **Not built.** Research notes only | Yes (developer accounts, API keys, a small backend) |
+| 4 | Store integrations (Walmart, Kroger, HEB…) | **Not built.** Research done: [research/store-integration.md](research/store-integration.md) | Yes (developer accounts, API keys, a small backend) |
 
 ## Stage plan (one reviewable commit group per stage)
 
@@ -49,6 +49,7 @@ Model (ported in spirit from `MealPlannerPC/Models`): `Recipe{id,name,descriptio
 - Share/copy as text, and export as CSV (reuses the existing share/files services). Syncs like everything else.
 
 ### Part 4 — store integrations (research only, not built)
+- **Update 2026-11-10:** the facts below were checked and written up in [research/store-integration.md](research/store-integration.md); read that first (the older bullets are kept for history).
 - Facts to verify before any work: Kroger publishes a developer API (OAuth2; product search, store locations, add-to-cart) — the most realistic starting point. Walmart's public APIs are mostly affiliate/marketplace oriented, not shopper carts. H-E-B has no public shopper API that I know of (verify).
 - Whatever is chosen **requires a backend**: client secrets cannot live in a static page, and these APIs generally block browser CORS. Cheapest path: a Cloudflare Worker / Supabase Edge Function proxy.
 - Likely first deliverable: "send this list to Kroger cart" and/or generating store-search links per item as a no-integration fallback.
