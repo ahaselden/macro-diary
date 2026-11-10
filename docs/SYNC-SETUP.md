@@ -138,7 +138,7 @@ The URL, anon key and your login session are stored only in that browser on that
 When you are signed in with your own project, **Settings → Sync → Add another device** shows a link (and a Copy / share button). Open that link on your other device: it fills in the Project URL and anon key and removes itself from the address bar; then just sign in there. The link holds the project URL and key only, never your password or sign-in. Treat it like the anon key (public by design, but only send it to people you want on your project). If that device is already signed in to a different project it asks before switching.
 
 ### Built-in default project (owner option)
-If the app is shipped with a default project (`js/services/sync/defaults.js`, public URL + publishable key only), users skip this whole page: Settings → Sync goes straight to sign-in, with **Advanced: use my own project** for anyone who wants their own. It ships empty; see docs/DECISIONS.md D25 and docs/VISION.md.
+If the app is shipped with a default project (`js/services/sync/defaults.js`, public URL + publishable key only), users skip this whole page: Settings → Sync goes straight to sign-in, with **Advanced: use my own project** for anyone who wants their own. It now holds the owner's project; clear both values to turn it off. See docs/DECISIONS.md D25 and docs/VISION.md.
 
 ### What "sync" does
 

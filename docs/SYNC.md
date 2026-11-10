@@ -59,7 +59,7 @@ A sync where nothing changed anywhere uploads nothing.
 - Passwords are never stored by the app; only the session tokens Supabase returns are.
 
 ## Setup: built-in default project and setup link
-A device uses its own project if the user set one, else the built-in default in `js/services/sync/defaults.js` (empty until the owner decides), else nothing. A signed-in device can show a link (`#sync-setup=…`, URL + key only) that pre-fills Settings → Sync on another device. See D25.
+A device uses its own project if the user set one, else the built-in default in `js/services/sync/defaults.js` (the owner's project), else nothing. A signed-in device can show a link (`#sync-setup=…`, URL + key only) that pre-fills Settings → Sync on another device. See D25.
 
 ## Known limits (honest list)
 
