@@ -19,7 +19,7 @@ The goal is that individuals and families can plan how and when they will eat th
 |---|---|---|---|
 | 1 | Track calories and macros (USDA, Open Food Facts, custom foods, barcode scan) | **Built** | Label-photo entry (camera or upload) and "save a scanned barcode as your own food" are merged (PRs 2 and 5); both are unverified on real phones. |
 | 2 | Share a day, export day/week/month/year | **Built** | |
-| 3 | Sync across devices | **Code built, not live** | Needs the owner's Supabase project ([SYNC-SETUP.md](SYNC-SETUP.md)); only tested against a mock. |
+| 3 | Sync across devices | **Built; real two-device test pending** | The owner's Supabase project exists and is the built-in default (PR #8, D25), so a new user only signs in; "Advanced: use my own project" and an "Add another device" setup link are merged. No device has synced through the real project yet ([SYNC-SETUP.md](SYNC-SETUP.md) 6b). Open: whether to host other people's data (households, privacy, free tier, sign-up settings). No QR code yet. |
 | 4 | Recipes with nutrition per serving | **Built** | Ingredients are parsed from text and linked to real foods. |
 | 5 | Import a recipe from **pasted text** | **Built** | Paste ingredient lines. |
 | 6 | Import a recipe from a **website** | Not built | Needs a small backend (section 5). |
