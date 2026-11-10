@@ -13,7 +13,7 @@ const per100 = { k: 100, p: 1, c: 1, f: 1 };
 const food = { name: 'Flour', brand: '', source: 'USDA', per100, servingG: 0 };
 const recipe = (id, over = {}) => ({ id, name: 'Recipe ' + id, description: '', source: '', servings: 4, totalTime: null, tags: [], steps: [], ingredients: [], updatedAt: 0, ...over });
 const planDay = (items = [], updatedAt = 0) => ({ updatedAt, slots: { Breakfast: [], Lunch: items, Dinner: [], Snacks: [] } });
-const item = (id, recipeId) => ({ id, type: 'recipe', recipeId, name: '', servings: 1, food: null, grams: null });
+const item = (id, recipeId) => ({ id, type: 'recipe', recipeId, name: '', servings: 1, food: null, grams: null, entryId: '' });
 const base = (over = {}) => ({ ...defaults(), ...over });
 
 // ---------- sanitising untrusted data ----------
@@ -34,6 +34,8 @@ test('sanitizePlanDay keeps the four meal slots and drops broken items', () => {
   const d = sanitizePlanDay({ updatedAt: 3, slots: { Lunch: [item('i1', 'r1'), { type: 'recipe' }, null, { type: 'food', food: null }, { type: 'food', food, grams: 150, id: 'f1' }], Brunch: [item('x', 'r')] } });
   assert.deepEqual(Object.keys(d.slots), ['Breakfast', 'Lunch', 'Dinner', 'Snacks']);
   assert.deepEqual(d.slots.Lunch.map(i => i.id), ['i1', 'f1']); assert.equal(sanitizePlanDay('x'), null);
+  const logged = sanitizePlanDay({ slots: { Lunch: [{ ...item('i9', 'r1'), entryId: 'e_123' }] } });
+  assert.equal(logged.slots.Lunch[0].entryId, 'e_123'); assert.equal(d.slots.Lunch[0].entryId, '');
 });
 test('sanitizeShopping keeps valid ticks/extras only', () => {
   const s = sanitizeShopping({ checks: { 'flour|g': { on: true, updatedAt: 5 }, bad: 5 }, extras: { e1: { text: 'Milk', on: 1 }, e2: { text: '   ' }, e3: 'x' } });

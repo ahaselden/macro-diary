@@ -61,7 +61,8 @@ export function sanitizePlanDay(d) {
       if (!plainObject(it)) return null;
       const type = it.type === 'food' ? 'food' : 'recipe';
       return { id: str(it.id, 80) || `${m}-${n}`, type, recipeId: type === 'recipe' ? str(it.recipeId, 80) : '', name: str(it.name, 200),
-        servings: numOr(it.servings, 1, 0.01), food: type === 'food' ? sanitizeFood(it.food) : null, grams: numOr(it.grams, null) };
+        servings: numOr(it.servings, 1, 0.01), food: type === 'food' ? sanitizeFood(it.food) : null, grams: numOr(it.grams, null),
+        entryId: str(it.entryId, 80) };   // diary entry this item was logged as ('' = not logged yet)
     }).filter(it => it && (it.type === 'recipe' ? it.recipeId : it.food));
   }
   return { updatedAt: numOr(d.updatedAt, 0), slots };
