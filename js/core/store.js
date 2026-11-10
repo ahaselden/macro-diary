@@ -12,12 +12,34 @@ export const defaults = () => ({
   apiKey: '', useUSDA: true, useOFF: true, days: {}, recent: [], custom: [],
 });
 
+const goalNum = (v, fallback) => (v !== null && v !== '' && v !== true && v !== false && Number.isFinite(+v) && +v >= 0 ? +v : fallback);
+
+/**
+ * Make loaded/restored data safe to use: right types, finite non-negative goals, known units.
+ * Untrusted input (a restored backup file) reaches HTML through these fields, so they are forced to
+ * plain numbers/known strings here rather than trusted. Never drops diary data.
+ */
+export function sanitize(d) {
+  const def = defaults(), g = d.goals && typeof d.goals === 'object' ? d.goals : {};
+  d.goals = { k: goalNum(g.k, def.goals.k), p: goalNum(g.p, def.goals.p), c: goalNum(g.c, def.goals.c), f: goalNum(g.f, def.goals.f) };
+  if (d.weightUnit !== 'g' && d.weightUnit !== 'oz') d.weightUnit = 'g';
+  if (typeof d.theme !== 'string') d.theme = 'auto';
+  if (typeof d.apiKey !== 'string') d.apiKey = '';
+  d.useUSDA = d.useUSDA !== false;
+  d.useOFF = d.useOFF !== false;
+  if (!d.days || typeof d.days !== 'object' || Array.isArray(d.days)) d.days = {};
+  if (!d.measures || typeof d.measures !== 'object' || Array.isArray(d.measures)) d.measures = {};
+  if (!Array.isArray(d.recent)) d.recent = [];
+  if (!Array.isArray(d.custom)) d.custom = [];
+  return d;
+}
+
 /** Bring older saved data up to the current shape. Never drops user data. */
 export function migrate(d) {
   const v = Number.isFinite(d.schemaVersion) ? d.schemaVersion : 1;
   if (v < 2) d.schemaVersion = 2;   // v1 -> v2: no structural change, just versioning
   // future: if (v < 3) { ...; d.schemaVersion = 3; }
-  return d;
+  return sanitize(d);
 }
 
 /** `storage` is anything with getItem/setItem (localStorage in the browser, a fake in tests, or null). */

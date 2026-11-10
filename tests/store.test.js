@@ -61,6 +61,32 @@ test('replace keeps object identity, drops old keys, migrates and fills defaults
   assert.equal(Object.keys(s.state.days).length, Object.keys(fixture('state').days).length);
 });
 
+test('a hostile backup cannot smuggle markup through goals, units or theme', () => {
+  const evil = '"><img src=x onerror=alert(1)>';
+  const s = createStore(fakeStorage()); s.replace({ goals: { k: evil, p: -5, c: null, f: '' }, weightUnit: evil, theme: { a: 1 }, apiKey: 7, days: [1], measures: 'x', recent: {}, custom: 3 });
+  assert.deepEqual(s.state.goals, defaults().goals);
+  assert.equal(s.state.weightUnit, 'g');
+  assert.equal(s.state.theme, 'auto');
+  assert.equal(s.state.apiKey, '');
+  assert.deepEqual(s.state.days, {});
+  assert.deepEqual(s.state.measures, {});
+  assert.deepEqual(s.state.recent, []);
+  assert.deepEqual(s.state.custom, []);
+});
+
+test('sane goals (numbers or numeric strings) are kept as numbers', () => {
+  const s = createStore(fakeStorage()); s.replace({ goals: { k: '1800', p: 120, c: 0, f: 55.5 } });
+  assert.deepEqual(s.state.goals, { k: 1800, p: 120, c: 0, f: 55.5 });
+});
+
+test('sanitising leaves valid diary data untouched', () => {
+  const v1 = fixture('state'), s = createStore(fakeStorage()); s.replace(clone(v1));
+  assert.deepEqual(s.state.days, v1.days);
+  assert.deepEqual(s.state.measures, v1.measures);
+  assert.equal(s.state.theme, v1.theme);
+  assert.equal(s.state.weightUnit, v1.weightUnit);
+});
+
 test('migrate never removes data and never lowers the version', () => {
   assert.equal(migrate({ days: { a: [] } }).schemaVersion, 2);
   assert.equal(migrate({ schemaVersion: 7 }).schemaVersion, 7);
