@@ -213,7 +213,7 @@ test('V5 (weak) js/ui/recipe-view.js exists, exports openRecipeView, imports onl
   assert.match(s, /export\s+(?:async\s+)?function\s+openRecipeView\s*\(\s*recipeId\s*,\s*servings\s*\)|export\s+const\s+openRecipeView\b/);
   const specs = [...s.matchAll(/import[^'"]*?from\s*['"]([^'"]+)['"]/g)].map(m => m[1]);
   assert.ok(specs.length > 0);
-  for (const sp of specs) assert.match(sp, /^(?:\.\.\/core\/[\w-]+\.js|\.\.\/domain\/[\w-]+\.js|\.\/recipe-editor\.js)$/, sp);
+  for (const sp of specs) assert.match(sp, /^(?:\.\.\/core\/[\w-]+\.js|\.\.\/domain\/[\w-]+\.js|\.\/recipe-editor\.js|\.\/cook-view\.js)$/, sp);
   assert.ok(specs.includes('./recipe-editor.js')); assert.match(s, /\brecipeSummary\b/);
   assert.match(s, /\bdialog\s*\(/); assert.match(s, /\bhead\s*\(/); assert.match(s, /showModal\s*\(/);
   assert.ok(!/\b(fetch|localStorage|XMLHttpRequest)\b/.test(noComments(s)));

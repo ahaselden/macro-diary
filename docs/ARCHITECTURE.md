@@ -53,7 +53,7 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 | `js/services/sync/*.js` | Sync: `engine.js` (pull→merge→push), `index.js` (service: config, sign-in, debounce), `config.js`, adapters `supabase-adapter.js` / `memory-adapter.js`. |
 | `js/services/recipe-fetch.js` `sync/connection.js` | Asks the fetch-recipe function for one page (sends only the address and the public key); reads this device's sync settings. The function itself is `supabase/functions/fetch-recipe/` (`guard.js` is pure and Node-tested, `index.ts` runs on Deno). |
 | `js/services/share.js` `files.js` `barcode.js` | Share sheet/clipboard and the day image; file download; camera barcode scanning. |
-| `js/ui/*.js` | One module per screen/dialog (incl. `recipes-view`, `recipe-editor`, `recipe-view`, `plan-view`, `shop-view`, `sync-view`): `diary`, `add-food`, `custom-food`, `amount-picker`, `export-view`, `settings-view`, `restore-dialog`, `theme`, `tabs`, `share-result`; `ctx.js` holds unsaved UI state. |
+| `js/ui/*.js` | One module per screen/dialog (incl. `recipes-view`, `recipe-editor`, `recipe-view`, `cook-view`, `plan-view`, `shop-view`, `sync-view`): `diary`, `add-food`, `custom-food`, `amount-picker`, `export-view`, `settings-view`, `restore-dialog`, `theme`, `tabs`, `share-result`; `ctx.js` holds unsaved UI state. |
 | `sw.js` `manifest.webmanifest` | Offline cache and installability. |
 | `tests/` | `node:test` suites. `tests/golden/` + `tests/fixtures/` are outputs/inputs captured from the original single-file app; the modules must reproduce them exactly ([D3](DECISIONS.md#d3-golden-file-tests-captured-from-the-original-app)). |
 

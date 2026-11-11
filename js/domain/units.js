@@ -43,8 +43,10 @@ export function parseServingText(text) {
   if (typeof text !== 'string') return null;
   const clean = stripTags(text.slice(0, MAX_TEXT));
   if (!clean) return null;
+  if (/\d\s*[x×]\s*\d/i.test(clean)) return null;                      // "2 x 50 g": a multipack, not one serving's weight
+  const num = clean.replace(/(\d),(\d)/g, '$1.$2');                     // decimal commas ("12,5 g") as in French/German/Spanish text
   const first = (re, mult) => {
-    for (const m of clean.matchAll(re)) { const g = Number(m[1]) * mult; if (Number.isFinite(g) && g > 0 && g <= MAX_SERVING_G) return g; }
+    for (const m of num.matchAll(re)) { const g = Number(m[1]) * mult; if (Number.isFinite(g) && g > 0 && g <= MAX_SERVING_G) return g; }
     return null;
   };
   const grams = first(/(?<![\w.\-])(\d+(?:\.\d+)?)\s*(?:g|gr|grams?)\b/gi, 1);

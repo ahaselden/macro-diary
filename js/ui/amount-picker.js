@@ -46,6 +46,7 @@ export function showFood(food, existing) {
   $('#mAdd').onclick = () => {
     const label = $('#mName').value.trim(), g = +$('#mG').value;
     if (!label || !(g > 0)) { toast('Enter a name and grams'); return; }
+    touched = true;
     const k = foodKey(food); state.measures[k] = [...(state.measures[k] || []).filter(m => m.label !== label), { label, g, updatedAt: Date.now() }]; save();
     units = unitsFor(food); fill('p:' + label); $('#amt').value = 1; upd(); $('#mName').value = $('#mG').value = ''; toast('Measure saved');
   };
