@@ -200,7 +200,7 @@ export function ingredientStatus(ing) {
 
 /** A plain http(s) link without credentials, at most 500 characters; anything else is ''. */
 function plainLink(v) {
-  if (typeof v !== 'string' || v.length > 500 || v !== v.trim()) return '';
+  if (typeof v !== 'string' || v.length > 500 || v !== v.trim() || /\s/.test(v)) return '';
   try { const u = new URL(v); return (u.protocol === 'http:' || u.protocol === 'https:') && !u.username && !u.password ? v : ''; } catch { return ''; }
 }
 

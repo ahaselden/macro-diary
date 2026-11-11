@@ -119,7 +119,7 @@ function onClick(ev) {
   if (addBtn) { openPicker(date, addBtn.dataset.add); return; }
   const row = t.closest('.pl-item');
   if (row && t.closest('[data-open]')) {                                           // the recipe's name: open a read-only view of it
-    const it = getDay(state, date).slots[row.dataset.meal].find(i => i.id === row.dataset.id);
+    const it = (getDay(state, date).slots[row.dataset.meal] || []).find(i => i.id === row.dataset.id);
     if (it && it.type === 'recipe') openRecipeView(it.recipeId, it.servings);
     return;
   }
