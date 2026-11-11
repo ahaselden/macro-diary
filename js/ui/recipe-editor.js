@@ -7,9 +7,15 @@ import { esc, rd, r1 } from '../core/format.js';
 import { foodKey } from '../domain/food.js';
 import { parseIngredient, formatQty } from '../domain/ingredient-parse.js';
 import { newRecipe, newIngredient, resolveGrams, recipeNutrition, saveRecipe, deleteRecipe, scaleIngredientText, setFavorite, ingredientStatus } from '../domain/recipes.js';
+import { shouldSuggest, suggestionFood } from '../domain/food-match.js';
 import { searchAll } from '../services/foods.js';
+import { loadPortions } from '../services/usda.js';
+import { suggestMatches } from '../services/food-suggest.js';
 
 let draft = null, isNew = true, importNotes = [];
+// Suggested food matches for this editing session: IN MEMORY only (never saved or synced), cleared whenever the editor opens. A suggestion is only ever
+// linked when the user taps Accept (or "Accept all likely"); 'check' suggestions are never included in Accept all.
+let suggestions = {}, sugMsg = '', sugRunning = false, sugCancel = false, sugToken = 0;
 
 const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
@@ -18,6 +24,7 @@ const newId = p => p + Date.now().toString(36) + Math.random().toString(36).slic
 export function openRecipeEditor(recipe, notes) {
   isNew = !recipe || !(state.recipes && Object.hasOwn(state.recipes, recipe.id));
   importNotes = Array.isArray(notes) ? notes.filter(n => typeof n === 'string' && n).slice(0, 10) : [];
+  suggestions = {}; sugMsg = ''; sugRunning = false; sugCancel = true; sugToken++;          // a lookup still running for an earlier editor must not touch this one
   draft = recipe ? structuredClone(recipe) : newRecipe(newId('r_'), Date.now());
   if (!Array.isArray(draft.ingredients)) draft.ingredients = [];
   const dlg = dialog();
@@ -46,10 +53,51 @@ function ingInfo(i) {
   return `${qty} <b>${name}</b>${prep ? ', ' + prep : ''}${linked}${grams}`;
 }
 
+/** The small "Suggested: <food> (likely)" note with Accept / Dismiss, shown after the ingredient's info line. Built here, not in ingInfo (which has no buttons). */
+function sugHtml(i) {
+  const s = Object.hasOwn(suggestions, i.id) ? suggestions[i.id] : null;
+  if (!s || !s.food || i.food) return '';
+  return ` · <span class="sug${s.confidence === 'check' ? ' sug-check' : ''}">Suggested: ${esc(s.food.name)} (${esc(s.confidence)}, ${rd(s.food.per100.k)} kcal /100g)</span> <button type="button" class="sug-btn" data-accept>Accept</button> <button type="button" class="sug-btn" data-dismiss>Dismiss</button>`;
+}
+
+const likelyIds = () => draft.ingredients.filter(i => !i.food && Object.hasOwn(suggestions, i.id) && suggestions[i.id].confidence === 'likely').map(i => i.id);
+
+function acceptSuggestion(i) {
+  const s = Object.hasOwn(suggestions, i.id) ? suggestions[i.id] : null; if (!s) return false;
+  const food = suggestionFood(s.food); if (!food) return false;
+  i.food = food; i.grams = resolveGrams(i, state.measures);        // exactly what picking the food in the picker does
+  delete suggestions[i.id];
+  return true;
+}
+
+const setSugMsg = t => { const el = $('#reSugMsg'); if (el) el.textContent = t; };
+
+async function runSuggest() {
+  if (sugRunning) return;
+  const tok = ++sugToken;
+  sugRunning = true; sugCancel = false; sugMsg = 'Looking up…'; renderForm();
+  const res = await suggestMatches(draft.ingredients, {
+    search: q => searchAll(q, { useUSDA: state.useUSDA, useOFF: state.useOFF, apiKey: state.apiKey }),
+    loadPortions: f => loadPortions(f, state.apiKey),
+    isCancelled: () => sugCancel || tok !== sugToken,
+    onProgress: p => { if (tok === sugToken) setSugMsg(`Looking up ${p.done} of ${p.total}…`); },
+  });
+  if (tok !== sugToken || !$('#rcRoot')) return;                  // the editor was closed or reopened meanwhile
+  sugRunning = false;
+  for (const id of Object.keys(res.suggestions)) Object.defineProperty(suggestions, id, { value: res.suggestions[id], enumerable: true, writable: true, configurable: true });
+  const found = Object.keys(res.suggestions).length;
+  sugMsg = res.reason === 'rate-limit' ? `The food database's request limit was reached, so lookups stopped (${found} found so far). Add your own USDA key in Settings for more lookups (the shared demo key is limited).`
+    : res.reason === 'cancelled' ? `Stopped (${found} found).`
+    : found ? `Found ${found} suggestion${found === 1 ? '' : 's'}. Nothing is linked until you tap Accept.` : (res.errors[0] || 'No matches found.');
+  renderForm();
+}
+
 function renderForm() {
   head(isNew ? 'New recipe' : 'Edit recipe', false);
   armGuard();
   const d = draft;
+  const canSuggest = (state.useUSDA || state.useOFF) && d.ingredients.some(i => shouldSuggest(i)), likely = likelyIds().length;
+  const sugBar = `<div class="rc-sug" id="reSugBar">${sugRunning ? '<button type="button" id="reSugCancel" class="sug-btn">Cancel</button>' : canSuggest ? '<button type="button" id="reSuggest" style="min-height:44px">Suggest matches</button>' : ''}${likely ? `<button type="button" id="reAcceptAll" class="sug-btn">Accept all likely (${likely})</button>` : ''}<span id="reSugMsg" class="muted" aria-live="polite">${esc(sugMsg)}</span></div>`;
   $('#dBody').innerHTML = `<div class="rc-ed" id="rcRoot">
     ${importNotes.length ? '<div class="rc-notes" role="note"><b>Check before saving</b><ul>' + importNotes.map(n => '<li>' + esc(n) + '</li>').join('') + '</ul></div>' : ''}
     <label for="reName">Name</label><input id="reName" value="${esc(d.name)}" autocomplete="off">
@@ -68,7 +116,8 @@ function renderForm() {
     <h3>Ingredients</h3>
     <label for="rePaste">Paste ingredients (one per line)</label><textarea id="rePaste" placeholder="2 cups flour&#10;1 tbsp olive oil"></textarea>
     <button id="reAddIng" style="margin-top:6px;min-height:44px">Add</button>
-    <div id="reIngs">${d.ingredients.map(i => `<div class="ing" data-id="${esc(i.id)}"><div class="row"><input class="ing-raw" value="${esc(i.raw)}" aria-label="Ingredient"><button type="button" class="lnk ${i.food ? 'linked' : ''}" data-link aria-label="${i.food ? 'Change food for ' : 'Link food for '}${esc(i.name)}" title="${i.food ? 'Change food' : 'Link food'}">${linkIcon}</button><button class="x" data-rm aria-label="Remove">✕</button></div><div class="ing-info muted">${ingInfo(i)}</div></div>`).join('')}</div>
+    ${sugBar}
+    <div id="reIngs">${d.ingredients.map(i => `<div class="ing" data-id="${esc(i.id)}"><div class="row"><input class="ing-raw" value="${esc(i.raw)}" aria-label="Ingredient"><button type="button" class="lnk ${i.food ? 'linked' : ''}" data-link aria-label="${i.food ? 'Change food for ' : 'Link food for '}${esc(i.name)}" title="${i.food ? 'Change food' : 'Link food'}">${linkIcon}</button><button class="x" data-rm aria-label="Remove">✕</button></div><div class="ing-info muted">${ingInfo(i)}${sugHtml(i)}</div></div>`).join('')}</div>
     <div class="rc-scale" id="reScale"></div>
     <div class="card rc-sum" id="reSum"></div>
     <h3>Steps (one per line)</h3><textarea id="reSteps">${esc((d.steps || []).join('\n'))}</textarea>
@@ -96,7 +145,7 @@ function renderForm() {
     const i = find(t); if (!i) return;
     Object.assign(i, parseIngredient(t.value));
     i.grams = i.food ? resolveGrams(i, state.measures) : null;
-    t.closest('.ing').querySelector('.ing-info').innerHTML = ingInfo(i);
+    t.closest('.ing').querySelector('.ing-info').innerHTML = ingInfo(i) + sugHtml(i);
     summary(); scaleView();
   };
   root.onclick = ev => {
@@ -108,6 +157,15 @@ function renderForm() {
       renderForm();
     } else if (t.closest('[data-rm]')) {
       const i = find(t); if (i) { draft.ingredients = draft.ingredients.filter(x => x !== i); renderForm(); }
+    } else if (t.closest('[data-accept]')) {
+      const i = find(t); if (i && acceptSuggestion(i)) renderForm();
+    } else if (t.closest('[data-dismiss]')) {
+      const i = find(t); if (i) { delete suggestions[i.id]; renderForm(); }
+    } else if (t.id === 'reSuggest') runSuggest();
+    else if (t.id === 'reSugCancel') { sugCancel = true; setSugMsg('Stopping…'); }
+    else if (t.id === 'reAcceptAll') {
+      let n = 0; for (const i of draft.ingredients) if (likelyIds().includes(i.id) && acceptSuggestion(i)) n++;
+      sugMsg = n ? `Linked ${n} ingredient${n === 1 ? '' : 's'}. Check the numbers below.` : ''; renderForm();
     } else if (t.closest('[data-link]')) {
       const i = find(t); if (i) renderPicker(i);
     } else if (t.closest('#reFav')) toggleFav();
@@ -218,7 +276,7 @@ function renderPicker(ing) {
     const food = { name: f.name, brand: f.brand || '', source: f.source || '', per100: f.per100, servingG: f.servingG || 0, servingLabel: f.servingLabel || '' };
     if (f.fdcId) food.fdcId = f.fdcId;
     if (f.portions) food.portions = f.portions;
-    ing.food = food; ing.grams = resolveGrams(ing, state.measures);
+    ing.food = food; ing.grams = resolveGrams(ing, state.measures); delete suggestions[ing.id];
     renderForm();
   };
   $('#pkQ').oninput = draw;

@@ -434,7 +434,7 @@ test('26 service: hostile input never throws (non-arrays, null items, missing op
 
 // ---------- WEAK static checks ----------
 
-const read = rel => readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8');
+const read = rel => readFileSync(new URL(`../${rel}`, import.meta.url), 'utf8').replace(/\r\n?/g, '\n');   // CRLF checkouts (Windows autocrlf) behave like LF
 const strip = s => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
 const editor = () => strip(read('js/ui/recipe-editor.js'));
 const cssRules = () => [...strip(read('css/components.css')).matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(m => ({ sel: m[1].trim().replace(/\s+/g, ' '), body: m[2].replace(/\s*([:;])\s*/g, '$1').replace(/\s+/g, ' ').trim() }));
