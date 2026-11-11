@@ -19,6 +19,7 @@ const shots = mkdtempSync(join(tmpdir(), 'macro-diary-shots-'));
 
 const results = [];
 let server, browser;
+for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, async () => { if (browser) await browser.close().catch(() => {}); if (server) server.stop(); process.exit(130); });   // Ctrl-C must not leave the server or browser running
 try {
   server = await startServer();
   browser = await launchBrowser({ headed });

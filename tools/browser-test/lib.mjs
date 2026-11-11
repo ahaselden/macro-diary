@@ -48,6 +48,7 @@ export async function openPage(browser, { appUrl, stubs = [], device, screenshot
     if (r.action === 'abort') return route.abort();
     return route.continue();
   });
+  await context.routeWebSocket('**', ws => ws.close());                      // WebSockets are not covered by route(): close them too
   const page = await context.newPage();
   page.on('pageerror', e => consoleErrors.push('Uncaught: ' + e.message));
   page.on('console', m => { if (m.type() === 'error' && !/net::ERR_FAILED/.test(m.text())) consoleErrors.push(m.text()); });   // ERR_FAILED = a request we aborted on purpose

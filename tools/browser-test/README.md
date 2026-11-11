@@ -20,7 +20,7 @@ node tools/browser-test/run.mjs --headed             # show the window, to watch
 The app is served on a free port and stopped at the end. Exit code 1 means something failed; failing scenarios save a screenshot (the path is printed).
 
 ## How a scenario works
-`scenarios/*.mjs` each `export default async ({ page, url, check, screenshot }) => {...}`. They may also `export const stubs = [{ match, json }]` (see `stubs.mjs`). **Every request that leaves the app is blocked unless a stub answers it**, so a test can never reach Open Food Facts, USDA or Supabase; stubs use invented data. A page error or console error fails the scenario.
+`scenarios/*.mjs` each `export default async ({ page, url, check, screenshot }) => {...}`. They may also `export const stubs = [{ match, json }]` (see `stubs.mjs`). **Every HTTP(S) request and WebSocket that the page makes to anywhere but the app is blocked unless a stub answers it**, so a scenario cannot reach Open Food Facts, USDA or Supabase; stubs use invented data. (The browser's own background traffic, such as Edge telemetry, is not controlled.) Scenario files are run as code: only run ones you trust. A page error or console error fails the scenario.
 
 ## NOT covered (still needs a real phone)
 - The real camera, barcode quality in real photos, glare and blur (the browser has a fake camera feed only).
