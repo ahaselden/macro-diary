@@ -1,0 +1,11 @@
+{
+  "name": "Test Kitchen Herb Chicken Strips",
+  "description": "An invented dinner used only for tests.",
+  "servings": 8,
+  "totalTime": 30,
+  "tags": [],
+  "steps": ["Slice the chicken.", "Roast with the thyme and lemon."],
+  "ingredients": ["600 g chicken breast", "1 tbsp dried thyme", "1 lemon, juiced"],
+  "warnings": ["Calories and macros come from the page (per serving), so treat them as an estimate: link foods to replace them."],
+  "nutrition": { "k": 172, "p": 26, "c": 10, "f": 3, "per": "1 serving" }
+}

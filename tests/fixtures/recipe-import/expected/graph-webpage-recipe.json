@@ -10,6 +10,6 @@
     "Cook 1/4 cup batter per pancake on a hot greased pan, about 2 minutes per side."
   ],
   "ingredients": ["1 1/2 cups all-purpose flour", "2 tbsp sugar", "1 tbsp baking powder", "1/2 tsp salt", "1 1/4 cups milk", "1 large egg", "3 tbsp butter, melted", "1 lemon, zested"],
-  "warningCount": 1,
-  "warningPatterns": ["nutrition"]
+  "warningCount": 2,
+  "warningPatterns": ["come from the page", "protein"]
 }

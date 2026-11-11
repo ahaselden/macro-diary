@@ -1,0 +1,11 @@
+{
+  "name": "Test Kitchen Crispy Baked Wings",
+  "description": "An invented snack used only for tests.",
+  "servings": 1,
+  "totalTime": 50,
+  "tags": [],
+  "steps": ["Toss the wings with the paprika and oil.", "Bake until crisp."],
+  "ingredients": ["12 chicken wings", "1 tsp smoked paprika", "2 tbsp olive oil"],
+  "warnings": ["Calories and macros come from the page (per serving), so treat them as an estimate: link foods to replace them."],
+  "nutrition": { "k": 434, "p": 80, "c": 13, "f": 5, "per": "12 Wings" }
+}

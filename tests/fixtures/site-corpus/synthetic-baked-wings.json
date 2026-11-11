@@ -1,0 +1,21 @@
+{
+  "sourceUrl": "https://wings.example.test/snacks/synthetic-baked-wings",
+  "fetchedAt": "2026-01-01T00:00:00.000Z",
+  "node": {
+    "@type": "Recipe",
+    "name": "Test Kitchen Crispy Baked Wings",
+    "description": "An invented snack used only for tests.",
+    "recipeIngredient": ["12 chicken wings", "1 tsp smoked paprika", "2 tbsp olive oil"],
+    "recipeInstructions": ["Toss the wings with the paprika and oil.", "Bake until crisp."],
+    "recipeYield": ["12", "12 Wings"],
+    "totalTime": "PT50M",
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "calories": "434 calories",
+      "fatContent": "5",
+      "carbohydrateContent": "13",
+      "proteinContent": "80",
+      "servingSize": "12 Wings"
+    }
+  }
+}

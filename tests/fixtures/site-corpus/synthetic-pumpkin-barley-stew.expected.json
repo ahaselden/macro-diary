@@ -1,0 +1,11 @@
+{
+  "name": "Test Kitchen Pumpkin Barley Stew",
+  "description": "An invented stew used only for tests.",
+  "servings": 6,
+  "totalTime": 45,
+  "tags": [],
+  "steps": ["Simmer the barley.", "Add the pumpkin."],
+  "ingredients": ["1 cup pearl barley", "2 cups pumpkin cubes", "4 cups vegetable stock"],
+  "warnings": ["Calories and macros come from the page (per serving), so treat them as an estimate: link foods to replace them."],
+  "nutrition": { "k": 336, "p": 31.8, "c": 46.7, "f": 3.7, "per": "1.5 cups" }
+}
