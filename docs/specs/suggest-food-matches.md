@@ -152,3 +152,8 @@ Matching is a text heuristic and will sometimes be wrong (that is why every link
 6. Numeric strings for `per100.k` (`'52'`) are treated as unusable by this spec; `ingredientStatus` accepts them. Not tested.
 7. Whether `isCancelled` is polled for skipped items too is not pinned (tests flip the flag during a search).
 8. Compact-ingredients tests U8/U10 forbid a `.ing-info button` selector and `<button` in `ingInfo`; U10 above works around that. If the owner prefers buttons in `ingInfo`, those two earlier tests must be changed deliberately and explained in the PR.
+
+## Verification log (implementer, Windows, desktop built-in browser, own dev server port)
+- 834 tests pass. In the app with the USDA requests stubbed (invented foods): a 5-ingredient recipe showed the button; the run did one ingredient at a time and gave "Onions, raw (likely)", "Oil, olive, salad or cooking (likely)" and "Chicken breast nuggets (check)"; salt was skipped; "mystery grain" had no match; nothing was linked after the run. "Accept all likely (2)" linked the two likely ones (the onion resolved to 44 kcal / 110 g through the stubbed "1 medium" measure; the olive oil asked for grams), left the "check" one pending, and Dismiss removed it; the saved recipe in storage still had no linked foods until Save; the editor's "from the page" numbers stayed because not every ingredient was linked.
+- NOT done: real USDA / Open Food Facts data, the rate-limit path against the live service, Cancel mid-run, a phone, closing the editor mid-run, the "no database enabled" case in the UI.
+- One designer test was changed after implementation: the UI checks' `read` helper now normalises CRLF to LF (U8 and other multi-line regexes could never match on a Windows checkout); no assertion changed.
