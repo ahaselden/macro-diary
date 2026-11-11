@@ -201,7 +201,7 @@ Desktop browser only (no phone, no camera involved).
 10. **Fallback when the unit rule leaves the bounds**: tests require only `null` or a finite value in (0, 1000], not which.
 
 ## Verification log (implementer, Windows, desktop built-in browser)
-- `npm test`: 662 pass. The local corpus (`npm run test:sites`, git-ignored snapshots of three real pages) caught the change; the new results were reviewed (chili 6 servings / 336 kcal, wings 1 serving / 434 kcal, chipotle chicken 8 servings / 172 kcal) and the snapshots refreshed.
+- `npm test`: 662 pass. The local corpus (`npm run test:sites`, git-ignored snapshots of three real pages) caught the change; the new results were reviewed (page A: 6 servings / 336 kcal; page B, whose yield counted items: 1 serving / 434 kcal; page C: 8 servings / 172 kcal) and the snapshots refreshed.
 - In the app (local stand-in as the import service): importing the three real pages filled the editor's four boxes, the serving text, the summary ("Numbers are from the page (estimate)") and the import note; saving worked; the list showed "from page" badges; a saved v5 recipe (fully linked, no `stated`) loaded at schema 6 with `stated: null` and no badge.
 - NOT done: planning and logging a stated recipe through the UI, linking all ingredients and watching the source flip in the UI (covered by unit tests only), restoring an old backup, two-device sync, a phone.
 - Open questions resolved as: zero calories are not used (calories must be above 0); a numeric (non-string) calories value is accepted; `per` is cut to 40 characters; `servingSize` is used for servings only when the page's nutrition is an object.
