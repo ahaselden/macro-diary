@@ -32,6 +32,8 @@ The queue of work, highest priority first. **When a feature is finished (PR merg
 - [ ] UPC-E codes expanded to UPC-A (KNOWN-ISSUES 34).
 - [ ] *(proposed by the assistant, not requested)* When a scanned or searched product has no serving, offer to enter the scoop or serving weight right there and remember it for that food (today: "+ Add your own measure" on the amount screen, which then becomes the start next time, D35). Came from a protein-powder barcode whose Open Food Facts record had only calories per 100 g.
 
+- [ ] *(owner 2026-11-11)* Camera-scan scenario for the headless tester: feed Chromium's fake camera a video of a drawn barcode (`--use-file-for-fake-video-capture`) to test the live scanner's logic (not a real lens, focus or glare).
+
 ## Needs the owner (not code)
 - [ ] Go live with sync: real two-device test with the owner's Supabase project ([SYNC-SETUP.md](SYNC-SETUP.md)). This is being tested separately; do not change sync behaviour meanwhile.
 - [ ] Try barcode, label photo, setup link and favourites on a real phone (KNOWN-ISSUES 33, 36, 37, 39).
@@ -39,5 +41,6 @@ The queue of work, highest priority first. **When a feature is finished (PR merg
 - [ ] Answer the open questions in VISION section 8.
 
 ## Later / unscheduled
+- **Android and iPhone testers** *(owner 2026-11-11: for the future, the headless browser is fine for now)*. Extend the browser-tester with real mobile engines: an Android emulator (Android Studio, virtual camera, real Chrome on Android; needs an install and about 10 GB) and iPhone Safari (WebKit): Playwright's WebKit build runs on Windows for the engine only, a real iPhone or iOS simulator needs a Mac or a device-cloud service (BrowserStack and similar, paid or trial). Real-phone items (camera quality, wake lock, install) stay on "Needs the owner" regardless.
 - Native apps (not planned; VISION question 4).
 - Favourites for foods or plan items; sorting favourites first (out of scope of item 1).

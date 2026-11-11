@@ -1,0 +1,8 @@
+{
+  "name": "macro-diary-browser-test",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dev-only headless browser tester. NOT part of the shipped app; the app itself has no dependencies.",
+  "type": "module",
+  "dependencies": { "playwright-core": "1.49.1" }
+}
