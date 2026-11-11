@@ -75,3 +75,8 @@ Empty, whitespace, 100k-character strings, nested parentheses, prototype keys, H
 3. `startingUnit` when `units` lacks the weight key (e.g. empty list): tests expect `{key: weightPref, amount: 4|100}` (today's behaviour). An invalid `weightPref` is untested.
 4. `mapOFF`: servingLabel when serving_size is empty but serving_quantity exists stays '' (parser only sees serving_size); the plan's "use the parser's label" clause is therefore unreachable and untested.
 5. Plain number text such as '37' (no unit) is expected to be null.
+
+## Verification log (implementer, Windows, desktop built-in browser, dev server on its own port)
+- 759 tests pass. With invented recent foods and the USDA household-measures request stubbed: an egg-like food opened at 4 oz and, 0.7 s later, switched to "1 large (50 g)" (72 kcal) because the amount had not been touched; with the amount typed first (6) it stayed at 6 oz; a food with a 37 g serving opened at "1 serving (1 scoop (37 g))" = 140 kcal and its result row read "140 kcal per 1 scoop (37 g)"; a food with nothing known stayed at 4 oz; after saving "handful = 30 g" for it, it opened at "1 handful (30 g)".
+- NOT done: real Open Food Facts / USDA data (network calls failed from this machine), a phone, adding the food to the diary after the switch, the Edit-entry path.
+- Testing note: a dev server left running by another session was serving a different worktree on port 8080; the first checks hit that code and were discarded.
