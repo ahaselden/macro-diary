@@ -1,14 +1,22 @@
 // Open Food Facts search.
 import { getJSON } from './http.js';
 import { isBarcode } from '../domain/food.js';
+import { parseServingText } from '../domain/units.js';
 
 const OFF_FIELDS = 'code,product_name,brands,nutriments,serving_quantity,serving_size';
+// grams of one serving: serving_quantity when it is a usable number, else the grams written in the serving_size text ("1 scoop (37 g)"), else 0
+function servingGrams(p){
+  const q = Number(p.serving_quantity);
+  if (Number.isFinite(q) && q > 0) return q;
+  const t = parseServingText(p.serving_size);
+  return t ? t.g : 0;
+}
 export function mapOFF(p){
   const n = p.nutriments || {}; if (!p.product_name) return null;
   let k = n['energy-kcal_100g']; if (k == null && n.energy_100g != null) k = n.energy_100g / 4.184;
   if (k == null) return null;
   return {name:p.product_name, brand:(p.brands||'').split(',')[0].trim(), source:'OFF',
-    per100:{k:+k, p:+n.proteins_100g||0, c:+n.carbohydrates_100g||0, f:+n.fat_100g||0}, servingG:+p.serving_quantity || 0, servingLabel:p.serving_size || ''};
+    per100:{k:+k, p:+n.proteins_100g||0, c:+n.carbohydrates_100g||0, f:+n.fat_100g||0}, servingG:servingGrams(p), servingLabel:p.serving_size == null ? '' : String(p.serving_size)};
 }
 export async function searchOFF(q){
   if (isBarcode(q)) {

@@ -6,7 +6,7 @@ import { MEALS } from '../core/constants.js';
 import { esc, rd, r1, r2, fmtW } from '../core/format.js';
 import { foodKey } from '../domain/food.js';
 import { addEntry, updateEntry } from '../domain/entries.js';
-import { unitsFor as unitsForM } from '../domain/units.js';
+import { unitsFor as unitsForM, startingUnit } from '../domain/units.js';
 import { loadPortions } from '../services/usda.js';
 import { view, add } from './ctx.js';
 
@@ -19,8 +19,8 @@ export function showFood(food, existing) {
   let startKey, startAmt;
   if (existing && units.some(x => x.key === existing.unitKey)) { startKey = existing.unitKey; startAmt = existing.amount; }
   else if (existing) { startKey = pref; startAmt = r1(existing.grams / units.find(x => x.key === pref).g); }
-  else if (food.servingG > 0) { startKey = 's'; startAmt = 1; }
-  else { startKey = pref; startAmt = pref === 'w:oz' ? 4 : 100; }
+  else { const st = startingUnit(food, units, state.measures[foodKey(food)], pref); startKey = st.key; startAmt = st.amount; }   // the user's own measure, else the serving, else a countable household portion, else a weight
+  let touched = !!existing;                                        // once the user edits the amount or unit, late-arriving measures must not move it
   const canLoad = food.source === 'USDA' && food.fdcId && !food.portions;
   $('#dBody').innerHTML = `<h2>${esc(food.name)}</h2><div class="muted">${esc(food.brand)} ${food.source ? '· ' + esc(food.source) : ''}</div>
     <div class="row"><div style="flex:0 0 38%"><label for="amt">Amount</label><input id="amt" type="number" inputmode="decimal" step="any" value="${Number(startAmt) || 0}"></div>
@@ -41,16 +41,20 @@ export function showFood(food, existing) {
     $('#prev2').innerHTML = `<div class="big">${rd(p.k * f)} <span class="muted" style="font-size:14px;font-weight:400">kcal · ${fmtW(lastG, state.weightUnit)}</span></div>
       <div class="macros"><div><span class="muted">Protein</span><b>${r1(p.p * f)} g</b></div><div><span class="muted">Carbs</span><b>${r1(p.c * f)} g</b></div><div><span class="muted">Fat</span><b>${r1(p.f * f)} g</b></div></div>`; };
   fill(startKey); upd();
-  $('#amt').oninput = upd;
-  $('#unit').onchange = () => { if (lastG > 0) $('#amt').value = r2(lastG / unitNow().g); upd(); };   // keep the same weight, restate in the new unit
+  $('#amt').oninput = () => { touched = true; upd(); };
+  $('#unit').onchange = () => { touched = true; if (lastG > 0) $('#amt').value = r2(lastG / unitNow().g); upd(); };   // keep the same weight, restate in the new unit
   $('#mAdd').onclick = () => {
     const label = $('#mName').value.trim(), g = +$('#mG').value;
     if (!label || !(g > 0)) { toast('Enter a name and grams'); return; }
+    touched = true;
     const k = foodKey(food); state.measures[k] = [...(state.measures[k] || []).filter(m => m.label !== label), { label, g, updatedAt: Date.now() }]; save();
     units = unitsFor(food); fill('p:' + label); $('#amt').value = 1; upd(); $('#mName').value = $('#mG').value = ''; toast('Measure saved');
   };
   if (canLoad) loadPortions(food, state.apiKey).then(() => { if (showFood.tok !== tok || !$('#unit')) return;
-      const keep = $('#unit').value; units = unitsFor(food); fill(keep); upd();
+      const keep = $('#unit').value; units = unitsFor(food);
+      if (!touched) { const st = startingUnit(food, units, state.measures[foodKey(food)], pref); fill(st.key); $('#amt').value = st.amount; }   // e.g. an egg now opens as 1 large, not 4 oz
+      else fill(keep);
+      upd();
       $('#uMsg').textContent = food.portions.length ? '' : 'No household measures listed for this food.'; },
     err => { if (showFood.tok === tok && $('#uMsg')) $('#uMsg').textContent = "Couldn't load household measures (" + err.message + ')'; });
   $('#addGo').onclick = () => {

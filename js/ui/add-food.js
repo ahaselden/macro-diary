@@ -2,7 +2,7 @@
 import { state } from '../core/store.js';
 import { $, toast, dialog, head, canClose, setCloseGuard } from '../core/dom.js';
 import { esc, rd, r1 } from '../core/format.js';
-import { foodKey, isBarcode, sameBarcode } from '../domain/food.js';
+import { foodKey, isBarcode, sameBarcode, servingSummary } from '../domain/food.js';
 import { searchAll } from '../services/foods.js';
 import { canScan, startScan, stopScan } from '../services/barcode.js';
 import { add } from './ctx.js';
@@ -56,9 +56,10 @@ function localMatches(q) {
 }
 
 function resHTML(list, from) {
-  return list.map((f, i) => `<div class="res" data-i="${i}" data-from="${esc(from)}"><div class="nm"><div>${esc(f.name)}</div>
-    <div class="muted">${esc(f.brand ? f.brand + ' · ' : '')}${rd(f.per100.k)} kcal /100g · P${r1(f.per100.p)} C${r1(f.per100.c)} F${r1(f.per100.f)}</div></div>
-    <span class="badge">${esc(f.tag || f.source)}</span></div>`).join('');
+  return list.map((f, i) => { const ss = esc(servingSummary(f));
+    return `<div class="res" data-i="${i}" data-from="${esc(from)}"><div class="nm"><div>${esc(f.name)}</div>
+    <div class="muted">${esc(f.brand ? f.brand + ' · ' : '')}${ss ? ss + ' · ' : ''}${rd(f.per100.k)} kcal /100g · P${r1(f.per100.p)} C${r1(f.per100.c)} F${r1(f.per100.f)}</div></div>
+    <span class="badge">${esc(f.tag || f.source)}</span></div>`; }).join('');
 }
 
 let localList = [];
