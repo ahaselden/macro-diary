@@ -87,28 +87,25 @@ export function proposePlan(state, opts) {
       const blocked = c => o.noRepeatDays > 0 && uses.some(u => u.id === c.id && Math.abs(u.day - di) < o.noRepeatDays);
       let pool = cands.filter(c => !blocked(c));
       if (!pool.length) { pool = cands; if (o.noRepeatDays > 0) note('Some meals repeat a recipe from the last few days because there were not enough different recipes.'); }
-      let pick, servings;
+      // One serving of each recipe is proposed (the user changes the amount later). The recipe is chosen by how well ONE serving fits the target.
+      let pick;
+      const servings = 1;
       if (!(budget > 0)) {
-        pick = pool.reduce((b, c) => (c.k < b.k - EPS ? c : b), pool[0]); servings = 0.5;
-        note('The daily goal (budget) is already used up by planned meals, so the smallest portion is proposed.');
+        pick = pool.reduce((b, c) => (c.k < b.k - EPS ? c : b), pool[0]);
+        note('The daily goal (budget) is already used up by planned meals, so the lowest-calorie recipe is proposed at 1 serving.');
       } else {
-        const scored = pool.map(c => {            // nearest half-serving to target/k, in [0.5, 4]; an exact tie goes to the smaller portion
-          const ideal = Math.min(4, Math.max(0.5, target / c.k)), lo = Math.min(4, Math.floor(ideal * 2) / 2), hi = Math.min(4, lo + 0.5);
-          const sv = ideal - lo <= hi - ideal + EPS ? lo : hi;
-          return { c, s: sv, d: Math.abs(sv * c.k - target) };
-        });
+        const scored = pool.map(c => ({ c, d: Math.abs(c.k - target) }));
         const best = Math.min(...scored.map(x => x.d));
         let top = scored.filter(x => x.d <= best + EPS);
         if (o.preferFavorites) {
           const near = scored.filter(x => x.c.fav && x.d <= best + NEAR * target);
           if (near.length) { const nb = Math.min(...near.map(x => x.d)); top = near.filter(x => x.d <= nb + EPS); }
         }
-        const w = top[Math.floor(rand() * top.length)];
-        pick = w.c; servings = w.s;
+        pick = top[Math.floor(rand() * top.length)].c;
       }
-      const kcal = Math.round(servings * pick.k);
-      const why = !(budget > 0) ? `Smallest portion (about ${kcal} kcal): the day's kcal goal is already used.`
-        : `About ${kcal} kcal, close to the ${Math.round(target)} kcal target for this meal${pick.fav ? '; a favourite' : ''}.`;
+      const kcal = Math.round(pick.k);
+      const why = !(budget > 0) ? `The day's kcal goal is already used up, so this is the lowest-calorie recipe (about ${kcal} kcal for 1 serving).`
+        : `About ${kcal} kcal for 1 serving, close to the ${Math.round(target)} kcal target for this meal${pick.fav ? '; a favourite' : ''}.`;
       if (!pick.complete) note('Some picks are incomplete recipes (nutrition not fully known), so their kcal may be underestimated.');
       (days[date] ||= {})[m] = [{ recipeId: pick.id, servings, why, complete: pick.complete }];
       uses.push({ day: di, id: pick.id });

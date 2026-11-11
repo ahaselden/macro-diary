@@ -12,6 +12,7 @@ import { weekStart, weekDates, monthGrid, monthSummary, addMonths, monthStart, a
 import { proposePlan, applyProposal } from '../domain/autoplan.js';
 import { searchAll } from '../services/foods.js';
 import { registerTab } from './tabs.js';
+import { openRecipeView } from './recipe-view.js';
 
 let weekStartDate = weekStart(fmt(new Date()));
 let view = 'week', monthDate = monthStart(fmt(new Date()));   // which Plan view is showing, and which month the month view shows
@@ -36,8 +37,11 @@ function itemHtml(date, meal, it) {
   const name = isR ? n.name : (it.name || (it.food && it.food.name) || '');
   const qty = isR ? Number(it.servings) || 0 : Number(it.grams) || 0;
   const logged = isLogged(date, it);
+  const nm = isR
+    ? `<button type="button" class="pl-nm link" data-open aria-label="Open recipe ${esc(name)}">${esc(name)}</button>${n.complete ? '' : '<span class="badge warn fit">incomplete</span>'}`
+    : `<div class="pl-nm">${esc(name)}${n.complete ? '' : ' <span class="badge warn">incomplete</span>'}</div>`;
   return `<div class="pl-item" data-meal="${esc(meal)}" data-id="${esc(it.id)}">
-    <div class="row"><div class="pl-nm">${esc(name)}${n.complete ? '' : ' <span class="badge warn">incomplete</span>'}</div>
+    <div class="row">${nm}
       <button class="x fit" data-rm aria-label="Remove">✕</button></div>
     <div class="row pl-ctl"><input class="pl-qty" type="number" inputmode="decimal" step="any" min="0" value="${qty}" aria-label="${isR ? 'Servings' : 'Grams'}">
       <span class="muted pl-unit">${isR ? 'serving' + (qty === 1 ? '' : 's') : 'g'}</span>
@@ -114,6 +118,11 @@ function onClick(ev) {
   const addBtn = t.closest('[data-add]');
   if (addBtn) { openPicker(date, addBtn.dataset.add); return; }
   const row = t.closest('.pl-item');
+  if (row && t.closest('[data-open]')) {                                           // the recipe's name: open a read-only view of it
+    const it = getDay(state, date).slots[row.dataset.meal].find(i => i.id === row.dataset.id);
+    if (it && it.type === 'recipe') openRecipeView(it.recipeId, it.servings);
+    return;
+  }
   if (row && t.closest('[data-rm]')) {
     removePlanItem(state, date, row.dataset.meal, row.dataset.id, Date.now()); changed(false); return;
   }
@@ -173,7 +182,7 @@ function openAutofill() {
   const viewDate = view === 'month' ? (monthStart(today) === monthDate ? today : monthDate) : weekStartDate;
   let seed = 1, range = view;
   $('#dBody').innerHTML = `<div class="rc-ed" id="apRoot">
-    <p class="muted">Fills only empty meals, using your recipes to fit your calorie goal, avoid repeats and prefer favourites. Nothing changes until you press Accept.</p>
+    <p class="muted">Fills only empty meals with one serving of your recipes, choosing ones close to your calorie goal for each meal, avoiding repeats and preferring favourites. Change the amounts afterwards. Nothing changes until you press Accept.</p>
     <div class="row ap-range"><button type="button" data-range="week" aria-pressed="${range === 'week'}">Week</button><button type="button" data-range="month" aria-pressed="${range === 'month'}">Month</button></div>
     <p class="muted" id="apSkipped"></p>
     <div class="row ap-slots">${MEALS.map(m => `<label class="ap-slot"><input type="checkbox" data-slot="${esc(m)}"${m === 'Lunch' || m === 'Dinner' ? ' checked' : ''}> ${esc(m)}</label>`).join('')}</div>
@@ -283,7 +292,7 @@ function openPicker(date, meal) {
     const res = t.closest('.res'); if (!res) return;
     if (res.dataset.rid) {
       const r = state.recipes[res.dataset.rid]; if (!r) return;
-      qtyStep(r.name, 'How many servings?', 'Servings', Number(r.servings) > 0 ? Number(r.servings) : 1, () => show('recipe'), v => finish(recipeItem(newId(), r.id, v)));
+      qtyStep(r.name, 'How many servings?', 'Servings', 1, () => show('recipe'), v => finish(recipeItem(newId(), r.id, v)));
     } else {
       const f = (res.dataset.from === 'l' ? local : remote)[+res.dataset.i]; if (!f) return;
       const food = { name: f.name, brand: f.brand || '', source: f.source || '', per100: f.per100, servingG: f.servingG || 0, servingLabel: f.servingLabel || '' };
