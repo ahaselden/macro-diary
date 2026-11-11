@@ -152,7 +152,7 @@ function readFields() {
   const kcal = val('reKcal');                                    // stated nutrition: blank or zero kcal = none; the page's serving text is kept
   if (kcal !== null) {
     const grams = id => { const v = +val(id); return Number.isFinite(v) && v > 0 ? Math.min(5000, v) : 0; };
-    if (!(+kcal > 0) || +kcal > 20000) draft.stated = null;
+    if (kcal.trim() === '' || !(+kcal >= 0) || +kcal > 20000) draft.stated = null;
     else draft.stated = { k: +kcal, p: grams('reProt'), c: grams('reCarb'), f: grams('reFat'), per: draft.stated && typeof draft.stated.per === 'string' ? draft.stated.per : '' };
   }
   if (val('reSteps') !== null) draft.steps = val('reSteps').split('\n').map(x => x.trim()).filter(Boolean);

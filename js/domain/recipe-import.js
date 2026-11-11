@@ -362,7 +362,7 @@ export function importFromText(text) {
       if (mode === 'pre') {
         const sv = /^(?:serves|servings?|yield)\s*:?\s*(\d.*)$/i.exec(raw);
         if (sv && servings === null) { const n = parseYield(sv[1]); if (n !== null) { servings = n; continue; } }
-        const nl = /^(calories?|kcal|protein|carbohydrates?|carbs?|fat)\b\s*:?\s*(.+)$/i.exec(raw);
+        const nl = /^(calories?|kcal|protein|carbohydrates?|carbs?|fat)\b\s*:?\s*(\d.*)$/i.exec(raw);
         if (nl) {                                                   // Calories / Protein / Carbs / Fat lines (per serving) before the first section
           const key = nl[1].toLowerCase();
           const kind = key.startsWith('cal') || key === 'kcal' ? 'k' : key === 'protein' ? 'p' : key.startsWith('carb') ? 'c' : 'f';
