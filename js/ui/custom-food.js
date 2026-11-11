@@ -91,14 +91,14 @@ async function barcodeFromPhoto(code, run) {
   const out = t => { const el = $('#cCodeMsg'); if (el && run === ocrRun) el.innerHTML = t; };
   code = normalizeBarcode(code); if (!code || run !== ocrRun || !$('#cBar')) return;
   if (!$('#cBar').dataset.user && !$('#cBar').value) $('#cBar').value = code;           // never replace what the user typed
-  if (!state.useOFF) { out(`Barcode ${esc(code)} found in the photo.`); return; }
+  if (!state.useOFF && !state.useUSDA) { out(`Barcode ${esc(code)} found in the photo. Turn on a food database in Settings to look it up.`); return; }
   out(`Barcode ${esc(code)} found in the photo. Looking it up…`);
   let res;
   try { res = await searchAll(code, { useUSDA: state.useUSDA, useOFF: state.useOFF, apiKey: state.apiKey }); }
   catch { if (run === ocrRun) out(`Barcode ${esc(code)} found in the photo.`); return; }
   if (run !== ocrRun || !$('#cCodeMsg')) return;                                          // the tab was re-rendered or a newer photo was chosen
   const offer = barcodeOffer(code, res && res.results);
-  if (!offer) { out(`Barcode ${esc(code)} found in the photo; no product was found for it.`); return; }
+  if (!offer) { const why = res && Array.isArray(res.errors) && res.errors.length ? ' The lookup failed: ' + esc(res.errors.join(' · ')) : ' No product was found for it.'; out(`Barcode ${esc(code)} found in the photo.` + why); return; }
   const sum = servingSummary(offer) || `${rd(offer.per100.k)} kcal /100g`;
   out(`Barcode ${esc(code)} found: <b>${esc(offer.name)}</b>${offer.brand ? ' · ' + esc(offer.brand) : ''} · ${esc(sum)}<br><button type="button" id="cUseBar" style="min-height:44px">Use this product</button>`);
   $('#cUseBar').onclick = () => { if (add.searchCode) add.searchCode(code); };              // the Search tab with this code, exactly like a scan

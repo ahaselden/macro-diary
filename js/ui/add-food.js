@@ -67,10 +67,11 @@ let localList = [];
 function renderResults(msg) {
   const el = $('#results'); if (!el) return;
   localList = localMatches(add.q);
+  const tried = [state.useOFF && 'Open Food Facts', state.useUSDA && 'USDA'].filter(Boolean).join(' and ') || 'any database';   // the sources a barcode was looked up in
   el.innerHTML = (localList.length ? `<div class="muted" style="margin-top:12px">Your foods</div>` + resHTML(localList, 'l') : '')
     + (msg ? `<p class="muted" style="margin-top:12px">${esc(msg)}</p>` : '')
     + (add.offer && add.offer === add.q && !add.results.length && !localList.length
-        ? `<button class="primary" style="width:100%;margin-top:8px" id="mkBarcode">Not found. Create a custom food for ${esc(add.q)}</button>` : '')
+        ? `<button class="primary" style="width:100%;margin-top:8px" id="mkBarcode">Not found in ${esc(tried)}. Create a custom food for ${esc(add.q)}</button>` : '')
     + (add.results.length ? `<div class="muted" style="margin-top:12px">Database results</div>` + resHTML(add.results, 'r') : '');
   if ($('#mkBarcode')) $('#mkBarcode').onclick = () => { add.barcode = add.q; add.tab = 'custom'; renderAddTabs(); };
   el.onclick = ev => { const r = ev.target.closest('.res'); if (!r) return;
