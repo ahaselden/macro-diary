@@ -24,3 +24,14 @@ export const replacesCustom = (old, neu) => {
   }
   return false;
 };
+
+/** "148 kcal per 1 scoop (37 g)": the calories in the food's serving, or '' when it has no usable serving. Plain text (the UI escapes it). */
+export function servingSummary(food) {
+  try {
+    if (!food || typeof food !== 'object' || Array.isArray(food)) return '';
+    const g = food.servingG, k = food.per100 && typeof food.per100 === 'object' ? Number(food.per100.k) : NaN;
+    if (typeof g !== 'number' || !Number.isFinite(g) || !(g > 0) || !Number.isFinite(k)) return '';
+    const raw = typeof food.servingLabel === 'string' ? food.servingLabel.slice(0, 300).replace(/<\/?[a-zA-Z!][^<>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60) : '';
+    return `${Math.round(k * g / 100)} kcal per ${raw || Math.round(g) + ' g'}`;
+  } catch { return ''; }
+}
