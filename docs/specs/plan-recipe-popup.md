@@ -102,3 +102,7 @@ R1..R15 are real behaviour tests of the helper. V1..V10 read source text only: t
 7. Exact wording of the nutrition line and of the label for source `none`: V9 pins only "from linked foods" and "from the page (estimate)".
 8. Does `openRecipeView` itself or the click handler show the deleted-recipe toast? Either is accepted (V3).
 9. Edit passes the stored recipe object to `openRecipeEditor`, which deep-copies it; not tested.
+
+## Verification log (implementer, Windows, desktop built-in browser)
+- With a demo recipe of 8 servings planned at 2 servings: the name is a button; clicking it opened the view titled with the recipe name: "2 servings planned · 344 kcal (172 kcal per serving, from the page (estimate))", macros, ingredients scaled by 1/4, steps, the source link (target _blank, rel noopener noreferrer), Edit and Close buttons. Edit opened the editor for that recipe. A planned item whose recipe was deleted showed "That recipe was deleted" and opened nothing.
+- Not done: a phone, screen readers, keyboard-only use, what happens after saving from the editor (the plan re-renders on recipes:changed; not watched by hand).

@@ -79,3 +79,8 @@ Only the domain behaviours O1..O12 are real behaviour tests. G1..G4 read source 
 4. The preview row and the old spec D-fit/D27 text are not updated by tests; docs are the implementer's job.
 5. If `state.goals.k` is invalid the goal falls back to 2000 (unchanged, A20).
 6. The dialog title and button still say "Auto-fill week" (unchanged, D28).
+
+## Verification log (implementer, Windows, desktop built-in browser)
+- 728 tests pass. In the app with a demo recipe: the Auto-fill preview listed 10 picks, each "1 serving" with "About 172 kcal for 1 serving, close to the N kcal target for this meal", and the dialog intro now says one serving; adding an 8-serving recipe to Snacks by hand started the servings box at 1.
+- Not done: accepting a proposal and then changing amounts by hand, a phone, a household of many recipes (the demo data had one recipe, so repeats were allowed).
+- D27 in docs/DECISIONS.md and docs/specs/autofill-week.md carry a pointer to D33.
