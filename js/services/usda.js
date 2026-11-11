@@ -1,6 +1,7 @@
 // USDA FoodData Central search and portions.
 import { getJSON } from './http.js';
 import { frac } from '../domain/units.js';
+import { usdaBarcodeQueries, usdaBarcodeMatch } from '../domain/barcode.js';
 
 export function usdaNut(list, num, unit){ const n = list.find(x => String(x.nutrientNumber) === num && (!unit || (x.unitName||'').toUpperCase() === unit)); return n ? +n.value : null; }
 export function mapUSDA(f){
@@ -21,6 +22,18 @@ export async function searchUSDA(q, apiKey){
   // generic foods (Foundation / SR Legacy) first, then branded products
   const [g, b] = await Promise.all([getJSON(url('Foundation,SR%20Legacy')), getJSON(url('Branded')).catch(() => ({foods: []}))]);
   return [...(g.foods || []), ...(b.foods || [])].map(mapUSDA).filter(Boolean);
+}
+/** A scanned code -> [the USDA branded food with that exact barcode] or []. Rejects with the request error so the caller can report it. */
+export async function searchUSDAByBarcode(code, apiKey){
+  const queries = usdaBarcodeQueries(code);
+  const key = encodeURIComponent((apiKey || '').trim() || 'DEMO_KEY');
+  for (const q of queries) {
+    const j = await getJSON(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${key}&query=${encodeURIComponent(q)}&pageSize=5&dataType=Branded`);
+    const hit = usdaBarcodeMatch(code, j && Array.isArray(j.foods) ? j.foods : []);
+    const food = hit ? mapUSDA(hit) : null;
+    if (food) return [food];
+  }
+  return [];
 }
 // Pure part of the portions loader: food-detail JSON -> portions array.
 export function mapPortions(j){

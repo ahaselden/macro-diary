@@ -79,3 +79,8 @@ Numbers/objects/arrays/huge strings/prototype keys as `gtinUpc`; throwing getter
 4. `searchAll` with `useOFF` false and `useUSDA` true on a barcode: treated as "OFF empty" so USDA is asked (test 16). Derived from the photo behaviour (`useOFF || useUSDA`), not stated explicitly in the plan.
 5. Test 11 expects a `null` JSON body to give `[]` (not a TypeError); the existing `searchUSDA` does not guard this. Reasonable but stricter than the plan.
 6. Conflict check with `tests/barcode-from-photo.test.js`: none found. Its check 8 (flags passed to `searchAll`) and check 16 (`catch` around the lookup) remain satisfiable; the old `if (!state.useOFF)` gate is not pinned by that file. If the implementer needs the helper text "Barcode ... found in the photo." changed, nothing there pins the wording.
+
+## Verification log (implementer, Windows, headless Edge via tools/browser-test, own port)
+- 931 tests pass. The headless scenarios `usda-barcode-fallback` (Open Food Facts stubbed empty, USDA stubbed with an invented branded record: the product is listed with the USDA badge, no custom-food button) and `barcode-not-found` (both empty: the button reads "Not found in Open Food Facts and USDA. Create a custom food for ...") pass; the earlier scenarios still pass.
+- NOT done: real USDA or Open Food Facts data with the owner's products, a real phone, the label-photo flow with only USDA enabled, the no-database message in the photo flow.
+- The designer's final report was only the word "placeholder"; the files and failing tests were checked by the implementer (25 of 28 failing before the code, the 3 passing ones guard unchanged behaviour).
