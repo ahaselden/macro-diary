@@ -1,8 +1,10 @@
 // Recipe import: turn a recipe page (schema.org JSON-LD) or pasted text into a NEW app recipe. Pure: no DOM, network, storage, clock
 // or randomness; every export returns a value on any input and never throws. Spec: docs/specs/recipe-import.md.
 // Imported text is only ever treated as text: tags are removed, entities decoded once, and the UI escapes whatever is displayed.
-// Nutrition on a page is deliberately NOT imported (the user links foods in the editor, so the numbers stay honest).
+// The page's per-serving calories and macros ARE kept (as the recipe's `stated` nutrition, always labelled as coming from the page) because
+// a new import would otherwise show 0 kcal; linked foods replace them once every ingredient is linked (D31).
 import { newRecipe, newIngredient } from './recipes.js';
+import { sanitizeStated } from '../core/schema.js';
 
 const LIM = { name: 200, description: 2000, tags: 20, tag: 40, steps: 100, step: 2000, ingredients: 200, ingredient: 300 };
 const MAX_DEPTH = 8;          // how deep we follow nested lists/graphs
@@ -68,6 +70,64 @@ export function parseYield(v) {
     for (let i = 0; i < Math.min(v.length, 50); i++) { if (typeof v[i] === 'string' || finite(v[i])) { const n = parseYield(v[i]); if (n !== null) return n; } }
   }
   return null;
+}
+
+// ---- servings from the yield, and the page's nutrition --------------------------------------------------------
+
+const SERVING_WORDS = new Set(['serving', 'servings', 'portion', 'portions', 'person', 'persons', 'people', 'serves']);
+const sameNoun = (a, b) => a === b || a + 's' === b || b + 's' === a || a + 'es' === b || b + 'es' === a;
+/** [number, noun] from "12 Wings" / "Makes 24 cookies" / "1.5 cups": the first number and the first word after it (lowercase), or null. */
+function amountAndNoun(text) {
+  if (typeof text !== 'string') return null;
+  const m = /(\d+(?:\.\d+)?)\s*([a-zA-Z]+)?/.exec(text.slice(0, 200));
+  return m ? [Number(m[1]), (m[2] || '').toLowerCase()] : null;
+}
+
+/**
+ * Servings from recipeYield, using the nutrition servingSize when they count the same thing: yield "12 Wings" with servingSize "12 Wings" is
+ * ONE serving; "24 cookies" with "2 cookies" is 12. Otherwise the plain rule (parseYield). A number in (0, 1000] or null.
+ */
+export function servingsFromPage(recipeYield, servingSize) {
+  try {
+    const items = Array.isArray(recipeYield) ? recipeYield.slice(0, 50) : [recipeYield];
+    const unit = items.map(amountAndNoun).find(a => a && a[1] && !SERVING_WORDS.has(a[1]));
+    const per = amountAndNoun(servingSize);
+    if (unit && per && per[0] > 0 && per[1] && sameNoun(unit[1], per[1])) {
+      const v = Math.round((unit[0] / per[0]) * 100) / 100;
+      if (Number.isFinite(v) && v > 0 && v <= 1000) return v;
+    }
+    return parseYield(recipeYield);
+  } catch { return null; }
+}
+
+const KCAL = /^\s*(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(?:kcal|calories?|cal)?\s*$/i;
+const GRAMS = /^\s*(\d+(?:\.\d+)?)\s*(g|mg)?\s*$/i;
+/** Calories per serving from "336", "434 calories", "172 kcal", "1,200 kcal" (kJ-only is not used); null unless 0 < value <= 20000. */
+function parseCalories(v) {
+  const text = typeof v === 'string' ? clean(v, 100) : finite(v) ? String(v) : '';
+  const m = KCAL.exec(text);
+  const n = m ? Number(m[1].replace(/,/g, '')) : NaN;
+  return n > 0 && n <= 20000 ? n : null;
+}
+/** Grams from "31.8g", "80", "3.7 g", "250 mg" (bare numbers are grams); null unless 0 <= value <= 5000. */
+function parseGrams(v) {
+  const text = typeof v === 'string' ? clean(v, 100) : finite(v) ? String(v) : '';
+  const m = GRAMS.exec(text);
+  if (!m) return null;
+  const n = Number(m[1]) / (m[2] && m[2].toLowerCase() === 'mg' ? 1000 : 1);
+  return Number.isFinite(n) && n >= 0 && n <= 5000 ? n : null;
+}
+const MACROS = [['p', 'protein'], ['c', 'carbs'], ['f', 'fat']];
+
+/** The page's nutrition object -> { k, p, c, f, per } (macros not listed or unreadable are 0) plus which were missing, or null without calories. */
+function pageNutrition(nut) {
+  if (!plain(nut)) return null;
+  const k = parseCalories(field(nut, 'calories'));
+  if (k === null) return null;
+  const grams = { p: parseGrams(field(nut, 'proteinContent')), c: parseGrams(field(nut, 'carbohydrateContent')), f: parseGrams(field(nut, 'fatContent')) };
+  const ss = field(nut, 'servingSize');
+  return { value: { k, p: grams.p ?? 0, c: grams.c ?? 0, f: grams.f ?? 0, per: typeof ss === 'string' ? clean(ss, 200).slice(0, 40) : '' },
+    missing: MACROS.filter(([key]) => grams[key] === null).map(([, name]) => name) };
 }
 
 function humanMinutes(s) {
@@ -148,18 +208,21 @@ const W = {
   ing: 'No ingredients were found. Add them in the editor.',
   steps: 'No steps were found. Add them in the editor.',
   serv: `The number of servings was not found, so ${DEFAULT_SERVINGS} is assumed. Check it in the editor.`,
-  nut: 'This page lists nutrition information. It is not imported: link foods in the editor to get calories and macros.',
+  note: 'Calories and macros come from the page (per serving), so treat them as an estimate: link foods to replace them.',
+  unusable: 'This page lists nutrition information, but the calories could not be read, so it was not used. Link foods in the editor to get calories and macros.',
+  missing: names => `Not listed on the page, so counted as 0: ${names.join(', ')}.`,
 };
 
-function emptyResult() { return { name: '', description: '', servings: DEFAULT_SERVINGS, totalTime: null, tags: [], steps: [], ingredients: [], warnings: [] }; }
+function emptyResult() { return { name: '', description: '', servings: DEFAULT_SERVINGS, totalTime: null, tags: [], steps: [], ingredients: [], nutrition: null, warnings: [] }; }
 
-function finish(r, servingsKnown, nutrition) {
+function finish(r, servingsKnown, nut) {              // nut: { used, missing } | { unusable: true } | nothing
   const w = [];
   if (!r.name) w.push(W.title);
   if (!r.ingredients.length) w.push(W.ing);
   if (!r.steps.length) w.push(W.steps);
   if (!servingsKnown) w.push(W.serv);
-  if (nutrition) w.push(W.nut);
+  if (nut && nut.used) { w.push(W.note); if (nut.missing.length) w.push(W.missing(nut.missing)); }
+  else if (nut && nut.unusable) w.push(W.unusable);
   r.warnings = w;
   return r;
 }
@@ -252,7 +315,8 @@ export function importFromJsonLd(node) {
     r.tags = tagList(node);
     r.ingredients = ingredientList(field(node, 'recipeIngredient'));
     r.steps = stepList(field(node, 'recipeInstructions'));
-    const yieldN = parseYield(field(node, 'recipeYield'));
+    const nutNode = field(node, 'nutrition');
+    const yieldN = servingsFromPage(field(node, 'recipeYield'), plain(nutNode) ? field(nutNode, 'servingSize') : undefined);
     if (yieldN !== null) r.servings = yieldN;
     let total = parseDuration(field(node, 'totalTime'));
     if (total === null) {
@@ -260,8 +324,10 @@ export function importFromJsonLd(node) {
       if (prep !== null || cook !== null) { const s = (prep || 0) + (cook || 0); total = s > 0 && s <= MAX_MINUTES ? s : null; }
     }
     r.totalTime = total;
-    const nut = field(node, 'nutrition');
-    return finish(r, yieldN !== null, plain(nut) ? Object.keys(nut).length > 0 : typeof nut === 'string' && nut.trim() !== '');
+    const got = pageNutrition(nutNode);
+    if (got) r.nutrition = got.value;
+    const listed = plain(nutNode) ? Object.keys(nutNode).length > 0 : typeof nutNode === 'string' && nutNode.trim() !== '';
+    return finish(r, yieldN !== null, got ? { used: true, missing: got.missing } : listed ? { unusable: true } : null);
   } catch { return finish(emptyResult(), false, false); }
 }
 
@@ -287,6 +353,7 @@ export function importFromText(text) {
     if (typeof text !== 'string') return finish(r, false, false);
     const lines = toLines(text, 2000000);
     let mode = 'pre', title = '', servings = null, total = null, prep = null, cook = null;
+    const stated = { k: null, p: null, c: null, f: null };
     const addIngredient = ingredientSink(r.ingredients);
     const intro = [];
     for (const raw of lines) {
@@ -295,6 +362,13 @@ export function importFromText(text) {
       if (mode === 'pre') {
         const sv = /^(?:serves|servings?|yield)\s*:?\s*(\d.*)$/i.exec(raw);
         if (sv && servings === null) { const n = parseYield(sv[1]); if (n !== null) { servings = n; continue; } }
+        const nl = /^(calories?|kcal|protein|carbohydrates?|carbs?|fat)\b\s*:?\s*(.+)$/i.exec(raw);
+        if (nl) {                                                   // Calories / Protein / Carbs / Fat lines (per serving) before the first section
+          const key = nl[1].toLowerCase();
+          const kind = key.startsWith('cal') || key === 'kcal' ? 'k' : key === 'protein' ? 'p' : key.startsWith('carb') ? 'c' : 'f';
+          stated[kind] = kind === 'k' ? parseCalories(nl[2]) : parseGrams(nl[2]);
+          continue;
+        }
         const tm = /^(total(?:\s+time)?|prep(?:aration)?(?:\s+time)?|cook(?:ing)?(?:\s+time)?|ready\s+in)\s*:?\s*(.+)$/i.exec(raw);
         if (tm) {
           const mins = humanMinutes(tm[2]);
@@ -313,7 +387,12 @@ export function importFromText(text) {
     r.description = intro.join(' ').slice(0, LIM.description);
     if (servings !== null) r.servings = servings;
     r.totalTime = total ?? (prep !== null || cook !== null ? (prep || 0) + (cook || 0) : null);
-    return finish(r, servings !== null, false);
+    let nut = null;
+    if (stated.k !== null) {
+      r.nutrition = { k: stated.k, p: stated.p ?? 0, c: stated.c ?? 0, f: stated.f ?? 0, per: '' };
+      nut = { used: true, missing: MACROS.filter(([key]) => stated[key] === null).map(([, name]) => name) };
+    }
+    return finish(r, servings !== null, nut);
   } catch { return finish(emptyResult(), false, false); }
 }
 
@@ -340,6 +419,7 @@ export function toRecipe(result, id, now, sourceUrl) {
     rec.tags = strings(r.tags, LIM.tags, LIM.tag);
     rec.steps = strings(r.steps, LIM.steps, LIM.step);
     rec.ingredients = strings(r.ingredients, LIM.ingredients, LIM.ingredient).map((line, n) => newIngredient(line, `i${n}_${id}`.slice(0, 80)));
+    rec.stated = sanitizeStated(r.nutrition);
     rec.source = validSource(sourceUrl);
   } catch { /* keep the safe defaults */ }
   return rec;

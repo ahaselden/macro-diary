@@ -54,7 +54,7 @@ export function itemNutrition(state, item) {
     const r = state.recipes[item.recipeId];
     if (!r) return { ...ZERO(), complete: false, missing: true, name: item.name || '(deleted recipe)' };
     const n = recipeNutrition(r, state.measures);
-    return { ...add(ZERO(), n.perServing, item.servings), complete: n.complete, missing: false, name: r.name };
+    return { ...add(ZERO(), n.perServing, item.servings), complete: n.complete, estimated: n.estimated, missing: false, name: r.name };
   }
   const p = item.food?.per100 || ZERO(), g = item.grams || 0;
   return { ...add(ZERO(), p, g / 100), complete: g > 0, missing: false, name: item.name || item.food?.name || '' };
@@ -76,7 +76,7 @@ function entryFor(state, item, meal, idGen) {
   if (item.type === 'recipe') {
     const r = state.recipes[item.recipeId]; if (!r) return null;
     const n = recipeNutrition(r, state.measures);
-    if (n.linked === 0) return null;   // no ingredient has nutrition data: nothing meaningful to log (the UI tells the user to link foods)
+    if (n.source === 'none') return null;   // no linked food and no stated nutrition: nothing meaningful to log (the UI tells the user to link foods)
     const sw = n.totalGrams > 0 && r.servings > 0 ? n.totalGrams / r.servings : 100;   // grams per serving (100 = unknown weight)
     const per100 = { k: n.perServing.k * 100 / sw, p: n.perServing.p * 100 / sw, c: n.perServing.c * 100 / sw, f: n.perServing.f * 100 / sw };
     const servings = Math.round(item.servings * 100) / 100;

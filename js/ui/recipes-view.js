@@ -19,7 +19,7 @@ export function renderRecipes() {
     const n = recipeNutrition(r, state.measures), t = Number(r.totalTime) || 0, sv = Number(r.servings) || 0;
     return `<div class="card rc-card" data-id="${esc(r.id)}"><div class="rc-head"><h2>${esc(r.name)}</h2><button type="button" class="ghost fit rc-star${r.favorite === true ? ' on' : ''}" data-fav aria-pressed="${r.favorite === true}" aria-label="Favourite: ${esc(r.name)}">${r.favorite === true ? '★' : '☆'}</button></div>
       <div class="rc-meta muted"><span>${sv} serving${sv === 1 ? '' : 's'}</span>${t > 0 ? `<span>${t} min</span>` : ''}
-      <span>≈ ${rd(n.perServing.k)} kcal / serving</span>${n.complete ? '' : '<span class="badge warn">incomplete</span>'}</div></div>`;
+      <span>≈ ${rd(n.perServing.k)} kcal / serving</span>${n.source === 'stated' ? '<span class="badge">from page</span>' : n.complete ? '' : '<span class="badge warn">incomplete</span>'}</div></div>`;
   }).join('') : `<p class="muted">${q ? 'No recipes match.' : favOnly && Object.keys(state.recipes || {}).length ? 'No favourites yet. Tap the star on a recipe to add one.' : 'No recipes yet. Tap “+ New recipe” to add one.'}</p>`;
 }
 

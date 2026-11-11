@@ -61,6 +61,12 @@ function renderForm() {
     <label for="reDesc">Description</label><textarea id="reDesc">${esc(d.description)}</textarea>
     <label for="reTags">Tags (comma separated)</label><input id="reTags" value="${esc((d.tags || []).join(', '))}" autocomplete="off">
     <label for="reSource">Source (text or URL)</label><input id="reSource" value="${esc(d.source)}" autocomplete="off">
+    <h3>Nutrition per serving (from the page)</h3>
+    <div class="muted">Used until every ingredient is linked to a food; leave calories blank for none.${d.stated && d.stated.per ? ' Serving on the page: ' + esc(d.stated.per) : ''}</div>
+    <div class="row"><div><label for="reKcal">kcal</label><input id="reKcal" type="number" inputmode="decimal" step="any" min="0" value="${d.stated ? Number(d.stated.k) : ''}"></div>
+    <div><label for="reProt">Protein (g)</label><input id="reProt" type="number" inputmode="decimal" step="any" min="0" value="${d.stated ? Number(d.stated.p) : ''}"></div></div>
+    <div class="row"><div><label for="reCarb">Carbs (g)</label><input id="reCarb" type="number" inputmode="decimal" step="any" min="0" value="${d.stated ? Number(d.stated.c) : ''}"></div>
+    <div><label for="reFat">Fat (g)</label><input id="reFat" type="number" inputmode="decimal" step="any" min="0" value="${d.stated ? Number(d.stated.f) : ''}"></div></div>
     <h3>Ingredients</h3>
     <label for="rePaste">Paste ingredients (one per line)</label><textarea id="rePaste" placeholder="2 cups flour&#10;1 tbsp olive oil"></textarea>
     <button id="reAddIng" style="margin-top:6px;min-height:44px">Add</button>
@@ -81,6 +87,7 @@ function renderForm() {
     else if (t.id === 'reDesc') d.description = t.value;
     else if (t.id === 'reTags') d.tags = t.value.split(',').map(x => x.trim()).filter(Boolean);
     else if (t.id === 'reSource') d.source = t.value;
+    else if (t.id === 'reKcal' || t.id === 'reProt' || t.id === 'reCarb' || t.id === 'reFat') { readFields(); summary(); }
     else if (t.id === 'reSteps') d.steps = t.value.split('\n').map(x => x.trim()).filter(Boolean);
     else if (t.classList.contains('grams')) { const i = find(t); if (i) { i.grams = +t.value > 0 ? +t.value : null; summary(); } }
     else if (t.id === 'reScaleN') scaleView();
@@ -121,7 +128,8 @@ function summary() {
   const n = recipeNutrition(draft, state.measures), p = n.perServing;
   el.innerHTML = `<div class="big">${rd(p.k)} <span class="muted" style="font-size:14px;font-weight:400">kcal / serving</span></div>
     <div class="macros"><div><span class="muted">Protein</span><b>${r1(p.p)} g</b></div><div><span class="muted">Carbs</span><b>${r1(p.c)} g</b></div><div><span class="muted">Fat</span><b>${r1(p.f)} g</b></div></div>
-    <div class="muted" style="margin-top:8px">${Number(n.linked) || 0} of ${Number(n.count) || 0} ingredients linked${n.complete ? '' : ' · missing: ' + esc((n.missing || []).join(', '))}</div>`;
+    <div class="muted" style="margin-top:8px">${n.source === 'stated' ? 'Numbers are from the page (estimate): link all ingredients to use your own foods.' : n.source === 'foods' ? 'Numbers are from linked foods.' : 'No numbers yet: link foods or enter nutrition above.'}</div>
+    <div class="muted" style="margin-top:4px">${Number(n.linked) || 0} of ${Number(n.count) || 0} ingredients linked${(Number(n.linked) || 0) >= (Number(n.count) || 0) ? '' : ' · missing: ' + esc((n.missing || []).join(', '))}</div>`;
 }
 
 function scaleView() {
@@ -141,6 +149,12 @@ function readFields() {
   if (val('reDesc') !== null) draft.description = val('reDesc');
   if (val('reTags') !== null) draft.tags = val('reTags').split(',').map(x => x.trim()).filter(Boolean);
   if (val('reSource') !== null) draft.source = val('reSource');
+  const kcal = val('reKcal');                                    // stated nutrition: blank or zero kcal = none; the page's serving text is kept
+  if (kcal !== null) {
+    const grams = id => { const v = +val(id); return Number.isFinite(v) && v > 0 ? Math.min(5000, v) : 0; };
+    if (!(+kcal > 0) || +kcal > 20000) draft.stated = null;
+    else draft.stated = { k: +kcal, p: grams('reProt'), c: grams('reCarb'), f: grams('reFat'), per: draft.stated && typeof draft.stated.per === 'string' ? draft.stated.per : '' };
+  }
   if (val('reSteps') !== null) draft.steps = val('reSteps').split('\n').map(x => x.trim()).filter(Boolean);
 }
 
