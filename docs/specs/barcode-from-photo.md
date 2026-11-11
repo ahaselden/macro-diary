@@ -87,3 +87,7 @@ Tests 4-18 in the test file (UI) are STATIC TEXT checks: they prove identifiers 
 5. Whether `data-user` is the mechanism for `#cBar` (currently only number fields set it); static tests assume it, as stated in the brief.
 6. How "Use" switches tab (no named function in the plan); test 17 is a loose regex.
 7. Whether barcodeOffer should accept results with `per100.k` present only via `perServing`; plan says per100 only.
+
+## Verification log (implementer, Windows, desktop built-in browser, own dev server port)
+- All tests pass (884). In the app with the Open Food Facts request stubbed (invented product with HTML in its name): a drawn EAN-13 image chosen in Custom filled the empty Barcode field, showed the product (name escaped, "160 kcal per 1 bar (40 g)") with "Use this product", and the label reading still ran. "Use this product" opened the Search tab with the code and the product listed. With a barcode typed first ("123"), a second photo kept it and still showed the offer. A grey photo without a barcode made no lookup and showed only the label message.
+- NOT done: real phone photos, native BarcodeDetector, real Open Food Facts, offline, product-not-found in the UI, the Open questions in this spec (the offer does not check that the result's own barcode matches the code).

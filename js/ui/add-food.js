@@ -16,6 +16,7 @@ export function initAddFood() {
   dlg.addEventListener('cancel', e => { if (!canClose()) e.preventDefault(); });          // Esc key
   dlg.addEventListener('click', e => { if (e.target === dlg && canClose()) { stopScan(); dlg.close(); } });
   $('#dBack').onclick = () => { stopScan(); renderSearchTab(); };
+  add.searchCode = code => { add.q = code; add.tab = 'search'; renderAddTabs(); doSearch(); };       // used by "Use this product" after a barcode was read from a photo
 }
 
 export function openAdd(meal, edit) {
