@@ -103,3 +103,8 @@ Empty recipe (no ingredients/steps): the view shows "No ingredients." / "No step
 
 ## Verification log
 (for the implementer: record here what was run and the result, including anything verified on a real device)
+
+### Implementer's log (2026-11-11, automated backlog run)
+- `npm test`: 763 tests, all pass (35 new tests from the test-designer, commit d5d3b34). One OLDER test changed: `tests/plan-recipe-popup.test.js` V5 listed the only modules `recipe-view.js` may import; `./cook-view.js` was added to that list because the spec (behaviour 33) requires the import. No designer test was edited.
+- Browser (desktop built-in browser, localhost, Chromium): seeded a recipe with HTML in its name and steps; the Cook button opens the view, the name and steps show as text, ticks survive a rescale, double and half rescale the ingredient lines (2 cups flour -> 4 cups), tapping a step marks it, the source link shows, the saved recipe's servings stay 4, Close works. The wake-lock switch was enabled (not disabled) there.
+- NOT verified: real wake-lock behaviour on phones, installed iOS apps and older browsers; the unsupported-device text path in a real browser (only tested with fakes); visual size and tap targets on a phone; the Cook button inside the planned-meal popup was not clicked in the browser; Edit/star still working on the card was not clicked.

@@ -7,6 +7,7 @@ import { searchRecipes, setFavorite } from '../domain/recipes.js';
 import { recipeNutrition } from '../domain/recipes.js';
 import { registerTab } from './tabs.js';
 import { openRecipeEditor } from './recipe-editor.js';
+import { openCookView } from './cook-view.js';
 
 let favOnly = false;
 
@@ -19,7 +20,7 @@ export function renderRecipes() {
     const n = recipeNutrition(r, state.measures), t = Number(r.totalTime) || 0, sv = Number(r.servings) || 0;
     return `<div class="card rc-card" data-id="${esc(r.id)}"><div class="rc-head"><h2>${esc(r.name)}</h2><button type="button" class="ghost fit rc-star${r.favorite === true ? ' on' : ''}" data-fav aria-pressed="${r.favorite === true}" aria-label="Favourite: ${esc(r.name)}">${r.favorite === true ? '★' : '☆'}</button></div>
       <div class="rc-meta muted"><span>${sv} serving${sv === 1 ? '' : 's'}</span>${t > 0 ? `<span>${t} min</span>` : ''}
-      <span>≈ ${rd(n.perServing.k)} kcal / serving</span>${n.source === 'stated' ? '<span class="badge">from page</span>' : n.complete ? '' : '<span class="badge warn">incomplete</span>'}</div></div>`;
+      <span>≈ ${rd(n.perServing.k)} kcal / serving</span>${n.source === 'stated' ? '<span class="badge">from page</span>' : n.complete ? '' : '<span class="badge warn">incomplete</span>'}<button type="button" class="fit rc-cook" data-cook>Cook</button></div></div>`;
   }).join('') : `<p class="muted">${q ? 'No recipes match.' : favOnly && Object.keys(state.recipes || {}).length ? 'No favourites yet. Tap the star on a recipe to add one.' : 'No recipes yet. Tap “+ New recipe” to add one.'}</p>`;
 }
 
@@ -35,6 +36,7 @@ export function initRecipes() {
       if (r && setFavorite(state, r.id, r.favorite !== true, Date.now())) { save(); emit('recipes:changed'); }
       return;
     }
+    if (ev.target.closest('[data-cook]')) { if (Object.hasOwn(state.recipes, c.dataset.id)) openCookView(c.dataset.id); return; }
     const r = state.recipes[c.dataset.id]; if (r) openRecipeEditor(r);
   };
   on('recipes:changed', renderRecipes);

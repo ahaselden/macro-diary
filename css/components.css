@@ -139,3 +139,18 @@ button.pl-nm.link{background:none;border:none;padding:0;min-height:44px;text-ali
 .rv h3{margin:14px 0 4px;font-size:15px}
 .rv ul,.rv ol{margin:0;padding-left:22px}
 .rv li{margin:4px 0}
+
+/* cooking view */
+.ck{font-size:20px;line-height:1.45}
+.ck h3{font-size:22px}
+.ck-list,.ck-steps{padding-left:0;list-style:none;margin:0}
+.ck-steps{counter-reset:ck}
+.ck-steps li{counter-increment:ck;padding:10px 10px 10px 44px;position:relative;border-radius:10px;cursor:pointer;margin:6px 0}
+.ck-steps li::before{content:counter(ck);position:absolute;left:10px;font-weight:700}
+.ck-steps li.on{outline:2px solid currentColor;font-weight:600}
+.ck-ing{display:flex;gap:10px;align-items:flex-start;padding:6px 0;cursor:pointer}
+.ck-ing input,.ck-keep input{width:26px;height:26px;flex:none}
+.ck-serv{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ck-serv button{min-width:48px;min-height:44px;font-size:20px}
+.ck-keep{display:flex;gap:10px;align-items:center;margin-top:14px}
+.rc-cook{margin-left:auto}
