@@ -3,6 +3,7 @@
 // (Firefox, Safari/iPhone, Chrome/Edge on Windows) it falls back to ZXing (js/vendor/zxing.min.js, see vendor/licenses/),
 // which is loaded only when a scan is started.
 import { loadScript } from './script.js';
+import { normalizeBarcode, pickBarcode } from '../domain/barcode.js';
 let scanStream = null, scanTimer = null;
 
 const nativeDetector = () => 'BarcodeDetector' in window;
@@ -58,4 +59,53 @@ export async function startScan(video, onCode) {
       if (text) found(text);
     } finally { busy = false; }
   }, 250);
+}
+
+// ---- reading a barcode from a still photo (the label-photo flow) ----
+const defaultPrepare = async (file, maxSide) => {
+  const bmp = await createImageBitmap(file, { resizeWidth: maxSide, resizeQuality: 'medium' });
+  const k = Math.min(1, maxSide / Math.max(bmp.width, bmp.height)), w = Math.max(1, Math.round(bmp.width * k)), h = Math.max(1, Math.round(bmp.height * k));
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  cv.getContext('2d', { willReadFrequently: true }).drawImage(bmp, 0, 0, w, h); bmp.close?.();
+  return cv;
+};
+let zxingDecode = null;
+const defaultDecoders = () => {
+  const list = [];
+  if (nativeDetector()) {
+    try {
+      const det = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] });
+      list.push(async frame => pickBarcode((await det.detect(frame)).map(c => c.rawValue)) || null);     // any code in the photo, not just the first (a QR code may come first)
+    } catch { /* this browser's detector does not support the formats: ZXing below still runs */ }
+  }
+  list.push(async frame => {
+    const Z = await loadZXing();
+    zxingDecode = zxingDecode || makeDecoder(Z);
+    return zxingDecode(new Z.HTMLCanvasElementLuminanceSource(frame));
+  });
+  return list;
+};
+
+/**
+ * Looks for a retail barcode in a photo. Resolves the code (already validated by normalizeBarcode) or null; never rejects, because the barcode is a
+ * bonus on top of reading the label. deps (all optional, injected in tests): prepare(file, maxSide) -> frame, decoders: [async frame -> text|null], sizes: [maxSide...].
+ */
+export async function decodeImageBarcode(file, deps) {
+  try {
+    if (!file || typeof file !== 'object' || !Number.isFinite(file.size)) return null;
+    const d = deps && typeof deps === 'object' ? deps : {};
+    const prepare = d.prepare === undefined ? defaultPrepare : d.prepare;
+    const sizes = d.sizes === undefined ? [1600, 900] : d.sizes;
+    const decoders = d.decoders === undefined ? defaultDecoders() : d.decoders;
+    if (typeof prepare !== 'function' || !Array.isArray(sizes) || !Array.isArray(decoders)) return null;
+    for (const size of sizes.slice()) {
+      let frame;
+      try { frame = await prepare(file, size); } catch { continue; }
+      for (const dec of decoders.slice()) {
+        if (typeof dec !== 'function') continue;
+        try { const code = normalizeBarcode(await dec(frame)); if (code) return code; } catch { /* try the next decoder */ }
+      }
+    }
+    return null;
+  } catch { return null; }
 }

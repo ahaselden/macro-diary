@@ -1,11 +1,14 @@
 // "Custom" tab of the add-food dialog: enter a food by hand, or prefill it from a photo of a nutrition label.
 import { state, save } from '../core/store.js';
 import { $, toast } from '../core/dom.js';
-import { isBarcode, replacesCustom } from '../domain/food.js';
-import { esc } from '../core/format.js';
+import { isBarcode, replacesCustom, servingSummary } from '../domain/food.js';
+import { normalizeBarcode, barcodeOffer } from '../domain/barcode.js';
+import { esc, rd } from '../core/format.js';
 import { add } from './ctx.js';
 import { parseLabel } from '../domain/label-parse.js';
 import { readImageText } from '../services/ocr.js';
+import { decodeImageBarcode } from '../services/barcode.js';
+import { searchAll } from '../services/foods.js';
 import { showFood } from './amount-picker.js';
 
 const NUMBER_FIELDS = ['#cSize', '#cK', '#cP', '#cC', '#cF'];
@@ -19,6 +22,7 @@ export function renderCustom() {
     <input type="file" id="cFileCam" accept="image/*" capture="environment" hidden>
     <input type="file" id="cFile" accept="image/*" hidden>
     <div class="muted" id="cLabelMsg" style="margin:6px 0 10px" aria-live="polite"></div>
+    <div id="cCodeMsg" class="muted" style="margin:0 0 10px" aria-live="polite"></div>
     <label>Name</label><input id="cName" placeholder="e.g. Homemade chili" autocomplete="off">
     <label>Barcode (optional)</label><input id="cBar" inputmode="numeric" placeholder="scan or type the digits" autocomplete="off" value="${esc(add.barcode)}">
     <label>Serving size (g)</label><input id="cSize" type="number" inputmode="decimal" value="100">
@@ -29,6 +33,7 @@ export function renderCustom() {
     <button class="primary" style="width:100%" id="cGo">Continue</button>`;
   // anything the user types is theirs: a later photo must not overwrite it, and it is no longer "from the photo"
   for (const id of NUMBER_FIELDS) $(id).addEventListener('input', e => { e.target.removeAttribute('data-ocr'); e.target.dataset.user = '1'; });
+  $('#cBar').addEventListener('input', e => { e.target.dataset.user = '1'; });         // a barcode the user typed is theirs: a photo must not replace it
   // "Take a photo" opens the camera on phones/tablets (capture); on a PC browser it falls back to the normal file picker.
   $('#cCam').onclick = () => $('#cFileCam').click();
   $('#cPick').onclick = () => $('#cFile').click();
@@ -54,8 +59,10 @@ export function renderCustom() {
 async function readLabel(file) {
   const run = ++ocrRun, setBusy = on => { for (const id of ['#cCam', '#cPick']) { const b = $(id); if (b) b.disabled = on; } };
   const msg = t => { const el = $('#cLabelMsg'); if (el && run === ocrRun) el.innerHTML = t; };
+  if ($('#cCodeMsg')) $('#cCodeMsg').innerHTML = '';                 // an offer from an earlier photo must not stay next to this photo's result
   if (file.size > 25e6) { msg('That photo is too large (max 25 MB).'); return; }
   setBusy(true);
+  decodeImageBarcode(file).then(code => { if (code && run === ocrRun) return barcodeFromPhoto(code, run); }).catch(() => {});   // runs beside the label reading, never in front of it
   try {
     const text = await readImageText(file, p => {
       const status = String(p.status || '');
@@ -77,4 +84,22 @@ async function readLabel(file) {
     msg(lines.join('<br>'));
   } catch (err) { msg('Could not read the photo: ' + esc(err.message || err) + '. You can still type the numbers.'); }
   finally { if (run === ocrRun) setBusy(false); }   // a stale run must not re-enable the buttons while a newer read is in progress
+}
+
+/** A barcode was found in the photo: fill the Barcode field if the user has not typed one, look the code up like a scan, and OFFER the product (the user confirms). */
+async function barcodeFromPhoto(code, run) {
+  const out = t => { const el = $('#cCodeMsg'); if (el && run === ocrRun) el.innerHTML = t; };
+  code = normalizeBarcode(code); if (!code || run !== ocrRun || !$('#cBar')) return;
+  if (!$('#cBar').dataset.user && !$('#cBar').value) $('#cBar').value = code;           // never replace what the user typed
+  if (!state.useOFF) { out(`Barcode ${esc(code)} found in the photo.`); return; }
+  out(`Barcode ${esc(code)} found in the photo. Looking it up…`);
+  let res;
+  try { res = await searchAll(code, { useUSDA: state.useUSDA, useOFF: state.useOFF, apiKey: state.apiKey }); }
+  catch { if (run === ocrRun) out(`Barcode ${esc(code)} found in the photo.`); return; }
+  if (run !== ocrRun || !$('#cCodeMsg')) return;                                          // the tab was re-rendered or a newer photo was chosen
+  const offer = barcodeOffer(code, res && res.results);
+  if (!offer) { out(`Barcode ${esc(code)} found in the photo; no product was found for it.`); return; }
+  const sum = servingSummary(offer) || `${rd(offer.per100.k)} kcal /100g`;
+  out(`Barcode ${esc(code)} found: <b>${esc(offer.name)}</b>${offer.brand ? ' · ' + esc(offer.brand) : ''} · ${esc(sum)}<br><button type="button" id="cUseBar" style="min-height:44px">Use this product</button>`);
+  $('#cUseBar').onclick = () => { if (add.searchCode) add.searchCode(code); };              // the Search tab with this code, exactly like a scan
 }
