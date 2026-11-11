@@ -44,7 +44,7 @@ function candidates(state, includeIncomplete) {
     if (!plain(r)) continue;
     let n; try { n = recipeNutrition(r, state.measures); } catch { continue; }
     const k = n && n.perServing && n.perServing.k;
-    if (!(n.linked > 0) || !finite(k) || !(k > 0)) continue;
+    if (n.source === 'none' || !finite(k) || !(k > 0)) continue;
     if (!n.complete && !includeIncomplete) continue;
     out.push({ id, k, complete: n.complete === true, fav: r.favorite === true });
   }

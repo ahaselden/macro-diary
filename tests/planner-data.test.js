@@ -11,7 +11,7 @@ import { fixture, clone } from './helpers.js';
 
 const per100 = { k: 100, p: 1, c: 1, f: 1 };
 const food = { name: 'Flour', brand: '', source: 'USDA', per100, servingG: 0 };
-const recipe = (id, over = {}) => ({ id, name: 'Recipe ' + id, description: '', source: '', servings: 4, totalTime: null, tags: [], steps: [], ingredients: [], favorite: false, updatedAt: 0, ...over });
+const recipe = (id, over = {}) => ({ id, name: 'Recipe ' + id, description: '', source: '', servings: 4, totalTime: null, tags: [], steps: [], ingredients: [], favorite: false, stated: null, updatedAt: 0, ...over });
 const planDay = (items = [], updatedAt = 0) => ({ updatedAt, slots: { Breakfast: [], Lunch: items, Dinner: [], Snacks: [] } });
 const item = (id, recipeId) => ({ id, type: 'recipe', recipeId, name: '', servings: 1, food: null, grams: null, entryId: '' });
 const base = (over = {}) => ({ ...defaults(), ...over });

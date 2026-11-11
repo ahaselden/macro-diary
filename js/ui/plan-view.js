@@ -123,7 +123,7 @@ function onClick(ev) {
     if (logItem(state, date, meal, it.id, Date.now(), newId)) { changed(true); toast('Logged to diary'); return; }
     if (it.type === 'recipe') {
       const r = state.recipes[it.recipeId];
-      toast(!r ? 'That recipe was deleted' : recipeNutrition(r, state.measures).linked === 0 ? "Link foods to this recipe's ingredients first" : 'Already logged');
+      toast(!r ? 'That recipe was deleted' : recipeNutrition(r, state.measures).source === 'none' ? "Link foods to this recipe's ingredients first" : 'Already logged');
     } else toast(!(Number(it.grams) > 0) ? 'Enter grams first' : 'Already logged');
     return;
   }

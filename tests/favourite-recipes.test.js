@@ -13,14 +13,14 @@ import { createSyncEngine } from '../js/services/sync/engine.js';
 import { createMemoryAdapter } from '../js/services/sync/memory-adapter.js';
 import { clone } from './helpers.js';
 
-const rec = (id, over = {}) => ({ id, name: 'Recipe ' + id, description: '', source: '', servings: 4, totalTime: null, tags: [], steps: [], ingredients: [], favorite: false, updatedAt: 0, ...over });
+const rec = (id, over = {}) => ({ id, name: 'Recipe ' + id, description: '', source: '', servings: 4, totalTime: null, tags: [], steps: [], ingredients: [], favorite: false, stated: null, updatedAt: 0, ...over });
 const base = (recipes = {}, over = {}) => ({ ...defaults(), recipes, ...over });
 const HOSTILE = ['true', 'false', 'yes', 1, 0, 2, -1, NaN, Infinity, null, undefined, {}, [], [true], { valueOf: () => true }, '', ' true ', Symbol.iterator.description];
 
 // ---------- schema ----------
-test('F1 SCHEMA_VERSION is 5, defaults() carries it, STORAGE_KEY is unchanged', () => {
-  assert.equal(SCHEMA_VERSION, 5);
-  assert.equal(defaults().schemaVersion, 5);
+test('F1 SCHEMA_VERSION is 6 (was 5; page-nutrition), defaults() carries it, STORAGE_KEY is unchanged', () => {
+  assert.equal(SCHEMA_VERSION, 6);
+  assert.equal(defaults().schemaVersion, 6);
   assert.equal(STORAGE_KEY, 'macrodiary.v1');
 });
 
@@ -28,7 +28,7 @@ test('F2 migrate v4 -> v5: recipes without `favorite` survive intact and get fav
   const old = { schemaVersion: 4, recipes: { r1: { name: 'Chili', description: 'd', source: 's', servings: 6, totalTime: 30, tags: ['a'], steps: ['x'], ingredients: [{ id: 'i1', raw: '1 cup beans', name: 'beans', qty: 1, unit: 'cup', prep: '', food: null, grams: null }], updatedAt: 777 } },
     plan: {}, shopping: { checks: {}, extras: {} }, tombstones: { gone: 5 }, days: { '2025-01-01': [] } };
   const d = migrate(clone(old));
-  assert.equal(d.schemaVersion, 5);
+  assert.equal(d.schemaVersion, 6);
   const r = d.recipes.r1;
   assert.equal(r.favorite, false);
   assert.equal(r.id, 'r1'); assert.equal(r.name, 'Chili'); assert.equal(r.servings, 6); assert.equal(r.totalTime, 30); assert.equal(r.updatedAt, 777);
@@ -58,7 +58,7 @@ test('F4 sanitizeRecipe: favorite is a strict boolean; only `true` is true', () 
 
 test('F5 sanitizeRecipe adds no other new fields and keeps rejecting nameless input', () => {
   const keys = Object.keys(sanitizeRecipe({ name: 'x' }, 'r')).sort();
-  assert.deepEqual(keys, ['description', 'favorite', 'id', 'ingredients', 'name', 'servings', 'source', 'steps', 'tags', 'totalTime', 'updatedAt']);
+  assert.deepEqual(keys, ['description', 'favorite', 'id', 'ingredients', 'name', 'servings', 'source', 'stated', 'steps', 'tags', 'totalTime', 'updatedAt']);
   assert.equal(sanitizeRecipe({ name: '', favorite: true }, 'r'), null);
 });
 
@@ -213,7 +213,7 @@ test('F25 backup round trip keeps the flag (JSON export, mergeRestore into an em
 test('F26 an OLD backup (no favorite field, schema 4) imports with favorite:false and nothing else changes', () => {
   const old = { schemaVersion: 4, days: {}, recipes: { r1: { name: 'Old', description: 'd', source: '', servings: 2, totalTime: null, tags: ['t'], steps: ['s'], ingredients: [], updatedAt: 9 } }, plan: {}, shopping: { checks: {}, extras: {} } };
   const m = mergeRestore(defaults(), old).recipes.r1;
-  assert.deepEqual(m, { id: 'r1', name: 'Old', description: 'd', source: '', servings: 2, totalTime: null, tags: ['t'], steps: ['s'], ingredients: [], favorite: false, updatedAt: 9 });
+  assert.deepEqual(m, { id: 'r1', name: 'Old', description: 'd', source: '', servings: 2, totalTime: null, tags: ['t'], steps: ['s'], ingredients: [], favorite: false, stated: null, updatedAt: 9 });
 });
 
 test('F27 restoring an old backup does not un-favourite a newer local favourite; hostile favorite values in a backup become false', () => {

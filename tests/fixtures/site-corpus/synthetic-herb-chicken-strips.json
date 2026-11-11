@@ -1,0 +1,21 @@
+{
+  "sourceUrl": "https://strips.example.test/mains/synthetic-herb-chicken-strips",
+  "fetchedAt": "2026-01-01T00:00:00.000Z",
+  "node": {
+    "@type": "Recipe",
+    "name": "Test Kitchen Herb Chicken Strips",
+    "description": "An invented dinner used only for tests.",
+    "recipeIngredient": ["600 g chicken breast", "1 tbsp dried thyme", "1 lemon, juiced"],
+    "recipeInstructions": ["Slice the chicken.", "Roast with the thyme and lemon."],
+    "recipeYield": ["8", "8 servings"],
+    "totalTime": "PT30M",
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "calories": "172 kcal",
+      "fatContent": "3 g",
+      "carbohydrateContent": "10 g",
+      "proteinContent": "26 g",
+      "servingSize": "1 serving"
+    }
+  }
+}

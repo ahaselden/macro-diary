@@ -17,7 +17,7 @@ const extract = async html => (await mod()).extractRecipeJsonLd(html);
 const fromLd = async node => (await mod()).importFromJsonLd(node);
 const fromText = async t => (await mod()).importFromText(t);
 const fromJsonNode = async (extra) => fromLd({ '@type': 'Recipe', name: 'T', ...extra });
-const KEYS = ['description', 'ingredients', 'name', 'servings', 'steps', 'tags', 'totalTime', 'warnings'];
+const KEYS = ['description', 'ingredients', 'name', 'nutrition', 'servings', 'steps', 'tags', 'totalTime', 'warnings'];   // page-nutrition: + nutrition
 const hasWarning = (r, re) => r.warnings.some(w => re.test(w));
 const allStrings = r => [r.name, r.description, ...r.tags, ...r.steps, ...r.ingredients, ...r.warnings];
 const RE_ING = /ingredient/i, RE_STEP = /step|instruction|method|direction/i, RE_SERV = /serving/i, RE_NUT = /nutrition/i;
@@ -127,6 +127,7 @@ test('R12 importFromHtml golden: @graph with WebSite+WebPage+Article+Recipe (fix
   const r = importFromHtml(fx('graph-webpage-recipe.html'));
   assert.deepEqual(Object.keys(r).sort(), KEYS);
   golden(r, gold('graph-webpage-recipe.json'));
+  assert.deepEqual(r.nutrition, { k: 310, p: 0, c: 0, f: 0, per: '' }, 'page-nutrition: the page states 310 calories and no macros');
   assert.ok(Array.isArray(r.tags) && Array.isArray(r.steps) && Array.isArray(r.ingredients) && Array.isArray(r.warnings));
 });
 
@@ -240,9 +241,9 @@ test('R23 warnings: missing ingredients, missing steps, unknown servings, missin
   const noTitle = await fromLd({ '@type': 'Recipe', ...full });
   assert.equal(noTitle.name, ''); assert.ok(hasWarning(noTitle, /title|name/i));
   const nut = await fromJsonNode({ ...full, nutrition: { '@type': 'NutritionInformation', calories: '310 calories', proteinContent: '9 g' } });
-  assert.ok(hasWarning(nut, RE_NUT), 'nutrition on the page is ignored and the user is told');
-  assert.deepEqual(Object.keys(nut).sort(), KEYS, 'nutrition is NOT imported (no calories/macros field)');
-  assert.ok(!JSON.stringify(nut).includes('310'), 'no nutrition value leaks into the result');
+  assert.ok(hasWarning(nut, /come from the page/i), 'page-nutrition: nutrition on the page IS used and the user is told (was: ignored)');
+  assert.deepEqual(Object.keys(nut).sort(), KEYS, 'page-nutrition: the result has a nutrition key');
+  assert.deepEqual(nut.nutrition, { k: 310, p: 9, c: 0, f: 0, per: '' }, 'page-nutrition: the values are kept (was: no value leaks into the result)');
   const empty = await fromLd({ '@type': 'Recipe' });
   for (const re of [RE_ING, RE_STEP, RE_SERV, /title|name/i]) assert.ok(hasWarning(empty, re), String(re));
   assert.ok(empty.warnings.every(w => typeof w === 'string' && w.length > 0));
@@ -357,7 +358,7 @@ test('R31 toRecipe: builds an app recipe with newRecipe/newIngredient semantics,
   assert.equal(rec.id, 'r_abc'); assert.equal(rec.updatedAt, 1700000000000); assert.equal(rec.favorite, false);
   assert.equal(rec.name, 'Lemon Pancakes'); assert.equal(rec.description, res.description); assert.equal(rec.source, src);
   assert.equal(rec.servings, 4); assert.equal(rec.totalTime, 25); assert.deepEqual(rec.tags, res.tags); assert.deepEqual(rec.steps, res.steps);
-  assert.deepEqual(Object.keys(rec).sort(), ['description', 'favorite', 'id', 'ingredients', 'name', 'servings', 'source', 'steps', 'tags', 'totalTime', 'updatedAt']);
+  assert.deepEqual(Object.keys(rec).sort(), ['description', 'favorite', 'id', 'ingredients', 'name', 'servings', 'source', 'stated', 'steps', 'tags', 'totalTime', 'updatedAt']);   // page-nutrition: + stated
   assert.equal(rec.ingredients.length, 8);
   const ids = rec.ingredients.map(i => i.id);
   assert.ok(ids.every(i => typeof i === 'string' && i.length > 0 && i.length <= 80)); assert.equal(new Set(ids).size, 8);

@@ -6,5 +6,6 @@
   "tags": ["Dinner", "Meal Prep", "Soup", "Stew", "Easy"],
   "steps": ["Rinse the lentils.", "Simmer until soft."],
   "ingredients": ["1 cup red lentils", "2 cloves garlic", "Dressing, 2 parts:", "Pinch of imaginary spice"],
-  "warnings": []
+  "warnings": [],
+  "nutrition": null
 }

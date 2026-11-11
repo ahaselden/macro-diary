@@ -15,7 +15,7 @@ const rootDir = rootPath('.').pathname.replace(/^\/([A-Za-z]:)/, '$1');
 
 const NODE = { '@type': 'Recipe', name: 'Synthetic Toast', recipeIngredient: ['2 slices bread', '1 tbsp butter'], recipeInstructions: ['Toast the bread.', 'Butter it.'], recipeYield: '2', totalTime: 'PT5M' };
 // hand-computed from the node above
-const EXPECTED = { name: 'Synthetic Toast', description: '', servings: 2, totalTime: 5, tags: [], steps: ['Toast the bread.', 'Butter it.'], ingredients: ['2 slices bread', '1 tbsp butter'], warnings: [] };
+const EXPECTED = { name: 'Synthetic Toast', description: '', servings: 2, totalTime: 5, tags: [], steps: ['Toast the bread.', 'Butter it.'], ingredients: ['2 slices bread', '1 tbsp butter'], warnings: [], nutrition: null };   // page-nutrition: + nutrition
 const FIXTURE = { sourceUrl: 'https://toast.example.test/synthetic-toast', fetchedAt: '2026-01-01T00:00:00.000Z', node: NODE };
 
 async function withDir(fn) {

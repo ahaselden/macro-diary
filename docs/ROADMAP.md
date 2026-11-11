@@ -36,6 +36,7 @@ Model (ported in spirit from `MealPlannerPC/Models`): `Recipe{id,name,descriptio
 - Ingredient parsing: `domain/ingredients.js` ports the behaviour of `IngredientParser/IngredientNormalization/IngredientTokens` (quantity fractions, unit aliases, prep notes) with tests, so "1 1/2 cups flour, sifted" becomes `{1.5, cup, flour, "sifted"}`.
 - Nutrition: each ingredient can be linked to a food (same USDA/OFF search + units/density logic the diary uses) → recipe calories/macros per serving, shown live while editing. Unlinked ingredients are flagged ("nutrition incomplete") instead of silently counting as zero.
 - UI: Recipes tab (list/search/add/edit/delete), recipe detail with scaled servings.
+- **Stated nutrition** (D31, schema v6): imports keep the page's per-serving calories and macros (labelled "from the page") until ingredients are linked; servings are worked out from the serving size. In PR.
 - **Recipe import** (D29): reads schema.org data from a page fetched by one small Supabase Edge Function (browsers can't fetch other sites: CORS), or from pasted text/page source. In PR; the function needs deploying (KNOWN-ISSUES 42).
 
 ### Stage 4 — Weekly meal plan (part 2b)

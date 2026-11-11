@@ -2,9 +2,10 @@
 // Pure: time and ids are parameters.
 import { unitsFor, volOf } from './units.js';
 import { parseIngredient, formatQty } from './ingredient-parse.js';
+import { sanitizeStated } from '../core/schema.js';
 
 export function newRecipe(id, now) {
-  return { id, name: '', description: '', source: '', servings: 4, totalTime: null, tags: [], steps: [], ingredients: [], favorite: false, updatedAt: now };
+  return { id, name: '', description: '', source: '', servings: 4, totalTime: null, tags: [], steps: [], ingredients: [], favorite: false, stated: null, updatedAt: now };
 }
 
 export function newIngredient(text, id) {
@@ -159,7 +160,15 @@ export function recipeNutrition(recipe, measures) {
   }
   const sv = recipe && recipe.servings > 0 ? recipe.servings : 1;
   const perServing = { k: total.k / sv, p: total.p / sv, c: total.c / sv, f: total.f / sv };
-  return { total, perServing, totalGrams, linked, count, complete: count > 0 && linked === count, missing };
+  const complete = count > 0 && linked === count;
+  const foods = { total, perServing, totalGrams, linked, count, complete, missing };
+  // Stated nutrition (the page's per-serving numbers, or ones the user typed) is used until every ingredient is linked; then the linked foods win.
+  const st = sanitizeStated(recipe && recipe.stated);
+  if (st && !complete) {
+    const per = { k: st.k, p: st.p, c: st.c, f: st.f };
+    return { ...foods, total: { k: per.k * sv, p: per.p * sv, c: per.c * sv, f: per.f * sv }, perServing: per, complete: true, source: 'stated', estimated: true };
+  }
+  return { ...foods, source: linked > 0 ? 'foods' : 'none', estimated: false };
 }
 
 // ---- persistence (MUTATES state) -----------------------------------------------------------------------------

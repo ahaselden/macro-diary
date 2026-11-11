@@ -7,9 +7,10 @@
 //                (missing updatedAt means 0 = "older than any real edit", so old data needs no rewrite)
 //            4 = meal planner data: recipes {id: recipe}, plan {date: {updatedAt, slots}}, shopping {checks, extras}
 //            5 = recipes gain `favorite` (boolean; missing = false)
+//            6 = recipes gain `stated` (null, or the page's per-serving { k, p, c, f, per }; missing = null)
 import { MEALS } from './constants.js';
 
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export const defaults = () => ({
   schemaVersion: SCHEMA_VERSION, theme: 'auto', weightUnit: 'g', measures: {}, goals: { k: 2000, p: 150, c: 200, f: 65 },
@@ -27,6 +28,20 @@ const ts = v => numOr(v, 0, 0, 8.64e15);
 // a unit is a short word like 'cup' or 'fl oz': keep letters, spaces and dots only (it is later used in a pattern match)
 const unitText = v => str(v, 40).toLowerCase().replace(/[^a-z .]/g, '').trim();
 const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * A recipe's stated nutrition: per SERVING calories and grams of protein/carbs/fat as the source (a web page, or the user) says, plus the
+ * page's serving-size text. Exactly the five keys, numbers finite and in range, otherwise null. Returns a fresh object.
+ */
+const STATED_KEYS = ['k', 'p', 'c', 'f', 'per'];
+export function sanitizeStated(s) {
+  if (!plainObject(s)) return null;
+  const keys = Object.keys(s);
+  if (keys.length !== STATED_KEYS.length || !keys.every(k => STATED_KEYS.includes(k))) return null;
+  const inRange = (v, max) => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= max;
+  if (!inRange(s.k, 20000) || !inRange(s.p, 5000) || !inRange(s.c, 5000) || !inRange(s.f, 5000) || typeof s.per !== 'string') return null;
+  return { k: s.k, p: s.p, c: s.c, f: s.f, per: s.per.slice(0, 40) };
+}
 
 /** A food as stored inside recipes/plans (same shape the diary uses). Returns null if unusable. */
 export function sanitizeFood(f) {
@@ -54,7 +69,7 @@ export function sanitizeRecipe(r, id) {
   return { id, name: str(r.name, 200), description: str(r.description, 2000), source: str(r.source, 500),
     servings: numOr(r.servings, 4, 0.01), totalTime: numOr(r.totalTime, null), tags: list(r.tags, 40, 20), steps: list(r.steps, 2000, 100),
     ingredients: (Array.isArray(r.ingredients) ? r.ingredients : []).slice(0, 200).map((i, n) => sanitizeIngredient(i, id, n)).filter(Boolean),
-    favorite: r.favorite === true, updatedAt: ts(r.updatedAt) };
+    favorite: r.favorite === true, stated: sanitizeStated(r.stated), updatedAt: ts(r.updatedAt) };
 }
 
 /** One planned day: { updatedAt, slots: { Breakfast: [item], Lunch: [], Dinner: [], Snacks: [] } }. */
@@ -125,6 +140,7 @@ export function migrate(d) {
   if (v < 3) d.schemaVersion = 3;        // v2 -> v3: tombstones + settingsUpdatedAt (added by sanitize with empty defaults)
   if (v < 4) d.schemaVersion = 4;        // v3 -> v4: recipes / plan / shopping (added by sanitize, empty)
   if (v < 5) d.schemaVersion = 5;        // v4 -> v5: recipe.favorite (added by sanitize, false)
-  // future: if (v < 6) { ...; d.schemaVersion = 6; }
+  if (v < 6) d.schemaVersion = 6;        // v5 -> v6: recipe.stated (added by sanitize, null)
+  // future: if (v < 7) { ...; d.schemaVersion = 7; }
   return sanitize(d);
 }

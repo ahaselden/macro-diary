@@ -8,7 +8,7 @@ const food = (extra = {}) => ({ name: 'X', brand: '', source: 'custom', per100: 
 const ing = (text, f, id = 'i') => ({ ...newIngredient(text, id), food: f });
 
 test('newRecipe / newIngredient shapes', () => {
-  assert.deepEqual(newRecipe('r1', 5), { id: 'r1', name: '', description: '', source: '', servings: 4, totalTime: null, tags: [], steps: [], ingredients: [], favorite: false, updatedAt: 5 });
+  assert.deepEqual(newRecipe('r1', 5), { id: 'r1', name: '', description: '', source: '', servings: 4, totalTime: null, tags: [], steps: [], ingredients: [], favorite: false, stated: null, updatedAt: 5 });
   assert.deepEqual(newIngredient('2 cups flour, sifted', 'a'), { id: 'a', raw: '2 cups flour, sifted', name: 'flour', qty: 2, unit: 'cup', prep: 'sifted', food: null, grams: null });
 });
 

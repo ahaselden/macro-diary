@@ -1,0 +1,21 @@
+{
+  "sourceUrl": "https://stews.example.test/soups/synthetic-pumpkin-barley-stew",
+  "fetchedAt": "2026-01-01T00:00:00.000Z",
+  "node": {
+    "@type": "Recipe",
+    "name": "Test Kitchen Pumpkin Barley Stew",
+    "description": "An invented stew used only for tests.",
+    "recipeIngredient": ["1 cup pearl barley", "2 cups pumpkin cubes", "4 cups vegetable stock"],
+    "recipeInstructions": ["Simmer the barley.", "Add the pumpkin."],
+    "recipeYield": "6 servings",
+    "totalTime": "PT45M",
+    "nutrition": {
+      "@type": "NutritionInformation",
+      "calories": "336",
+      "fatContent": "3.7g",
+      "carbohydrateContent": "46.7g",
+      "proteinContent": "31.8g",
+      "servingSize": "1.5 cups"
+    }
+  }
+}
