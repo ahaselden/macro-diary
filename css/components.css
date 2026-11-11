@@ -83,6 +83,7 @@ video{width:100%;border-radius:12px;background:#000;max-height:50dvh}
 .ing-info input.grams{display:inline-block;width:90px;max-width:90px;min-height:36px;padding:2px 8px;font-size:14px}
 .ing .lnk{flex:0 0 44px;min-width:44px;min-height:44px;padding:0;border:none;background:none;color:var(--muted);display:inline-flex;align-items:center;justify-content:center}
 .ing .lnk.linked{color:var(--accent)}
+.ing .lnk.linked svg{stroke-width:3.2}
 .ing .x{flex:0 0 44px;min-height:44px;padding:0;border:none;background:none;color:var(--muted);font-size:20px}
 .rc-sum{margin:14px 0}
 .rc-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
