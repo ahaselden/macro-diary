@@ -79,17 +79,17 @@ async function runSuggest() {
   const res = await suggestMatches(draft.ingredients, {
     search: q => searchAll(q, { useUSDA: state.useUSDA, useOFF: state.useOFF, apiKey: state.apiKey }),
     loadPortions: f => loadPortions(f, state.apiKey),
-    isCancelled: () => sugCancel || tok !== sugToken,
+    isCancelled: () => sugCancel || tok !== sugToken || !dialog().open || (!$('#rcRoot') && !$('#rcPick')),   // also stop when the editor was closed (no more requests)
     onProgress: p => { if (tok === sugToken) setSugMsg(`Looking up ${p.done} of ${p.total}…`); },
   });
-  if (tok !== sugToken || !$('#rcRoot')) return;                  // the editor was closed or reopened meanwhile
+  if (tok !== sugToken) return;                                   // the editor was reopened meanwhile: this run belongs to an old session
   sugRunning = false;
   for (const id of Object.keys(res.suggestions)) Object.defineProperty(suggestions, id, { value: res.suggestions[id], enumerable: true, writable: true, configurable: true });
   const found = Object.keys(res.suggestions).length;
   sugMsg = res.reason === 'rate-limit' ? `The food database's request limit was reached, so lookups stopped (${found} found so far). Add your own USDA key in Settings for more lookups (the shared demo key is limited).`
     : res.reason === 'cancelled' ? `Stopped (${found} found).`
     : found ? `Found ${found} suggestion${found === 1 ? '' : 's'}. Nothing is linked until you tap Accept.` : (res.errors[0] || 'No matches found.');
-  renderForm();
+  if ($('#rcRoot')) renderForm();                                 // not while the food picker (or another dialog) is showing; going back redraws with the results
 }
 
 function renderForm() {
@@ -143,7 +143,9 @@ function renderForm() {
   root.onchange = ev => {
     const t = ev.target; if (!t.classList.contains('ing-raw')) return;
     const i = find(t); if (!i) return;
+    const oldName = i.name;
     Object.assign(i, parseIngredient(t.value));
+    if (i.name !== oldName) delete suggestions[i.id];                  // the suggestion was for the old wording
     i.grams = i.food ? resolveGrams(i, state.measures) : null;
     t.closest('.ing').querySelector('.ing-info').innerHTML = ingInfo(i) + sugHtml(i);
     summary(); scaleView();

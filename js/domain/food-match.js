@@ -63,6 +63,9 @@ export function scoreMatch(ingredient, food) {
   } catch { return none(); }
 }
 
+// A word that changes WHAT the food is. If the ingredient says it and the food's name does not, the match is at most "check" (e.g. "ground beef" vs "Beef, tenderloin").
+const QUALIFIERS = new Set(['ground', 'canned', 'dried', 'frozen', 'smoked', 'cooked', 'roasted', 'pickled']);
+
 const usableK = f => { const p = own(f, 'per100'); const k = own(p, 'k'); return finite(k) && k >= 0; };
 
 /** The best candidate as { food, confidence: 'likely' | 'check', score }, or null. 'likely' needs a strong score AND a clear lead over the runner-up. */
@@ -78,7 +81,10 @@ export function pickSuggestion(ingredient, candidates) {
     }
     if (!best || bestScore < 0.45) return null;
     const clear = second < 0 || bestScore - second >= 0.15;
-    return { food: best, confidence: bestScore >= 0.75 && clear ? 'likely' : 'check', score: bestScore };
+    const said = tokens(text(own(ingredient, 'name')).slice(0, NAME_CAP)).filter(t => QUALIFIERS.has(t));
+    const foodWords = tokens(text(own(best, 'name')).slice(0, NAME_CAP));
+    const lost = said.some(t => !foodWords.includes(t));
+    return { food: best, confidence: bestScore >= 0.75 && clear && !lost ? 'likely' : 'check', score: bestScore };
   } catch { return null; }
 }
 

@@ -4,7 +4,7 @@ import { searchQuery, pickSuggestion, shouldSuggest, suggestionFood } from '../d
 
 const MAX_LOOKUPS = 60, DEFAULT_DELAY_MS = 250, MAX_MESSAGE = 200;
 const WEIGHT_UNITS = new Set(['g', 'kg', 'oz', 'lb']);
-const RATE_LIMIT = /rate limit|429|too many/i;
+const RATE_LIMIT = /rate limit|\b429\b|too many/i;
 
 const plain = v => !!v && typeof v === 'object' && !Array.isArray(v);
 const own = (o, k) => (plain(o) && Object.hasOwn(o, k) ? o[k] : undefined);
