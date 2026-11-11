@@ -5,6 +5,7 @@ import { state } from '../core/store.js';
 import { esc, rd, r1 } from '../core/format.js';
 import { recipeSummary } from '../domain/recipes.js';
 import { openRecipeEditor } from './recipe-editor.js';
+import { openCookView } from './cook-view.js';
 
 export function openRecipeView(recipeId, servings) {
   const r = state.recipes && Object.hasOwn(state.recipes, recipeId) ? state.recipes[recipeId] : null;
@@ -27,10 +28,11 @@ export function openRecipeView(recipeId, servings) {
     <h3>Steps</h3>
     ${s.steps.length ? `<ol>${s.steps.map(x => `<li>${esc(x)}</li>`).join('')}</ol>` : '<p class="muted">No steps.</p>'}
     ${sourceLine}
-    <div class="row" style="margin-top:12px"><button type="button" class="primary" id="rvEdit">Edit</button><button type="button" id="rvClose">Close</button></div>
+    <div class="row" style="margin-top:12px"><button type="button" class="primary" id="rvCook">Cook</button><button type="button" id="rvEdit">Edit</button><button type="button" id="rvClose">Close</button></div>
   </div>`;
   $('#rvRoot').onclick = ev => {
     if (ev.target.closest('#rvClose')) dialog().close();
+    else if (ev.target.closest('#rvCook')) openCookView(recipeId, servings);
     else if (ev.target.closest('#rvEdit')) { dialog().close(); openRecipeEditor(r); }
   };
 }
