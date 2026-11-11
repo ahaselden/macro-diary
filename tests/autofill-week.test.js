@@ -1,4 +1,6 @@
 // Tests for docs/specs/autofill-week.md (domain part). Written before the implementation exists.
+// UPDATED 2026-11-11 (owner decision, docs/specs/autofill-one-serving.md): every proposed item is exactly 1 serving; the recipe is chosen by
+// how well ONE serving fits the slot target. A2, A3, A4, A5, A6 and A22 were changed for that; everything else is as first written.
 // Golden values are hand computed (see the comments); modules are imported dynamically so each test fails on its own.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -28,27 +30,31 @@ test('A1 no dates or no recipes: empty proposal {days:{}, notes:[...]} with a no
   assert.deepEqual(empty.days, {}); assert.ok(empty.notes.length >= 1 && empty.notes.every(n => typeof n === 'string' && n.length > 0));
 });
 
-test('A2 one slot: target = whole day budget; servings = multiple of 0.5 whose kcal is closest (hand computed)', async () => {
-  // target 600: 280 kcal -> 2 serv = 560 (diff 40; 2.5 = 700 diff 100); 400 kcal -> 1.5 serv = 600 exactly; 600 -> 1
-  for (const [kcal, serv] of [[280, 2], [400, 1.5], [600, 1]]) {
+test('A2 one slot: target = whole day budget; servings always 1; the recipe whose ONE serving is closest to the target is chosen (hand computed)', async () => {
+  // a single recipe is always proposed at exactly 1 serving, however far it is from the target 600
+  for (const kcal of [280, 400, 600, 900]) {
     const p = await propose(mk([rec('a', kcal)], 600), { dates: [D[0]], slots: ['Lunch'] });
     const x = pick(p, D[0], 'Lunch');
-    assert.equal(x.recipeId, 'a'); assert.equal(x.servings, serv, `${kcal} kcal`); assert.equal(x.complete, true); assert.equal(p.days[D[0]].Lunch.length, 1);
+    assert.equal(x.recipeId, 'a'); assert.equal(x.servings, 1, `${kcal} kcal`); assert.equal(x.complete, true); assert.equal(p.days[D[0]].Lunch.length, 1);
   }
+  // target 600: 280 -> diff 320, 400 -> 200, 550 -> 50 (closest); 450 -> 150 vs 700 -> 100 (above the target is fine)
+  assert.equal(pick(await propose(mk([rec('a', 280), rec('b', 400), rec('c', 550)], 600), { dates: [D[0]], slots: ['Lunch'] }), D[0], 'Lunch').recipeId, 'c');
+  assert.equal(pick(await propose(mk([rec('a', 450), rec('b', 700)], 600), { dates: [D[0]], slots: ['Lunch'] }), D[0], 'Lunch').recipeId, 'b');
 });
 
-test('A3 servings are clamped to [0.5, 4]', async () => {
-  assert.equal(pick(await propose(mk([rec('a', 100)], 600), { dates: [D[0]], slots: ['Lunch'] }), D[0], 'Lunch').servings, 4);     // 400 kcal is the closest allowed
-  assert.equal(pick(await propose(mk([rec('a', 2000)], 600), { dates: [D[0]], slots: ['Lunch'] }), D[0], 'Lunch').servings, 0.5);  // 1000 kcal is the closest allowed
+test('A3 (was: servings clamped to [0.5, 4]) servings stay exactly 1 even when one serving is far above or below the target', async () => {
+  assert.equal(pick(await propose(mk([rec('a', 100)], 600), { dates: [D[0]], slots: ['Lunch'] }), D[0], 'Lunch').servings, 1);    // old rule: 4
+  assert.equal(pick(await propose(mk([rec('a', 2000)], 600), { dates: [D[0]], slots: ['Lunch'] }), D[0], 'Lunch').servings, 1);   // old rule: 0.5
 });
 
-test('A4 slots share the budget by weight (renormalised): Lunch+Dinner 1300 -> 600/700; Breakfast+Snacks 3500 -> 2500/1000; default slots are Lunch+Dinner', async () => {
+test('A4 slots share the budget by weight (renormalised): Lunch+Dinner 1300 -> 600/700; Breakfast+Snacks 3500 -> 2500/1000 (recipe choice by 1-serving fit, servings 1); default slots are Lunch+Dinner', async () => {
   let p = await propose(mk([rec('r600', 600), rec('r700', 700)], 1300), { dates: [D[0]], slots: ['Lunch', 'Dinner'] });
   assert.equal(pick(p, D[0], 'Lunch').recipeId, 'r600'); assert.equal(pick(p, D[0], 'Dinner').recipeId, 'r700');
   assert.equal(pick(p, D[0], 'Lunch').servings, 1); assert.equal(pick(p, D[0], 'Dinner').servings, 1);
-  p = await propose(mk([rec('big', 1250), rec('small', 500)], 3500), { dates: [D[0]], slots: ['Breakfast', 'Snacks'] });
-  assert.equal(pick(p, D[0], 'Breakfast').recipeId, 'big'); assert.equal(pick(p, D[0], 'Breakfast').servings, 2);   // 1250 x 2 = 2500
-  assert.equal(pick(p, D[0], 'Snacks').recipeId, 'small'); assert.equal(pick(p, D[0], 'Snacks').servings, 2);       // 500 x 2 = 1000
+  // targets 2500 / 1000: Breakfast -> x2400 (diff 100; z1500 diff 1000; y1000 diff 1500); Snacks (x blocked, same day) -> y1000 (diff 0; z diff 500)
+  p = await propose(mk([rec('x', 2400), rec('y', 1000), rec('z', 1500)], 3500), { dates: [D[0]], slots: ['Breakfast', 'Snacks'] });
+  assert.equal(pick(p, D[0], 'Breakfast').recipeId, 'x'); assert.equal(pick(p, D[0], 'Breakfast').servings, 1);
+  assert.equal(pick(p, D[0], 'Snacks').recipeId, 'y'); assert.equal(pick(p, D[0], 'Snacks').servings, 1);
   p = await propose(mk([rec('a', 600), rec('b', 590), rec('c', 580)]), { dates: [D[0]] });
   assert.deepEqual(Object.keys(p.days[D[0]]).sort(), ['Dinner', 'Lunch']);
 });
@@ -58,18 +64,19 @@ test('A5 kcal already planned that day (any slot, also not being filled) reduce 
   const s = mk([rec('x', 1200), rec('y', 800)]); addPlanItem(s, D[0], 'Dinner', recipeItem('i1', 'x', 1), 1);
   const x = pick(await propose(s, { dates: [D[0]], slots: ['Lunch'] }), D[0], 'Lunch');
   assert.equal(x.recipeId, 'y'); assert.equal(x.servings, 1);
-  // goalK omitted -> state.goals.k (800): 400 kcal recipe -> 2 servings (with the schema default 2000 it would be 4)
-  const p = await propose(mk([rec('a', 400)], 800), { dates: [D[0]], slots: ['Lunch'] });
-  assert.equal(pick(p, D[0], 'Lunch').servings, 2);
-  // opts.goalK overrides
-  assert.equal(pick(await propose(mk([rec('a', 400)], 800), { dates: [D[0]], slots: ['Lunch'], goalK: 1200 }), D[0], 'Lunch').servings, 3);
+  // goalK omitted -> state.goals.k (800): m400 (diff 400) beats n1900 (diff 1100); with the schema default 2000 it would be n (diff 100)
+  const two = () => mk([rec('m', 400), rec('n', 1900)], 800);
+  assert.equal(pick(await propose(two(), { dates: [D[0]], slots: ['Lunch'] }), D[0], 'Lunch').recipeId, 'm');
+  // opts.goalK overrides: target 1200 -> m diff 800, n diff 700 -> n
+  const o = pick(await propose(two(), { dates: [D[0]], slots: ['Lunch'], goalK: 1200 }), D[0], 'Lunch');
+  assert.equal(o.recipeId, 'n'); assert.equal(o.servings, 1);
 });
 
-test('A6 budget <= 0 (goal already exceeded): lowest-kcal recipe at 0.5 servings plus a note about the goal/budget', async () => {
+test('A6 budget <= 0 (goal already exceeded): lowest-kcal recipe at 1 serving (was 0.5) plus a note about the goal/budget', async () => {
   const s = mk([rec('x', 800), rec('p', 400), rec('q', 200)], 500); addPlanItem(s, D[0], 'Dinner', recipeItem('i1', 'x', 1), 1);   // 500 - 800 = -300
   const p = await propose(s, { dates: [D[0]], slots: ['Lunch'] });
   const x = pick(p, D[0], 'Lunch');
-  assert.equal(x.recipeId, 'q'); assert.equal(x.servings, 0.5); assert.ok(x.why.length > 0);
+  assert.equal(x.recipeId, 'q'); assert.equal(x.servings, 1); assert.ok(x.why.length > 0);
   assert.ok(p.notes.some(n => /goal|budget/i.test(n)));
 });
 
@@ -226,15 +233,15 @@ test('A21 bad dates are ignored (not real calendar dates, wrong types); duplicat
   assert.deepEqual(Object.keys(p.days), [D[0]]); assert.equal(p.days[D[0]].Lunch.length, 1);
 });
 
-test('A22 hostile recipe data never yields NaN/Infinity/out-of-range servings', async () => {
+test('A22 hostile recipe data never yields NaN/Infinity servings; always exactly 1', async () => {
   const hostile = [rec('h1', 500, { servings: 1e308 }), rec('h2', 500, { servings: 0 }), rec('h3', 500, { servings: -4 }), rec('h4', 500, { servings: 'x' }), rec('h5', 500, { servings: NaN }),
     rec('h6', 1e308), rec('h7', 1e-300), rec('h8', 500, { servings: Infinity }), rec('ok', 500)];
   const p = await propose(mk(hostile, 1e300), { dates: D, slots: ['Lunch', 'Dinner'], noRepeatDays: 0 });
   const all = Object.values(p.days).flatMap(d => Object.values(d).flat());
   assert.ok(all.length > 0);
-  for (const x of all) { assert.ok(Number.isFinite(x.servings), 'finite'); assert.ok(x.servings >= 0.5 && x.servings <= 4); assert.equal(x.servings * 2, Math.round(x.servings * 2)); }
+  for (const x of all) { assert.ok(Number.isFinite(x.servings), 'finite'); assert.equal(x.servings, 1); }
   const huge = await propose(mk([rec('a', 500)], 1e300), { dates: D, slots: ['Lunch'] });
-  for (const d of D) assert.equal(pick(huge, d, 'Lunch')?.servings, 4);   // budget capped by the 4-serving maximum
+  for (const d of D) assert.equal(pick(huge, d, 'Lunch')?.servings, 1);   // a huge budget no longer scales the amount (old rule: 4)
 });
 
 test('A23 31 days x 4 slots x 60 recipes finishes in well under 2 s and fills every slot', async () => {

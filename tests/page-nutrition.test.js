@@ -250,12 +250,12 @@ test('N19 recipes with no linked food and no stated still cannot be logged; logD
 const D0 = '2025-11-17';
 test('N20 auto-fill proposes a stated recipe, using the stated kcal and counting it as complete', async () => {
   const { proposePlan } = await ap();
-  // stated 280 kcal/serving; the foods would say 100 kcal (flour 400 g / 4 servings): target 600 -> 2 servings (hand computed: 2 x 280 = 560, diff 40; 2.5 x 280 = 700, diff 100)
+  // stated 280 kcal/serving; the foods would say 100 kcal (flour 400 g / 4 servings): target 600 -> proposed at exactly 1 serving (owner decision 2026-11-11; the old rule gave 2)
   const s = stateWith(rec({ id: 'a', servings: 4, stated: { k: 280, p: 1, c: 1, f: 1, per: '' } })); s.goals.k = 600;
   const p = proposePlan(s, { dates: [D0], slots: ['Lunch'] });
   const x = p.days[D0] && p.days[D0].Lunch && p.days[D0].Lunch[0];
   assert.ok(x, 'a stated recipe is a candidate without includeIncomplete');
-  assert.equal(x.recipeId, 'a'); assert.equal(x.servings, 2); assert.equal(x.complete, true);
+  assert.equal(x.recipeId, 'a'); assert.equal(x.servings, 1); assert.equal(x.complete, true);
   const onlyStated = stateWith(statedRec({ id: 'z', ingredients: [] })); onlyStated.goals.k = 300;
   assert.equal(proposePlan(onlyStated, { dates: [D0], slots: ['Lunch'] }).days[D0].Lunch[0].recipeId, 'z');
 });

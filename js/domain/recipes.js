@@ -198,6 +198,48 @@ export function ingredientStatus(ing) {
   };
 }
 
+/** A plain http(s) link without credentials, at most 500 characters; anything else is ''. */
+function plainLink(v) {
+  if (typeof v !== 'string' || v.length > 500 || v !== v.trim()) return '';
+  try { const u = new URL(v); return (u.protocol === 'http:' || u.protocol === 'https:') && !u.username && !u.password ? v : ''; } catch { return ''; }
+}
+
+/**
+ * What a read-only view of a recipe shows, for `plannedServings` servings: the recipe's own numbers scaled to the planned amount, with the
+ * ingredient lines scaled the same way. Pure; reads own properties only; never throws; strings are returned verbatim (the view escapes them).
+ * planned = the given number of servings when it is a finite number > 0, else the recipe's yield, else 1; factor = planned / yield (1 when the
+ * recipe has no usable yield); total = perServing x planned.
+ */
+export function recipeSummary(recipe, plannedServings, measures) {
+  const o = recipe && typeof recipe === 'object' && !Array.isArray(recipe) ? recipe : {};
+  const own = k => (Object.hasOwn(o, k) ? o[k] : undefined);
+  const list = v => (Array.isArray(v) ? v : []);
+  const yieldN = own('servings');
+  const yieldOk = typeof yieldN === 'number' && Number.isFinite(yieldN) && yieldN > 0;
+  const servings = yieldOk ? yieldN : 1;
+  const planned = typeof plannedServings === 'number' && Number.isFinite(plannedServings) && plannedServings > 0 ? plannedServings : servings;
+  const factor = yieldOk ? planned / yieldN : 1;
+  const ings = list(own('ingredients')).filter(i => i && typeof i === 'object' && !Array.isArray(i));
+  let n = null;
+  try { n = recipeNutrition({ servings: yieldN, stated: own('stated'), ingredients: ings }, measures); } catch { n = null; }
+  const per = n ? n.perServing : { k: 0, p: 0, c: 0, f: 0 };
+  const fin = v => (Number.isFinite(v) ? v : 0);
+  const perServing = { k: fin(per.k), p: fin(per.p), c: fin(per.c), f: fin(per.f) };
+  const total = { k: fin(perServing.k * planned), p: fin(perServing.p * planned), c: fin(perServing.c * planned), f: fin(perServing.f * planned) };
+  const lines = [];
+  for (const i of ings) { let t = ''; try { t = scaleIngredientText(i, factor); } catch { t = ''; } if (typeof t === 'string' && t) lines.push(t); }
+  const time = own('totalTime');
+  return {
+    name: typeof own('name') === 'string' ? own('name') : '', servings, planned, factor, perServing, total,
+    source: n ? n.source : 'none', estimated: n ? n.estimated === true : false,
+    ingredients: lines,
+    steps: list(own('steps')).filter(x => typeof x === 'string' && x.trim() !== ''),
+    tags: list(own('tags')).filter(x => typeof x === 'string' && x !== ''),
+    time: typeof time === 'number' && Number.isFinite(time) && time > 0 ? time : null,
+    link: plainLink(own('source')),
+  };
+}
+
 // ---- persistence (MUTATES state) -----------------------------------------------------------------------------
 
 export function saveRecipe(state, recipe, now) {

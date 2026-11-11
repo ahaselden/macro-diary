@@ -1,3 +1,5 @@
+*Note: the servings rule below was replaced by 1 serving per pick (D33, docs/specs/autofill-one-serving.md).*
+
 # Spec: auto-fill week
 
 ## Purpose

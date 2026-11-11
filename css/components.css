@@ -98,6 +98,7 @@ video{width:100%;border-radius:12px;background:#000;max-height:50dvh}
 .pl-meal{margin-top:12px;padding-top:8px;border-top:1px solid var(--line)}
 .pl-item{padding:8px 0;border-top:1px solid var(--line)}
 .pl-nm{min-width:0;overflow-wrap:anywhere}
+button.pl-nm.link{background:none;border:none;padding:0;min-height:44px;text-align:left;color:var(--accent);text-decoration:underline;font:inherit;font-weight:600;cursor:pointer}
 .pl-item .x{flex:0 0 44px;min-height:44px;padding:0;border:none;background:none;color:var(--muted);font-size:20px}
 .pl-ctl{margin-top:2px;flex-wrap:wrap}
 .pl-ctl .pl-qty{flex:0 0 84px;width:84px;min-width:0}
@@ -134,3 +135,7 @@ video{width:100%;border-radius:12px;background:#000;max-height:50dvh}
 .rc-notes ul{margin:4px 0 0;padding-left:18px}
 .ri-msg{min-height:1.4em;margin:8px 0;color:#b91c1c;font-size:14px}
 .ri textarea{width:100%;box-sizing:border-box;min-height:120px}
+/* read-only recipe view (opened from the plan) */
+.rv h3{margin:14px 0 4px;font-size:15px}
+.rv ul,.rv ol{margin:0;padding-left:22px}
+.rv li{margin:4px 0}
