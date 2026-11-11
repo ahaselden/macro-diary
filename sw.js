@@ -1,7 +1,7 @@
 // Caches the app shell so it opens offline. Food-database requests always go to the network.
 // Keep SHELL in sync with the files that ship: tests/sw.test.js fails if a js/css file is missing from it.
 // After changing ANY shipped file, bump CACHE so installed copies (phones) pick up the update.
-const CACHE = 'macro-diary-v35';
+const CACHE = 'macro-diary-v37';
 const OCR_CACHE = 'macro-diary-ocr-v1';   // ~7 MB OCR engine, fetched on first label scan; survives CACHE bumps. Change the name if /vendor/tesseract/ is ever updated.
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png',
@@ -18,6 +18,7 @@ const SHELL = [
   'js/domain/backup.js',
   'js/domain/cooking.js',
   'js/domain/entries.js',
+  'js/domain/food-match.js',
   'js/domain/food.js',
   'js/domain/ingredient-parse.js',
   'js/domain/ingredient-tokens.js',
@@ -36,6 +37,7 @@ const SHELL = [
   'js/main.js',
   'js/services/barcode.js',
   'js/services/files.js',
+  'js/services/food-suggest.js',
   'js/services/foods.js',
   'js/services/http.js',
   'js/services/ocr.js',
