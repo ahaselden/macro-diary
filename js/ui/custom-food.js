@@ -59,9 +59,9 @@ export function renderCustom() {
 async function readLabel(file) {
   const run = ++ocrRun, setBusy = on => { for (const id of ['#cCam', '#cPick']) { const b = $(id); if (b) b.disabled = on; } };
   const msg = t => { const el = $('#cLabelMsg'); if (el && run === ocrRun) el.innerHTML = t; };
+  if ($('#cCodeMsg')) $('#cCodeMsg').innerHTML = '';                 // an offer from an earlier photo must not stay next to this photo's result
   if (file.size > 25e6) { msg('That photo is too large (max 25 MB).'); return; }
   setBusy(true);
-  if ($('#cCodeMsg')) $('#cCodeMsg').innerHTML = '';
   decodeImageBarcode(file).then(code => { if (code && run === ocrRun) return barcodeFromPhoto(code, run); }).catch(() => {});   // runs beside the label reading, never in front of it
   try {
     const text = await readImageText(file, p => {

@@ -3,7 +3,7 @@
 // (Firefox, Safari/iPhone, Chrome/Edge on Windows) it falls back to ZXing (js/vendor/zxing.min.js, see vendor/licenses/),
 // which is loaded only when a scan is started.
 import { loadScript } from './script.js';
-import { normalizeBarcode } from '../domain/barcode.js';
+import { normalizeBarcode, pickBarcode } from '../domain/barcode.js';
 let scanStream = null, scanTimer = null;
 
 const nativeDetector = () => 'BarcodeDetector' in window;
@@ -73,8 +73,10 @@ let zxingDecode = null;
 const defaultDecoders = () => {
   const list = [];
   if (nativeDetector()) {
-    const det = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] });
-    list.push(async frame => { const codes = await det.detect(frame); return codes.length ? codes[0].rawValue : null; });
+    try {
+      const det = new BarcodeDetector({ formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e'] });
+      list.push(async frame => pickBarcode((await det.detect(frame)).map(c => c.rawValue)) || null);     // any code in the photo, not just the first (a QR code may come first)
+    } catch { /* this browser's detector does not support the formats: ZXing below still runs */ }
   }
   list.push(async frame => {
     const Z = await loadZXing();
