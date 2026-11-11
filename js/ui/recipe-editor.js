@@ -6,7 +6,7 @@ import { emit } from '../core/bus.js';
 import { esc, rd, r1 } from '../core/format.js';
 import { foodKey } from '../domain/food.js';
 import { parseIngredient, formatQty } from '../domain/ingredient-parse.js';
-import { newRecipe, newIngredient, resolveGrams, recipeNutrition, saveRecipe, deleteRecipe, scaleIngredientText, setFavorite } from '../domain/recipes.js';
+import { newRecipe, newIngredient, resolveGrams, recipeNutrition, saveRecipe, deleteRecipe, scaleIngredientText, setFavorite, ingredientStatus } from '../domain/recipes.js';
 import { searchAll } from '../services/foods.js';
 
 let draft = null, isNew = true, importNotes = [];
@@ -34,18 +34,16 @@ function armGuard() {
   setCloseGuard(() => { readFields(); return JSON.stringify(draft) === initialSnapshot || confirm('Discard your changes to this recipe?'); });
 }
 
-const qtyUnit = i => ((i.qty == null || i.qty === '' ? '' : formatQty(i.qty)) + ' ' + (i.unit || '')).trim();
+// Small link icon next to the ingredient (grey when no food is linked, accent colour when one is).
+const linkIcon = '<svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5"/></svg>';
 
+/** ONE small line under the ingredient: how it was read, and (when a food is linked) which food and how many kcal; a compact grams box when grams are unknown. */
 function ingInfo(i) {
-  const parsed = `<div>${esc(qtyUnit(i))} <b>${esc(i.name)}</b>${i.prep ? ', ' + esc(i.prep) : ''}</div>`;
-  let linked = '';
-  if (i.food) {
-    const g = Number(i.grams);
-    linked = `<div>Linked: ${esc(i.food.name)}${g > 0 ? ` · ${rd(Number(i.food.per100.k) * g / 100)} kcal (${rd(g)} g)` : ''}</div>`;
-    if (!(g > 0)) linked += `<div>Can't convert '${esc(qtyUnit(i) || i.raw)}' for this food — enter grams</div>
-      <div class="row"><input class="grams" type="number" inputmode="decimal" step="any" min="0" placeholder="grams" aria-label="Grams" value=""></div>`;
-  }
-  return parsed + linked + `<div class="row"><button class="fit" data-link>${i.food ? 'Change food' : 'Link food'}</button></div>`;
+  const s = ingredientStatus(i);
+  const qty = esc(s.qty), name = esc(s.name), prep = esc(s.prep), food = esc(s.foodName);
+  const linked = s.linked ? ` · ${food}${s.kcal !== null ? ` · ${rd(s.kcal)} kcal (${rd(s.grams)} g)` : ''}` : '';
+  const grams = s.needsGrams ? ' · enter grams <input class="grams" type="number" inputmode="decimal" step="any" min="0" placeholder="grams" aria-label="Grams" value="">' : '';
+  return `${qty} <b>${name}</b>${prep ? ', ' + prep : ''}${linked}${grams}`;
 }
 
 function renderForm() {
@@ -70,7 +68,7 @@ function renderForm() {
     <h3>Ingredients</h3>
     <label for="rePaste">Paste ingredients (one per line)</label><textarea id="rePaste" placeholder="2 cups flour&#10;1 tbsp olive oil"></textarea>
     <button id="reAddIng" style="margin-top:6px;min-height:44px">Add</button>
-    <div id="reIngs">${d.ingredients.map(i => `<div class="ing" data-id="${esc(i.id)}"><div class="row"><input class="ing-raw" value="${esc(i.raw)}" aria-label="Ingredient"><button class="x" data-rm aria-label="Remove">✕</button></div><div class="ing-info muted">${ingInfo(i)}</div></div>`).join('')}</div>
+    <div id="reIngs">${d.ingredients.map(i => `<div class="ing" data-id="${esc(i.id)}"><div class="row"><input class="ing-raw" value="${esc(i.raw)}" aria-label="Ingredient"><button type="button" class="lnk ${i.food ? 'linked' : ''}" data-link aria-label="${i.food ? 'Change food for ' : 'Link food for '}${esc(i.name)}" title="${i.food ? 'Change food' : 'Link food'}">${linkIcon}</button><button class="x" data-rm aria-label="Remove">✕</button></div><div class="ing-info muted">${ingInfo(i)}</div></div>`).join('')}</div>
     <div class="rc-scale" id="reScale"></div>
     <div class="card rc-sum" id="reSum"></div>
     <h3>Steps (one per line)</h3><textarea id="reSteps">${esc((d.steps || []).join('\n'))}</textarea>

@@ -217,7 +217,7 @@ test('U5 the link button has a visual state: class linked (or data-linked) when 
   assert.match(tag, /\$\{[^}]*(?:\.food|\.linked|\blinked\b)[^}]*\}|data-linked/, 'state computed from the ingredient');
   const onchange = /root\.onchange\s*=[\s\S]*?\n {2}\};/.exec(src);
   assert.ok(onchange, 'root.onchange handler');
-  assert.ok(!/data-link|\.lnk|\.linked|classList/.test(onchange[0]), 'the change handler does not touch the icon button');
+  assert.ok(!/data-link|\.lnk|\.linked|classList\.(?:add|remove|toggle)/.test(onchange[0]), 'the change handler does not touch the icon button (the existing classList.contains(\'ing-raw\') guard is allowed)');
   assert.match(onchange[0], /\.ing-info'\)\.innerHTML\s*=\s*ingInfo\(/, 'still redraws only .ing-info');
 });
 

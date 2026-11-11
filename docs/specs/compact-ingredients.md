@@ -95,3 +95,8 @@ The static tests are weak: they check that markup, CSS rules and calls exist in 
 4. Non-string `name`/`prep` (numbers, objects): only "is a string" is asserted, not what string.
 5. `qty` of 0 renders as `'0 g'` under "exactly like the current `qtyUnit`"; not tested.
 6. Icon artwork, the accent colour and the class name of the link button are free (the CSS tests read the class from the markup); the plan says "e.g. `.linked`"; tests accept `linked` as a class or `data-linked`.
+
+## Verification log (implementer, Windows, desktop built-in browser)
+- At 375x812: a demo recipe with 7 ingredients (two linked, one without grams) shows one row per ingredient (about 77 px each, 95 px with a linked kcal line), link icons 44x44, grey when unlinked and green when linked, labels such as "Link food for onion powder", the info line "2 tbsp **honey** · Honey · enter grams [grams]"; tapping a link icon opens the Link food picker. Desktop width was reset afterwards.
+- Not done: a real phone, screen-reader output, entering grams and removing through the new layout by hand, the picker flow to the end, desktop screenshots.
+- One designer test was changed after implementation: U5 rejected the word `classList` in the change handler, which the existing handler already uses (`classList.contains('ing-raw')`); the designer tightened it to reject only the link icon and class changes. No other test edited.

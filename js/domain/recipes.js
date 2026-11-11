@@ -171,6 +171,33 @@ export function recipeNutrition(recipe, measures) {
   return { ...foods, source: linked > 0 ? 'foods' : 'none', estimated: false };
 }
 
+/**
+ * How one ingredient should be summarised in the editor: the parsed quantity/name/prep and the link state, with calories computed from the
+ * linked food and grams. Pure; reads own properties only; never throws; strings are returned verbatim (the UI escapes them).
+ *   needsGrams = a food is linked but the grams are unknown (the user must enter them).
+ */
+export function ingredientStatus(ing) {
+  const o = ing && typeof ing === 'object' && !Array.isArray(ing) ? ing : {};
+  const own = (obj, k) => (obj && typeof obj === 'object' && Object.hasOwn(obj, k) ? obj[k] : undefined);
+  const text = v => (typeof v === 'string' ? v : '');
+  const q = own(o, 'qty');
+  const qty = ((q == null || q === '' ? '' : formatQty(q)) + ' ' + text(own(o, 'unit'))).trim();
+  const food = own(o, 'food');
+  const linked = !!food && typeof food === 'object' && !Array.isArray(food);
+  const g = own(o, 'grams');
+  const gn = typeof g === 'number' || typeof g === 'string' ? Number(g) : NaN;
+  const grams = Number.isFinite(gn) && gn > 0 ? gn : null;
+  const per = linked ? own(food, 'per100') : undefined;
+  const kRaw = own(per, 'k');
+  const k = typeof kRaw === 'number' || typeof kRaw === 'string' ? Number(kRaw) : NaN;
+  return {
+    qty, name: text(own(o, 'name')), prep: text(own(o, 'prep')), linked,
+    foodName: linked ? text(own(food, 'name')) : '',
+    kcal: linked && grams !== null && Number.isFinite(k) ? (k * grams) / 100 : null,
+    grams, needsGrams: linked && grams === null,
+  };
+}
+
 // ---- persistence (MUTATES state) -----------------------------------------------------------------------------
 
 export function saveRecipe(state, recipe, now) {
