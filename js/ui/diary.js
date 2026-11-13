@@ -25,6 +25,7 @@ export function renderDiary() {
   $('#dateLbl').textContent = cur === fmt(new Date()) ? 'Today' : pretty(cur);
   const list = state.days[cur] || [], t = totals(list), g = state.goals, left = g.k - t.k;
   const mac = (n, k, col) => `<div><span class="muted">${n}</span><b>${rd(t[k])} / ${Number(g[k]) || 0}g</b>${bar(t[k], g[k], col)}</div>`;
+  $('#summary').setAttribute('aria-label', `Nutrition details for this day: ${rd(t.k)} of ${Number(g.k) || 0} kcal eaten. Press to open.`);
   $('#summary').innerHTML =
     `<div class="row" style="align-items:flex-end"><div><div class="big">${rd(t.k)}</div><div class="muted">of ${Number(g.k) || 0} kcal eaten</div></div>
      <div style="text-align:right"><div class="big" style="font-size:24px;${left < 0 ? 'color:var(--over)' : ''}">${rd(Math.abs(left))}</div><div class="muted">${left < 0 ? 'over' : 'remaining'}</div></div></div>
@@ -41,7 +42,7 @@ export function renderDiary() {
 }
 
 const NUT_ROWS = [['fiber', 'Fiber', 'g'], ['sugars', 'Sugars', 'g'], ['satFat', 'Saturated fat', 'g'], ['sodium', 'Sodium', 'mg'], ['cholesterol', 'Cholesterol', 'mg']];
-const num1 = n => String(Math.round(n * 10) / 10);
+const num1 = n => (n > 0 && n < 0.1 ? '<0.1' : String(Math.round(n * 10) / 10));   // a tiny recorded amount must not read as a recorded 0
 
 /** The day's nutrition details: calories and macros against the goals, then the extra label facts that were recorded. */
 function openDetails() {
