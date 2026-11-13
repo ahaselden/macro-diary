@@ -3,7 +3,6 @@ import { OZ } from '../core/constants.js';
 import { rd, r1 } from '../core/format.js';
 import { fmt, parse } from '../core/dates.js';
 import { entryMacros, totals } from './nutrition.js';
-import { NUT_KEYS } from '../core/schema.js';
 
 // The extra nutrients in the exports (D43, D48): [key, column name, unit]. An entry that did not record one gives an EMPTY cell, never 0.
 const NUT_COLS = [['fiber', 'Fiber', 'g'], ['sugars', 'Sugars', 'g'], ['satFat', 'Saturated fat', 'g'], ['sodium', 'Sodium', 'mg'], ['cholesterol', 'Cholesterol', 'mg']];
@@ -21,7 +20,7 @@ function nutOf(e, key) {
 /** Totals and coverage over a list of entries: { tot: {key: sum|null}, cnt: {key: entries that recorded it}, items }. */
 function nutSum(entries) {
   const tot = {}, cnt = {};
-  for (const key of NUT_KEYS) { let t = 0, c = 0; for (const e of entries) { const v = nutOf(e, key); if (v !== null) { t += v; c++; } } tot[key] = c ? t : null; cnt[key] = c; }
+  for (const [key] of NUT_COLS) { let t = 0, c = 0; for (const e of entries) { const v = nutOf(e, key); if (v !== null) { t += v; c++; } } tot[key] = c ? t : null; cnt[key] = c; }
   return { tot, cnt, items: entries.length };
 }
 
@@ -71,7 +70,7 @@ export function exportFiles(state, x, exportedAt) {
       const ents = (yr ? x.days.filter(day => day.slice(0, 7) === r.label) : [r.label]).flatMap(day => Array.isArray(state.days[day]) ? state.days[day] : []);
       const ns = nutSum(ents);
       rows.push([r.label, r.days, rd(r.k / d), r1(r.p / d), r1(r.c / d), r1(r.f / d), state.goals.k,
-        ...NUT_KEYS.map(k => (ns.tot[k] === null ? '' : r1n(ns.tot[k] / d))), ns.items, ...NUT_KEYS.map(k => ns.cnt[k])]);
+        ...NUT_COLS.map(([k]) => (ns.tot[k] === null ? '' : r1n(ns.tot[k] / d))), ns.items, ...NUT_COLS.map(([k]) => ns.cnt[k])]);
     });
     files.push({ name: exportName(x, 'summary', 'csv'), type: 'text/csv', text: toCSV(rows) });
   }
@@ -79,7 +78,7 @@ export function exportFiles(state, x, exportedAt) {
   if (x.days.length) {
     const days = {};
     x.days.forEach(d => days[d] = state.days[d].map(e => {   // an entry with recorded extras also carries their scaled totals (the stored per-100 g `nut` is kept as is)
-      const t = {}; for (const k of NUT_KEYS) { const v = nutOf(e, k); if (v !== null) t[k] = r1n(v); }
+      const t = {}; for (const [k] of NUT_COLS) { const v = nutOf(e, k); if (v !== null) t[k] = r1n(v); }
       return Object.keys(t).length ? { ...e, nutTotal: t } : e;
     }));
     files.push({ name: exportName(x, 'data', 'json'), type: 'application/json', text: JSON.stringify({ exported: exportedAt, from: x.a, to: x.b, goals: state.goals, days }, null, 2) });
