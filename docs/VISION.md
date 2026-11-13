@@ -97,13 +97,9 @@ Several features need a server for the same reasons: secrets, and fetching pages
 
 Everything else stays static and client-side, and the app keeps working if the backend is not set up (the features that need it just stay off).
 
-## 6. Suggested order *(my suggestion; each step is its own pull request)*
+## 6. What is built and what is next
 
-1. Go live with sync (owner sets up Supabase), after deciding on households (4.6).
-2. Favourites (small; unlocks 3). **Done (PR #10 merged).**
-3. Auto-fill week/month (pure logic, no backend, fully testable). **Week done (PR #12); month in PR.**
-4. Recipe import from websites (first use of the backend). **In PR (feature/recipe-import); function not yet deployed.**
-5. Store integration, starting with the one store that allows it.
+The first suggested steps (sync, favourites, auto-fill, recipe import) are built. The live, priority-ordered queue is [BACKLOG.md](BACKLOG.md); this section no longer keeps its own list.
 
 ## 7. Proposed non-goals *(edit freely)*
 
