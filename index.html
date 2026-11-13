@@ -112,6 +112,8 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
       <div class="chk"><input type="checkbox" id="srcOFF"><label style="margin:0;color:inherit">Open Food Facts (packaged foods &amp; barcodes)</label></div>
       <label for="apiKey">USDA API key</label>
       <input id="apiKey" placeholder="DEMO_KEY" autocapitalize="off" autocomplete="off">
+      <div class="chk"><input type="checkbox" id="syncApiKey"><label style="margin:0;color:inherit" for="syncApiKey">Sync my USDA key to my other devices</label></div>
+      <p class="muted" style="margin:4px 0 0">The key is stored in your sync account, readable only by you.</p>
       <p class="muted">The built-in DEMO_KEY is heavily rate-limited. Get a free key at fdc.nal.usda.gov/api-key-signup and paste it here.</p>
     </div>
     <div class="card" id="syncCard">

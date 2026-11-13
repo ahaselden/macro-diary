@@ -36,7 +36,11 @@ test('B2 v6 and older data migrate to v7 with syncApiKey false, nothing lost', (
     const old = fixture(f), mm = migrate(clone(old));
     assert.equal(mm.schemaVersion, 7, f); assert.equal(mm.syncApiKey, false, f);
     assert.deepEqual(Object.keys(mm.days).sort(), Object.keys(old.days).sort(), f);
-    for (const d of Object.keys(old.days)) assert.deepEqual(mm.days[d].map(e => e.id), old.days[d].map(e => e.id), f + d);
+    for (const d of Object.keys(old.days)) {
+      // some fixtures hold deliberately hostile days (e.g. a string); only compare ids when the day is an array
+      if (Array.isArray(old.days[d])) assert.deepEqual(mm.days[d].map(e => e && e.id), old.days[d].map(e => e && e.id), f + d);
+      else assert.deepEqual(mm.days[d], old.days[d], f + d);
+    }
   }
   const v1 = migrate({ days: { a: [] } });
   assert.equal(v1.schemaVersion, 7); assert.equal(v1.syncApiKey, false);

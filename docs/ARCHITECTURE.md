@@ -69,8 +69,8 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 ```
 state = {
   schemaVersion: 6,
-  theme: 'auto' | 'dark' | …,   weightUnit: 'g' | 'oz',            // theme, apiKey, recent: per-device, never synced (D10)
-  goals: { k, p, c, f },        apiKey, useUSDA, useOFF,
+  theme: 'auto' | 'dark' | …,   weightUnit: 'g' | 'oz',            // theme, recent: per-device, never synced (D10); apiKey syncs only while syncApiKey is on (D42)
+  goals: { k, p, c, f },        apiKey, syncApiKey, useUSDA, useOFF,
   settingsUpdatedAt: ms,                                             // stamps the synced settings as ONE record
   days: { 'YYYY-MM-DD': [ entry, … ] },
   tombstones: { entryId: deletedAtMs },                              // so deletions propagate between devices
