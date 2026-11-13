@@ -25,8 +25,9 @@ export function mapOFF(p){
 }
 export async function searchOFF(q){
   if (isBarcode(q)) {
-    const j = await getJSON(`https://world.openfoodfacts.org/api/v2/product/${q}.json?fields=${OFF_FIELDS}`);
-    const f = j.status === 1 && mapOFF(j.product); return f ? [f] : [];
+    // Open Food Facts answers an UNKNOWN barcode with HTTP 404: that is "no such product", not a failure
+    let j; try { j = await getJSON(`https://world.openfoodfacts.org/api/v2/product/${q}.json?fields=${OFF_FIELDS}`); } catch (e) { if (e && e.message === 'HTTP 404') return []; throw e; }
+    const f = j && j.status === 1 && mapOFF(j.product); return f ? [f] : [];
   }
   const j = await getJSON(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=15&fields=${OFF_FIELDS}`);
   return (j.products || []).map(mapOFF).filter(Boolean);

@@ -165,6 +165,8 @@ A "Cook" button on each recipe card and in the planned-meal recipe popup opens `
 **Honesty rule.** Absent means "not recorded", never 0; a reported 0 is kept. Each nutrient shows how many items recorded it ("from 3 of 5 items"), so a total is a lower bound.
 **Limits.** Merge stays whole-entry last-writer-wins, so a newer edit without `nut` wins over an older copy with it. Foods typed by hand cannot record extras yet.
 
+## D44. An unknown barcode at Open Food Facts is "no result", not an error
+Open Food Facts answers a barcode it does not know with HTTP 404 and a "product not found" body. `searchOFF` now returns [] for a 404 on the barcode endpoint, so the normal not-found path and the USDA fallback (D39) run and no "HTTP 404" message is shown. Every other failure (network, timeout, 429, 4xx other than 404, 5xx) and name searches are unchanged.
 ## D45. The Amount screen shows the item's nutrition facts, and a scanned barcode is kept on the food
 **What.** The Amount screen (and the entry editor) shows a "Nutrition facts" block for the chosen amount: the five extras from D43 scaled by grams/100 through the pure `itemFacts`, formatted by `formatNut` (the same text as the day page, which now uses it too). A food with no `nut` gets one honest line. A barcode from a lookup (Open Food Facts `code`, USDA `gtinUpc`, only when it passes the check digit) or typed/scanned by the user (`pickFoodBarcode`: a valid scanned code wins) is kept as `barcode` on the food, the diary entry and the recent food, shown as a small line, and cleaned (`sanitizeBarcode`, 8 to 14 digits) on load, sync and backup.
 **No schema bump.** `barcode` is an optional field that old data simply lacks (custom foods already carried it), so nothing needs migrating; old entries have none.

@@ -4,7 +4,7 @@ export async function getJSON(url){
   try {
     const r = await fetch(url, {signal: ctl.signal});
     if (r.status === 429) throw new Error('rate limited – add your own USDA key in Settings');
-    if (!r.ok) throw new Error('HTTP ' + r.status);
+    if (!r.ok) throw new Error('HTTP ' + r.status);   // services/off.js matches on the text 'HTTP 404': keep this format
     return await r.json();
   } catch (e) { throw new Error(e.name === 'AbortError' ? 'timed out' : e.message === 'Failed to fetch' ? 'network error' : e.message); }
   finally { clearTimeout(t); }
