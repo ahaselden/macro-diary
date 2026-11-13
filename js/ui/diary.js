@@ -6,7 +6,7 @@ import { MEALS } from '../core/constants.js';
 import { esc, rd, amtLabel } from '../core/format.js';
 import { fmt, addDays, pretty } from '../core/dates.js';
 import { entryMacros, totals } from '../domain/nutrition.js';
-import { dayDetails } from '../domain/details.js';
+import { dayDetails, formatNut } from '../domain/details.js';
 import { removeEntry, copyEntries } from '../domain/entries.js';
 import { dayText } from '../domain/summary.js';
 import { dayImage } from '../services/share.js';
@@ -42,7 +42,6 @@ export function renderDiary() {
 }
 
 const NUT_ROWS = [['fiber', 'Fiber', 'g'], ['sugars', 'Sugars', 'g'], ['satFat', 'Saturated fat', 'g'], ['sodium', 'Sodium', 'mg'], ['cholesterol', 'Cholesterol', 'mg']];
-const num1 = n => (n > 0 && n < 0.1 ? '<0.1' : String(Math.round(n * 10) / 10));   // a tiny recorded amount must not read as a recorded 0
 
 /** The day's nutrition details: calories and macros against the goals, then the extra label facts that were recorded. */
 function openDetails() {
@@ -51,7 +50,7 @@ function openDetails() {
   const row = (name, val, goal, unit, pct) => `<div class="row" style="justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>${name}</span><span><b>${rd(val)}${unit}</b> of ${Number(goal) || 0}${unit}${pct == null ? '' : ` (${pct}%)`}</span></div>`;
   const facts = NUT_ROWS.map(([key, label, unit]) => {
     const n = d.nutrients[key];
-    const right = n.total == null ? '<span class="muted">Not recorded</span>' : `<b>${esc(num1(n.total))} ${unit}</b> <span class="muted">from ${n.recorded} of ${d.items} ${d.items === 1 ? 'item' : 'items'}</span>`;
+    const right = n.total == null ? '<span class="muted">Not recorded</span>' : `<b>${esc(formatNut(n.total, unit))}</b> <span class="muted">from ${n.recorded} of ${d.items} ${d.items === 1 ? 'item' : 'items'}</span>`;
     return `<div class="row" style="justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>${label}</span><span>${right}</span></div>`;
   }).join('');
   $('#dBody').innerHTML = `<div class="muted">${esc(day === fmt(new Date()) ? 'Today' : pretty(day))} · ${d.items} ${d.items === 1 ? 'item' : 'items'}</div>

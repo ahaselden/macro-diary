@@ -67,3 +67,7 @@ export function usdaBarcodeMatch(code, foods) {
     return null;
   } catch { return null; }
 }
+
+/** The barcode to keep on a food: a valid scanned/typed code wins (stored as the user scanned it), else the code the database reported, else ''. */
+export function pickFoodBarcode(scanned, found) { return normalizeBarcode(scanned) || normalizeBarcode(found); }
+

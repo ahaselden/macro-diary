@@ -24,7 +24,7 @@ const brandedFood = (gtinUpc, over = {}) => ({
     { nutrientNumber: '205', value: 10 }, { nutrientNumber: '204', value: 2 }], ...over,
 });
 // what mapUSDA must produce for brandedFood() (hand-derived from the mapper's documented shape)
-const mapped = (over = {}) => ({ name: 'Coca cola', brand: 'Acme', source: 'USDA', per100: { k: 42, p: 1.5, c: 10, f: 2 }, servingG: 0, servingLabel: '', fdcId: 99, ...over });
+const mapped = (over = {}) => ({ name: 'Coca cola', brand: 'Acme', source: 'USDA', per100: { k: 42, p: 1.5, c: 10, f: 2 }, servingG: 0, servingLabel: '', fdcId: 99, barcode: UPCA, ...over });
 const q = u => new URL(u).searchParams;
 const usdaUrls = () => urls.filter(u => u.includes('api.nal.usda.gov'));
 const offUrls = () => urls.filter(u => u.includes('openfoodfacts'));
@@ -146,7 +146,7 @@ test('9. searchUSDAByBarcode: only an equal-product record is accepted (differen
   globalThis.fetch = async u => { urls.push(u); return resp({ foods: [brandedFood('136000291452'), brandedFood('291452'), brandedFood(36000291452), brandedFood(null), { description: 'x' }, null] }); };
   assert.deepEqual(await U.searchUSDAByBarcode(UPCA, 'k'), []);
   globalThis.fetch = async u => { urls.push(u); return resp({ foods: [brandedFood(EAN8, { fdcId: 8 })] }); };
-  assert.deepEqual(await U.searchUSDAByBarcode(EAN8, 'k'), [mapped({ fdcId: 8 })]);
+  assert.deepEqual(await U.searchUSDAByBarcode(EAN8, 'k'), [mapped({ fdcId: 8, barcode: EAN8 })]);
   assert.equal(usdaUrls().length, 2);
 });
 test('10. searchUSDAByBarcode: invalid code -> [] and NO request', async () => {

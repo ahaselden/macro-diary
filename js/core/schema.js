@@ -45,7 +45,13 @@ export function sanitizeNut(v) {
   }
   return Object.keys(out).length ? out : undefined;
 }
-const cleanNut = o => { if (!plainObject(o) || !('nut' in o)) return; const n = sanitizeNut(o.nut); if (n) o.nut = n; else delete o.nut; };
+/** A barcode kept on a food or entry: a string of 8 to 14 digits (no trimming), else undefined. */
+export const sanitizeBarcode = v => (typeof v === 'string' && /^\d{8,14}$/.test(v) ? v : undefined);
+const cleanNut = o => {
+  if (!plainObject(o)) return;
+  if ('nut' in o) { const n = sanitizeNut(o.nut); if (n) o.nut = n; else delete o.nut; }
+  if ('barcode' in o) { const b = sanitizeBarcode(o.barcode); if (b) o.barcode = b; else delete o.barcode; }
+};
 
 /**
  * A recipe's stated nutrition: per SERVING calories and grams of protein/carbs/fat as the source (a web page, or the user) says, plus the
