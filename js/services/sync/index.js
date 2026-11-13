@@ -104,7 +104,7 @@ export function createSyncService({ config, getState, applyState, onStatus = () 
     async signOut() {
       const c = config.get();
       if (c.session) { try { await sbSignOut(conn().url, conn().anonKey, c.session, fetchImpl); } catch { /* best effort */ } }
-      config.set({ session: null, meta: null }); lastError = ''; emit();   // forget bookkeeping so a later sign-in does a full pull
+      reportNext = false; config.set({ session: null, meta: null }); lastError = ''; emit();   // forget bookkeeping so a later sign-in does a full pull
     },
     /** Save server URL + anon key (validated). Returns an error string or ''. */
     configure({ url, anonKey }) {
@@ -115,6 +115,6 @@ export function createSyncService({ config, getState, applyState, onStatus = () 
       config.set({ url: u, anonKey: String(anonKey).trim(), useOwnProject: true }); emit();
       return '';
     },
-    setAuto(auto) { config.set({ auto: !!auto }); emit(); },
+    setAuto(auto) { config.set({ auto: !!auto }); if (!auto) reportNext = false; emit(); },
   };
 }
