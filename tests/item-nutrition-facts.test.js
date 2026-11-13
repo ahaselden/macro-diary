@@ -124,7 +124,7 @@ test('12 amount-picker source wires the facts block and keeps the card', () => {
 });
 
 test('13 schema is still v8 (guard; passes before implementation)', () => {
-  assert.equal(SCHEMA_VERSION, 9);
+  assert.equal(SCHEMA_VERSION, 10);
 });
 
 // ---------- Part 2: barcode kept (spec "Part 2", B1..B9) ----------

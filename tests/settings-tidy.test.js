@@ -170,7 +170,7 @@ test('12. sw.js CACHE is bumped past v52', () => {
 });
 
 test('13. no saved-shape change: schema version, storage key and no open flag in state', () => {
-  assert.match(read('../js/core/schema.js'), /export const SCHEMA_VERSION = 9;/);
+  assert.match(read('../js/core/schema.js'), /export const SCHEMA_VERSION = 10;/);
   assert.match(read('../js/core/constants.js'), /STORAGE_KEY = 'macrodiary\.v1'/);
   assert.doesNotMatch(read('../js/ui/theme.js'), /state\.(themeOpen|appearance\w*|themePanel\w*)\s*=/);
   assert.equal(Object.keys(state).some(k => /open|panel|expanded/i.test(k)), false);
