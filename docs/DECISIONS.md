@@ -54,7 +54,7 @@ A planned recipe becomes ONE diary entry "N servings" whose grams are the recipe
 ## D16. Shopping list aggregation is conservative — *made without the owner*
 Same ingredient is summed only across compatible units (weight→g, volume→ml, counts per unit word); weight and volume of the same ingredient stay as separate lines. **Why:** a wrong merge in a shopping list (buying 1 cup when you need 500 g) is worse than two lines. Grouping ignores size words ("large eggs" = "eggs") and plurals; names shown are as written in the first recipe. Ticks are keyed by `range start | normalised name | unit family`: they survive quantity changes, but belong to ONE shopping trip (a reviewer found that ticking onions this week also ticked them next week when ticks were keyed by name alone). Old ticks from past weeks accumulate as tiny records until "Untick all"; a rename orphans a tick (harmless). Aisles come from a keyword table, most specific aisle first; unknown → *Other*.
 
-## D17. Navigation: Diary | Plan | Recipes | Shop | More — *made without the owner*
+## D17. Navigation: Diary | Plan | Recipes | Shop | More — *made without the owner* (superseded by D50: the fifth button is now Settings, with Export inside it)
 Five bottom tabs fit a 360 px phone; Export and Settings moved under **More** (with a "‹ More" back button) rather than shrinking the bar. `showTab('export'|'settings')` still works and highlights *More*.
 
 ## D18. Sync is scheduled by any data event, and sync results refresh every screen
