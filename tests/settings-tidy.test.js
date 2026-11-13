@@ -91,9 +91,9 @@ test('4. index.html: #themePanel is hidden and wraps the intro text and #themes'
   assert.doesNotMatch(settings.slice(0, settings.indexOf(p)), /id="themes"/, '#themes must not sit before the panel');
 });
 
-test('5. index.html: card order Units, Daily goals, Appearance, Food databases, Sync, Backup; every id still there once', () => {
+test('5. index.html: card order Units, Daily goals, Appearance, Food databases, Sync, Export your data, Backup; every id still there once', () => {
   const at = s => { const i = settings.indexOf(s); assert.ok(i > -1, 'missing ' + s); return i; };
-  const order = [at('<h2>Units</h2>'), at('<h2>Daily goals</h2>'), at('id="themeToggle"'), at('<h2>Food databases</h2>'), at('<h2>Sync between devices</h2>'), at('<h2>Backup</h2>')];
+  const order = [at('<h2>Units</h2>'), at('<h2>Daily goals</h2>'), at('id="themeToggle"'), at('<h2>Food databases</h2>'), at('<h2>Sync between devices</h2>'), at('<h2>Export your data</h2>'), at('<h2>Backup</h2>')];
   for (let i = 1; i < order.length; i++) assert.ok(order[i - 1] < order[i], 'card ' + i + ' out of order');
   for (const id of ['wUnit', 'gK', 'gP', 'gC', 'gF', 'srcUSDA', 'srcOFF', 'keyLine', 'keyEdit', 'keyEditor', 'apiKey', 'syncApiKey', 'keySave', 'keyCancel', 'syncCard', 'syncBox', 'bkExport', 'bkImport', 'bkFile', 'wipe', 'themes'])
     assert.equal(html.split('id="' + id + '"').length - 1, 1, '#' + id + ' must appear exactly once');

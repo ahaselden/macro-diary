@@ -61,10 +61,6 @@ th{color:var(--muted);font-weight:600;font-size:12px;border-top:none}
   padding:10px 16px;border-radius:99px;z-index:50;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
 .toast.show{opacity:1}
 video{width:100%;border-radius:12px;background:#000;max-height:50dvh}
-/* More hub + back button */
-.more-btn{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;font-size:17px;margin:6px 0;justify-content:flex-start;padding:0 16px}
-.more-btn span{font-size:22px}
-.back-more{min-height:44px;margin-bottom:8px;padding:0 12px}
 /* Recipes list */
 .rc-bar{margin-bottom:10px}
 .rc-card{cursor:pointer}

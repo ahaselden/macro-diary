@@ -8,6 +8,7 @@ import { apiKeySummary } from '../domain/api-key.js';
 import { download } from '../services/files.js';
 import { registerTab } from './tabs.js';
 import { setThemePanel } from './theme.js';
+import { renderExport } from './export-view.js';
 import { restoreFlow } from './restore-dialog.js';
 
 export function loadSettings() {
@@ -56,6 +57,6 @@ export function initSettings() {
       replace(defaults()); save(); emit('settings:changed'); emit('diary:changed'); toast('All data deleted');
     }
   };
-  registerTab('settings', () => { setThemePanel(false); setKeyEditor(false); resetKeyEditor(); loadSettings(); });   // opening Settings always shows the collapsed key line
+  registerTab('settings', () => { renderExport(); setThemePanel(false); setKeyEditor(false); resetKeyEditor(); loadSettings(); });   // opening Settings always shows the collapsed key line
   on('settings:changed', loadSettings);
 }
