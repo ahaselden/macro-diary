@@ -16,7 +16,7 @@ export default async ({ page, url, check, screenshot }) => {
     await page.reload();
     await page.waitForSelector('.tabs');
   };
-  const openSettings = async () => { await page.click('[data-tab="more"]'); await page.click('#moreSettings'); await page.waitForSelector('#keyLine', { state: 'visible' }); };
+  const openSettings = async () => { await page.click('[data-tab="settings"]'); await page.waitForSelector('#keyLine', { state: 'visible' }); };
   const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('macrodiary.v1')));
   const toast = async () => { const l = page.locator('#toast'); return (await l.isVisible()) ? (await l.textContent()).trim() : ''; };
   const near = t => Math.abs(t - Date.now()) < 60000;
