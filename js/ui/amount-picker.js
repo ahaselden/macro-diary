@@ -4,7 +4,7 @@ import { $, toast, dialog, head } from '../core/dom.js';
 import { emit } from '../core/bus.js';
 import { MEALS } from '../core/constants.js';
 import { esc, rd, r1, r2, fmtW } from '../core/format.js';
-import { foodKey } from '../domain/food.js';
+import { foodKey, cleanFoodName } from '../domain/food.js';
 import { addEntry, updateEntry } from '../domain/entries.js';
 import { unitsFor as unitsForM, startingUnit } from '../domain/units.js';
 import { loadPortions } from '../services/usda.js';
@@ -23,6 +23,7 @@ export function showFood(food, existing) {
   let touched = !!existing;                                        // once the user edits the amount or unit, late-arriving measures must not move it
   const canLoad = food.source === 'USDA' && food.fdcId && !food.portions;
   $('#dBody').innerHTML = `<h2>${esc(food.name)}</h2><div class="muted">${esc(food.brand)} ${food.source ? '· ' + esc(food.source) : ''}</div>
+    ${existing ? `<label for="eName">Name</label><input id="eName" autocomplete="off" value="${esc(existing.name)}">` : ''}
     <div class="row"><div style="flex:0 0 38%"><label for="amt">Amount</label><input id="amt" type="number" inputmode="decimal" step="any" value="${Number(startAmt) || 0}"></div>
     <div><label for="unit">Unit</label><select id="unit"></select></div></div>
     <div class="muted" id="uMsg" style="margin-top:6px">${canLoad ? 'Loading cups, tablespoons and other measures…' : ''}</div>
@@ -59,8 +60,10 @@ export function showFood(food, existing) {
     err => { if (showFood.tok === tok && $('#uMsg')) $('#uMsg').textContent = "Couldn't load household measures (" + err.message + ')'; });
   $('#addGo').onclick = () => {
     const g = grams(); if (!(g > 0)) { toast('Enter an amount'); return; }
+    const newName = existing ? cleanFoodName($('#eName').value) : '';
+    if (existing && !newName) { toast('Enter a name'); return; }
     const meal = $('#mealSel').value, un = unitNow(), amount = +$('#amt').value, disp = un.key.startsWith('w:') ? '' : `${r2(amount)} ${un.short}`;
-    if (existing) { updateEntry(state, view.day, existing.id, { grams: g, meal, unitKey: un.key, amount, disp }, Date.now()); }
+    if (existing) { updateEntry(state, view.day, existing.id, { name: newName, grams: g, meal, unitKey: un.key, amount, disp }, Date.now()); }
     else {
       const info = { name: food.name, brand: food.brand || '', source: food.source || '', per100: food.per100, servingG: food.servingG || 0,
         servingLabel: food.servingLabel || '', fdcId: food.fdcId, portions: food.portions };

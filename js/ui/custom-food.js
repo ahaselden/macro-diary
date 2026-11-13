@@ -1,7 +1,7 @@
 // "Custom" tab of the add-food dialog: enter a food by hand, or prefill it from a photo of a nutrition label.
 import { state, save } from '../core/store.js';
-import { $, toast } from '../core/dom.js';
-import { isBarcode, replacesCustom, servingSummary } from '../domain/food.js';
+import { $, toast, head } from '../core/dom.js';
+import { isBarcode, replacesCustom, servingSummary, cleanFoodName, updateCustomFood, foodKey } from '../domain/food.js';
 import { normalizeBarcode, barcodeOffer } from '../domain/barcode.js';
 import { esc, rd } from '../core/format.js';
 import { add } from './ctx.js';
@@ -14,7 +14,13 @@ import { showFood } from './amount-picker.js';
 const NUMBER_FIELDS = ['#cSize', '#cK', '#cP', '#cC', '#cF'];
 let ocrRun = 0;   // bumped on every render and every photo: a result from an older run is ignored
 
-export function renderCustom() {
+/** Open the custom-food form prefilled with a saved food, to edit it in place (past diary entries are not touched). */
+export function editCustomFood(food) {
+  renderCustom(food);
+  head('Edit food', true);
+}
+
+export function renderCustom(editing) {
   ocrRun++;
   $('#tabBody').innerHTML = `
     <div class="muted">Fill this in from a nutrition label:</div>
@@ -29,8 +35,14 @@ export function renderCustom() {
     <div class="row"><div><label>Calories</label><input id="cK" type="number" inputmode="decimal"></div><div><label>Protein (g)</label><input id="cP" type="number" inputmode="decimal"></div></div>
     <div class="row"><div><label>Carbs (g)</label><input id="cC" type="number" inputmode="decimal"></div><div><label>Fat (g)</label><input id="cF" type="number" inputmode="decimal"></div></div>
     <p class="muted">Values are per serving above.</p>
-    <div class="chk"><input type="checkbox" id="cSave" checked><label style="margin:0;color:inherit" for="cSave">Save to My foods</label></div>
-    <button class="primary" style="width:100%" id="cGo">Continue</button>`;
+    ${editing ? '<p class="muted">Past diary entries keep the name and numbers they were logged with.</p>' : '<div class="chk"><input type="checkbox" id="cSave" checked><label style="margin:0;color:inherit" for="cSave">Save to My foods</label></div>'}
+    <button class="primary" style="width:100%" id="cGo">${editing ? 'Save changes' : 'Continue'}</button>`;
+  if (editing) {
+    const size = Number(editing.servingG) > 0 ? Number(editing.servingG) : 100, per = n => String(Math.round((Number(editing.per100 && editing.per100[n]) || 0) * size) / 100);
+    $('#cName').value = editing.name || ''; $('#cBar').value = editing.barcode || ''; $('#cSize').value = String(size);
+    $('#cK').value = per('k'); $('#cP').value = per('p'); $('#cC').value = per('c'); $('#cF').value = per('f');
+  }
+  const editKey = editing ? foodKey(editing) : '';
   // anything the user types is theirs: a later photo must not overwrite it, and it is no longer "from the photo"
   for (const id of NUMBER_FIELDS) $(id).addEventListener('input', e => { e.target.removeAttribute('data-ocr'); e.target.dataset.user = '1'; });
   $('#cBar').addEventListener('input', e => { e.target.dataset.user = '1'; });         // a barcode the user typed is theirs: a photo must not replace it
@@ -41,10 +53,16 @@ export function renderCustom() {
   $('#cGo').onclick = () => {
     const bar = $('#cBar').value.replace(/\s/g, '');
     if (bar && !isBarcode(bar)) { toast('Barcode must be 8 to 14 digits'); return; }
-    const typed = $('#cName').value.trim();
-    if (bar && !typed) { toast('Give this product a name so it can be found by its barcode'); return; }
-    const name = typed || 'Quick add', size = +$('#cSize').value || 100, k = +$('#cK').value;
+    const name = cleanFoodName($('#cName').value);
+    if (!name) { toast('Enter a name'); return; }
+    const size = +$('#cSize').value || 100, k = +$('#cK').value;
     if (!(k >= 0) || $('#cK').value === '') { toast('Enter calories'); return; }
+    if (editing) {
+      const done = updateCustomFood(state, editKey, { name, servingG: size, k, p: +$('#cP').value || 0, c: +$('#cC').value || 0, f: +$('#cF').value || 0, barcode: bar }, Date.now());
+      if (!done) { toast('You already have a food with that name'); return; }
+      save(); toast('Food updated'); add.tab = 'search'; add.onFoodEdited && add.onFoodEdited();
+      return;
+    }
     const s = 100 / size, food = { name, brand: '', source: 'Custom', servingG: size,
       per100: { k: k * s, p: (+$('#cP').value || 0) * s, c: (+$('#cC').value || 0) * s, f: (+$('#cF').value || 0) * s } };
     food.updatedAt = Date.now();
