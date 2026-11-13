@@ -182,7 +182,7 @@ test('14. guards (pass before implementation): row shapes, schema, UI untouched'
   const x = xData(state, 'year', '2025-06-01');
   x.rows.forEach(r => assert.deepEqual(Object.keys(r), ['date', 'k', 'p', 'c', 'f', 'n']));
   rollup(x).forEach(r => assert.deepEqual(Object.keys(r).sort(), ['c', 'days', 'f', 'k', 'label', 'p']));
-  assert.equal(SCHEMA_VERSION, 8);
+  assert.equal(SCHEMA_VERSION, 9);
   const ui = readFileSync(new URL('../js/ui/export-view.js', import.meta.url), 'utf8');
   assert.match(ui, /exportFiles/);
   assert.doesNotMatch(ui, /fiber|sodium|cholesterol|satFat|nutTotal/i);

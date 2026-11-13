@@ -9,6 +9,8 @@ const fakeStorage = (initial, failWrites = false) => {
   return { getItem: k => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { if (failWrites) throw new Error('quota'); m.set(k, v); }, m };
 };
 
+const noFoodId = days => JSON.parse(JSON.stringify(days, (k, v) => (k === 'foodId' ? undefined : v)));
+
 test('storage key is unchanged (existing users data lives here)', () => assert.equal(STORAGE_KEY, 'macrodiary.v1'));
 
 test('empty storage gives defaults', () => {
@@ -26,7 +28,7 @@ test('a v1 save (no schemaVersion) loads intact and is stamped to the current ve
   assert.equal(v1.schemaVersion, undefined);
   const { state } = createStore(fakeStorage(JSON.stringify(v1)));
   assert.equal(state.schemaVersion, SCHEMA_VERSION);
-  assert.deepEqual(state.days, v1.days);
+  assert.deepEqual(noFoodId(state.days), v1.days);   // saved-food-ids: migration may stamp foodId on copies of saved foods
   assert.deepEqual(state.goals, v1.goals);
   assert.deepEqual(state.measures, v1.measures);
 });
@@ -81,7 +83,7 @@ test('sane goals (numbers or numeric strings) are kept as numbers', () => {
 
 test('sanitising leaves valid diary data untouched', () => {
   const v1 = fixture('state'), s = createStore(fakeStorage()); s.replace(clone(v1));
-  assert.deepEqual(s.state.days, v1.days);
+  assert.deepEqual(noFoodId(s.state.days), v1.days);   // saved-food-ids: see above
   assert.deepEqual(s.state.measures, v1.measures);
   assert.equal(s.state.theme, v1.theme);
   assert.equal(s.state.weightUnit, v1.weightUnit);
@@ -89,7 +91,7 @@ test('sanitising leaves valid diary data untouched', () => {
 
 test('migrate never removes data and never lowers the version', () => {
   assert.equal(migrate({ days: { a: [] } }).schemaVersion, SCHEMA_VERSION);
-  assert.equal(migrate({ schemaVersion: 7 }).schemaVersion, 8);
+  assert.equal(migrate({ schemaVersion: 7 }).schemaVersion, 9);
 });
 
 test('v3+ adds tombstones + settingsUpdatedAt to old data without touching entries', () => {

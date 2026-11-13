@@ -2,8 +2,8 @@
 //
 // Rule: LAST WRITER WINS PER RECORD, using `updatedAt` (ms since epoch; missing = 0 = "older than any real edit").
 //   • diary entry      → record = one entry (matched by id)
-//   • custom food      → record = one food (matched by foodKey)
-//   • saved measure    → record = one measure of one food (matched by label)
+//   • custom food      → record = one saved food (matched by its `id`, D53; a food without a valid id first gets the id derived from its name/brand/source/barcode)
+//   • saved measure    → record = one measure of one food (matched by label); buckets are keyed by the saved food's id (foods that are not saved: by foodKey)
 //   • settings         → ONE record (goals, weightUnit, useUSDA, useOFF, syncApiKey and, when that is on, apiKey), stamped by `settingsUpdatedAt`
 //   • deletions        → `tombstones[id] = deletedAt`; a tombstone beats an entry last edited before it,
 //                        an edit made after the deletion beats the tombstone (resurrects the entry)
@@ -19,7 +19,7 @@
 // records, which is arbitrary but identical on every device. Pass { preferLocal: true } to break ties
 // in favour of the first argument instead (used for restoring an old backup that has no timestamps);
 // that mode is NOT commutative and must not be used for sync.
-import { isLegitKey, isPlaceholderKey } from '../core/schema.js';
+import { isLegitKey, isPlaceholderKey, withFoodIds, unionMeasures, isSafeKey } from '../core/schema.js';
 import { foodKey } from './food.js';
 import { validEntry } from './entries.js';
 
@@ -61,20 +61,26 @@ export function mergeStates(local, remote, opts = {}) {
     if (list.length) days[day] = list;
   }
 
-  // custom foods (most recently changed first, then by key — deterministic)
-  const foods = new Map();
-  for (const f of [...(local.custom || []), ...(remote.custom || [])]) {
-    if (!f || !f.name || !f.per100) continue;
-    const k = foodKey(f), cur = foods.get(k);
-    foods.set(k, cur ? newer(cur, f, pref) : f);
+  // custom foods: matched by id (withFoodIds gives a food without a valid id the id derived from its identity, so an old-app copy meets the same food);
+  // the newest record wins as a whole; a tombstone hides a food last edited at or before it; most recently changed first, then by id; at most 100 (D53)
+  const foods = new Map(), idsByKey = new Map();
+  for (const f of [...withFoodIds(local.custom), ...withFoodIds(remote.custom)]) {
+    if (!f.name || !f.per100) continue;
+    const cur = foods.get(f.id);
+    foods.set(f.id, cur ? newer(cur, f, pref) : f);
+    const k = foodKey(f); if (!idsByKey.has(k)) idsByKey.set(k, new Set());
+    idsByKey.get(k).add(f.id);                                       // every name this food was seen under, winner or not
   }
-  const custom = [...foods.entries()].sort(([ka, a], [kb, b]) => stamp(b) - stamp(a) || (ka < kb ? -1 : ka > kb ? 1 : 0)).map(([, f]) => f).slice(0, 100);
+  const custom = [...foods.values()].filter(f => !(f.id in tombstones) || stamp(f) > tombstones[f.id])
+    .sort((a, b) => stamp(b) - stamp(a) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)).slice(0, 100);
 
   // saved measures
   const measures = {};
+  const listOf = (src, k) => (src && Object.prototype.hasOwnProperty.call(src, k) && Array.isArray(src[k]) ? src[k] : []);
   for (const k of new Set([...Object.keys(local.measures || {}), ...Object.keys(remote.measures || {})])) {
+    if (!isSafeKey(k)) continue;                                     // never a bucket named after a prototype key
     const byLabel = new Map();
-    for (const m of [...(local.measures?.[k] || []), ...(remote.measures?.[k] || [])]) {
+    for (const m of [...listOf(local.measures, k), ...listOf(remote.measures, k)]) {
       if (!m || !m.label || !(m.g > 0)) continue;
       const cur = byLabel.get(m.label);
       byLabel.set(m.label, cur ? newer(cur, m, pref) : m);
@@ -82,6 +88,13 @@ export function mergeStates(local, remote, opts = {}) {
     const list = [...byLabel.values()].sort((a, b) => (a.label < b.label ? -1 : a.label > b.label ? 1 : 0));
     if (list.length) measures[k] = list;
   }
+  // an old-app device keeps writing a saved food's measures under name|brand|source: fold those buckets into the food's id bucket (all names it was seen under)
+  const byLabelAsc = (a, b) => (a.label < b.label ? -1 : a.label > b.label ? 1 : 0);
+  for (const [k, ids] of idsByKey) {
+    if (!Object.prototype.hasOwnProperty.call(measures, k)) continue;
+    for (const id of ids) measures[id] = unionMeasures(measures[id], measures[k]).sort(byLabelAsc);
+  }
+  for (const k of idsByKey.keys()) delete measures[k];
 
   // settings: one record, newest wins as a whole
   const pick = (x, y) => {

@@ -13,7 +13,9 @@ const backup = fixture('backup');
 // The merge rules changed on purpose (see DECISIONS D9): result ORDER may differ from the original, so compare contents.
 const byId = (a, b) => (a.id < b.id ? -1 : 1);
 const normDays = days => Object.fromEntries(Object.entries(days).map(([d, l]) => [d, [...l].sort(byId)]));
-const normFoods = l => Object.fromEntries(l.map(f => [foodKey(f), f]));
+// saved-food-ids: saved foods now carry an `id` and their measures are keyed by it; the golden file is from the original app, so compare without ids and with id keys turned back into foodKeys
+const normFoods = l => Object.fromEntries(l.map(({ id, ...f }) => [foodKey(f), f]));
+const byFoodKey = (m, custom) => Object.fromEntries(Object.entries(m).map(([k, l]) => { const f = custom.find(x => x.id === k); return [f ? foodKey(f) : k, l]; }));
 const normMeasures = m => Object.fromEntries(Object.entries(m).map(([k, l]) => [k, [...l].sort((a, b) => (a.label < b.label ? -1 : 1))]));
 
 test('validEntry matches golden for every case', () => {
@@ -27,7 +29,7 @@ test('mergeRestore brings in exactly the same data the original merge did (order
   assert.deepEqual(normDays(r.days), normDays(g.mergeResult.days));
   assert.deepEqual(normFoods(r.custom), normFoods(g.mergeResult.custom));
   assert.deepEqual(normFoods(r.recent), normFoods(g.mergeResult.recent));
-  assert.deepEqual(normMeasures(r.measures), normMeasures(g.mergeResult.measures));
+  assert.deepEqual(normMeasures(byFoodKey(r.measures, r.custom)), normMeasures(g.mergeResult.measures));
 });
 
 test('settings are left untouched by a restore-merge of an old (untimestamped) backup', () => {

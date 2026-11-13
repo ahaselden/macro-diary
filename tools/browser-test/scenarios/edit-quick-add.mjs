@@ -128,7 +128,9 @@ export default async ({ page, url, check, screenshot }) => {
   // C12 (state from C10, after reload)
   await page.reload(); await page.waitForSelector('#meals .entry');
   st = await stored();
-  check(JSON.stringify(st.measures['Cheez-it Duo 2pk||Custom'].map(m => [m.label, m.g])) === '[["box",200]]' && !('Cheez-it Duo||Custom' in st.measures), 'C12: measures moved: ' + JSON.stringify(st.measures));
+  // saved-food-ids: measures are keyed by the saved food's id, so a rename moves nothing (the old key was migrated to the id on load)
+  const duoId = st.custom[0].id;
+  check(/^f-[0-9a-f]{16}$/.test(duoId) && JSON.stringify(st.measures[duoId].map(m => [m.label, m.g])) === '[["box",200]]' && !('Cheez-it Duo||Custom' in st.measures) && !('Cheez-it Duo 2pk||Custom' in st.measures), 'C12: measures under the food id: ' + JSON.stringify(st.measures));
   await openAdd('Breakfast'); await search('Cheez'); await page.locator('#results .res .nm').first().click();
   const units = await page.locator('#unit option').allTextContents();
   check(units.some(u => /box/.test(u)), 'C12: #unit offers box: ' + JSON.stringify(units));

@@ -4,7 +4,7 @@ import { $, toast, dialog, head } from '../core/dom.js';
 import { emit } from '../core/bus.js';
 import { MEALS } from '../core/constants.js';
 import { esc, rd, r1, r2, fmtW } from '../core/format.js';
-import { foodKey, cleanFoodName } from '../domain/food.js';
+import { foodKey, foodIdOf, measuresKey, cleanFoodName } from '../domain/food.js';
 import { addEntry, updateEntry } from '../domain/entries.js';
 import { itemFacts, formatNut } from '../domain/details.js';
 import { unitsFor as unitsForM, startingUnit } from '../domain/units.js';
@@ -20,7 +20,7 @@ export function showFood(food, existing) {
   let startKey, startAmt;
   if (existing && units.some(x => x.key === existing.unitKey)) { startKey = existing.unitKey; startAmt = existing.amount; }
   else if (existing) { startKey = pref; startAmt = r1(existing.grams / units.find(x => x.key === pref).g); }
-  else { const st = startingUnit(food, units, state.measures[foodKey(food)], pref); startKey = st.key; startAmt = st.amount; }   // the user's own measure, else the serving, else a countable household portion, else a weight
+  else { const st = startingUnit(food, units, state.measures[measuresKey(food)], pref); startKey = st.key; startAmt = st.amount; }   // the user's own measure, else the serving, else a countable household portion, else a weight
   let touched = !!existing;                                        // once the user edits the amount or unit, late-arriving measures must not move it
   const canLoad = food.source === 'USDA' && food.fdcId && !food.portions;
   $('#dBody').innerHTML = `<h2>${esc(food.name)}</h2><div class="muted">${esc(food.brand)} ${food.source ? '· ' + esc(food.source) : ''}</div>
@@ -55,12 +55,12 @@ export function showFood(food, existing) {
     const label = $('#mName').value.trim(), g = +$('#mG').value;
     if (!label || !(g > 0)) { toast('Enter a name and grams'); return; }
     touched = true;
-    const k = foodKey(food); state.measures[k] = [...(state.measures[k] || []).filter(m => m.label !== label), { label, g, updatedAt: Date.now() }]; save();
+    const k = measuresKey(food); state.measures[k] = [...(state.measures[k] || []).filter(m => m.label !== label), { label, g, updatedAt: Date.now() }]; save();
     units = unitsFor(food); fill('p:' + label); $('#amt').value = 1; upd(); $('#mName').value = $('#mG').value = ''; toast('Measure saved');
   };
   if (canLoad) loadPortions(food, state.apiKey).then(() => { if (showFood.tok !== tok || !$('#unit')) return;
       const keep = $('#unit').value; units = unitsFor(food);
-      if (!touched) { const st = startingUnit(food, units, state.measures[foodKey(food)], pref); fill(st.key); $('#amt').value = st.amount; }   // e.g. an egg now opens as 1 large, not 4 oz
+      if (!touched) { const st = startingUnit(food, units, state.measures[measuresKey(food)], pref); fill(st.key); $('#amt').value = st.amount; }   // e.g. an egg now opens as 1 large, not 4 oz
       else fill(keep);
       upd();
       $('#uMsg').textContent = food.portions.length ? '' : 'No household measures listed for this food.'; },
@@ -72,8 +72,9 @@ export function showFood(food, existing) {
     const meal = $('#mealSel').value, un = unitNow(), amount = +$('#amt').value, disp = un.key.startsWith('w:') ? '' : `${r2(amount)} ${un.short}`;
     if (existing) { updateEntry(state, view.day, existing.id, { name: newName, grams: g, meal, unitKey: un.key, amount, disp }, Date.now()); }
     else {
+      const fid = foodIdOf(food);                                  // a saved food (or a copy of one) links its entry and recent food to the saved food
       const info = { name: food.name, brand: food.brand || '', source: food.source || '', per100: food.per100, servingG: food.servingG || 0,
-        servingLabel: food.servingLabel || '', fdcId: food.fdcId, portions: food.portions, ...(food.nut ? { nut: { ...food.nut } } : {}), ...(food.barcode ? { barcode: food.barcode } : {}) };
+        servingLabel: food.servingLabel || '', fdcId: food.fdcId, portions: food.portions, ...(food.nut ? { nut: { ...food.nut } } : {}), ...(food.barcode ? { barcode: food.barcode } : {}), ...(fid ? { foodId: fid } : {}) };
       addEntry(state, view.day, { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), meal, ...info, grams: g, unitKey: un.key, amount, disp }, Date.now());
       state.recent = [info, ...state.recent.filter(f => foodKey(f) !== foodKey(info))].slice(0, 30);
     }

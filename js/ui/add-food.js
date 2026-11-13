@@ -2,7 +2,7 @@
 import { state } from '../core/store.js';
 import { $, toast, dialog, head, canClose, setCloseGuard } from '../core/dom.js';
 import { esc, rd, r1 } from '../core/format.js';
-import { foodKey, isBarcode, sameBarcode, servingSummary } from '../domain/food.js';
+import { foodKey, foodIdOf, isBarcode, sameBarcode, servingSummary } from '../domain/food.js';
 import { pickFoodBarcode } from '../domain/barcode.js';
 import { searchAll } from '../services/foods.js';
 import { canScan, startScan, stopScan } from '../services/barcode.js';
@@ -54,8 +54,14 @@ function localMatches(q) {
   if (isBarcode(q)) return state.custom.filter(f => sameBarcode(f.barcode, q)).map(f => ({ ...f, tag: 'My food' }));   // a scan finds foods you saved with that code
   q = q.toLowerCase();
   const all = [...state.custom.map(f => ({ ...f, tag: 'My food' })), ...state.recent.map(f => ({ ...f, tag: 'Recent' }))];
-  const seen = new Set();
-  return all.filter(f => (!q || (f.name + ' ' + (f.brand || '')).toLowerCase().includes(q)) && !seen.has(foodKey(f)) && seen.add(foodKey(f))).slice(0, 15);
+  // saved foods are told apart by id (two with the same name and different barcodes both show); a recent copy is hidden when its saved food is already listed
+  const ids = new Set(), keys = new Set();
+  return all.filter(f => {
+    if (!(!q || (f.name + ' ' + (f.brand || '')).toLowerCase().includes(q))) return false;
+    if (f.tag === 'My food') { const id = f.id || foodKey(f); if (ids.has(id)) return false; ids.add(id); keys.add(foodKey(f)); return true; }
+    if ((f.foodId && ids.has(f.foodId)) || keys.has(foodKey(f))) return false;
+    keys.add(foodKey(f)); return true;
+  }).slice(0, 15);
 }
 
 function resHTML(list, from) {
@@ -81,7 +87,8 @@ function renderResults(msg) {
     if (eb) { const f = localList[+eb.dataset.editFood]; if (f) editCustomFood(f); return; }   // "Edit" on a saved food opens the form, not the amount screen
     const f = (r.dataset.from === 'l' ? localList : add.results)[+r.dataset.i];
     const bc = f && pickFoodBarcode(add.q, f.barcode);   // a code the user scanned or typed is kept on the food
-    showFood(f && bc ? { ...f, barcode: bc } : f); };
+    const fid = f && foodIdOf(f);   // a saved food (or a recent copy of one) hands its id on as foodId, so its saved measures are found and the diary entry is linked
+    showFood(f && (bc || fid) ? { ...f, ...(bc ? { barcode: bc } : {}), ...(fid ? { foodId: fid } : {}) } : f); };
 }
 
 async function doSearch() {

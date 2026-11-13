@@ -10,9 +10,11 @@
 //            6 = recipes gain `stated` (null, or the page's per-serving { k, p, c, f, per }; missing = null)
 //            7 = syncApiKey (the opt-in to carry the USDA key in the sync account)
 //            8 = foods and diary entries may carry `nut` (optional extra nutrients per 100 g; absent = not recorded)
+//            9 = saved foods (`custom`) carry a stable `id`; copies of a saved food (entries, recents, recipe and plan foods) may carry `foodId`;
+//                saved measures of a saved food are keyed by that id instead of its name|brand|source (D53)
 import { MEALS } from './constants.js';
 
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 export const defaults = () => ({
   schemaVersion: SCHEMA_VERSION, theme: 'auto', weightUnit: 'g', measures: {}, goals: { k: 2000, p: 150, c: 200, f: 65 },
@@ -30,6 +32,71 @@ const ts = v => numOr(v, 0, 0, 8.64e15);
 // a unit is a short word like 'cup' or 'fl oz': keep letters, spaces and dots only (it is later used in a pattern match)
 const unitText = v => str(v, 40).toLowerCase().replace(/[^a-z .]/g, '').trim();
 const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+
+// ---- ids of saved foods (D53) ---------------------------------------------------------------------------------------------------------------
+// Generated ids ('f' + time + random, no '-') are made by domain/food.js; derived ids ('f-' + 16 hex) are made here from the food's identity so that two
+// devices that never saw each other's data give the same legacy food the same id.
+const FOOD_ID = /^f(?:-[0-9a-f]{16}|[0-9a-z]{6,24})$/;
+/** Is `v` a saved-food id: a string of the generated or the derived shape. Never throws. */
+export const isFoodId = v => typeof v === 'string' && FOOD_ID.test(v);
+/** Object keys that must never be used as a bucket name in a map built from untrusted data. */
+export const isSafeKey = k => k !== '__proto__' && k !== 'constructor' && k !== 'prototype';
+const foodKeyOf = f => [f.name, f.brand, f.source].join('|');   // the same text as domain/foodKey (core may not import domain; a test checks they agree)
+
+/**
+ * The id a saved food WITHOUT one gets: 'f-' + the 64-bit FNV-1a hash (16 lowercase hex digits) of the UTF-8 bytes of `name|brand|source|barcode`,
+ * where the barcode (only when it is 8 to 14 digits) has its leading zeros removed. Only those four fields count, so every device derives the same id.
+ * null for anything that is not a plain object. Pure; never throws.
+ */
+export function legacyFoodId(food) {
+  if (!plainObject(food)) return null;
+  const text = k => { try { const v = food[k]; return typeof v === 'string' ? v : ''; } catch { return ''; } };
+  let code = ''; try { code = (sanitizeBarcode(food.barcode) || '').replace(/^0+/, ''); } catch { code = ''; }
+  const bytes = new TextEncoder().encode([text('name'), text('brand'), text('source')].join('|') + '|' + code);
+  // 64-bit FNV-1a as two 32-bit halves (offset basis 0xcbf29ce484222325, prime 2^40 + 0x1b3): no BigInt, fast for long names
+  let hi = 0xcbf29ce4, lo = 0x84222325;
+  for (const byte of bytes) {
+    lo = (lo ^ byte) >>> 0;
+    const m = lo * 0x1b3;
+    hi = (hi * 0x1b3 + Math.floor(m / 4294967296) + lo * 256) % 4294967296;
+    lo = m % 4294967296;
+  }
+  return 'f-' + hi.toString(16).padStart(8, '0') + lo.toString(16).padStart(8, '0');
+}
+
+const stampOf = x => (x && Number.isFinite(x.updatedAt) ? x.updatedAt : 0);
+const canonOf = x => { try { return JSON.stringify(x); } catch { return ''; } };
+const newerOf = (a, b) => { const sa = stampOf(a), sb = stampOf(b); return sa !== sb ? (sa > sb ? a : b) : (canonOf(a) >= canonOf(b) ? a : b); };
+
+/**
+ * A NEW list of saved foods in which every food has a valid, unique `id`: a valid id is kept, anything else (missing, hostile, wrong type) becomes
+ * legacyFoodId(food). Foods that end up with the same id are collapsed to the newest (`updatedAt`, tie: the larger JSON), at the place of the first.
+ * Foods that already have a valid id are reused as they are, the others are copied, so frozen input is fine. Entries that are not objects are dropped.
+ */
+export function withFoodIds(list) {
+  const out = [], at = new Map();
+  for (const f of Array.isArray(list) ? list : []) {
+    if (!plainObject(f)) continue;
+    const id = isFoodId(f.id) ? f.id : legacyFoodId(f), g = f.id === id ? f : { ...f, id }, i = at.get(id);
+    if (i === undefined) { at.set(id, out.length); out.push(g); } else out[i] = newerOf(out[i], g);
+  }
+  return out;
+}
+
+/**
+ * Union of two lists of saved measures [{label, g, updatedAt}] by label: the newer `updatedAt` wins (missing = 0). A tie goes to `a` when `preferA`,
+ * else to the larger JSON, so the result does not depend on the argument order. Junk items (no label, no positive grams) are dropped.
+ * Order: the labels of `a`, then the new labels of `b`. Pure.
+ */
+export function unionMeasures(a, b, preferA = false) {
+  const byLabel = new Map();
+  for (const m of [...(Array.isArray(a) ? a : []), ...(Array.isArray(b) ? b : [])]) {
+    if (!m || typeof m.label !== 'string' || !m.label || !(m.g > 0)) continue;
+    const cur = byLabel.get(m.label);
+    byLabel.set(m.label, !cur ? m : stampOf(cur) !== stampOf(m) ? (stampOf(cur) > stampOf(m) ? cur : m) : preferA || canonOf(cur) >= canonOf(m) ? cur : m);
+  }
+  return [...byLabel.values()];
+}
 
 /** Optional extra nutrients per 100 g (sodium and cholesterol in mg, the rest in g) and their allowed ranges. Absent = "not recorded", never 0. */
 export const NUT_KEYS = ['fiber', 'sugars', 'satFat', 'sodium', 'cholesterol'];
@@ -51,6 +118,7 @@ const cleanNut = o => {
   if (!plainObject(o)) return;
   if ('nut' in o) { const n = sanitizeNut(o.nut); if (n) o.nut = n; else delete o.nut; }
   if ('barcode' in o) { const b = sanitizeBarcode(o.barcode); if (b) o.barcode = b; else delete o.barcode; }
+  if ('foodId' in o && !isFoodId(o.foodId)) delete o.foodId;
 };
 
 /**
@@ -76,6 +144,8 @@ export function sanitizeFood(f) {
     servingG: numOr(f.servingG, 0), servingLabel: str(f.servingLabel, 100) };
   const nut = sanitizeNut(f.nut); if (nut) out.nut = nut;
   if (typeof f.fdcId === 'number' || typeof f.fdcId === 'string') out.fdcId = f.fdcId;
+  const foodId = isFoodId(f.foodId) ? f.foodId : isFoodId(f.id) ? f.id : '';   // a saved food linked directly carries its own id; copies carry foodId
+  if (foodId) out.foodId = foodId;
   if (typeof f.barcode === 'string' && /^\d{8,14}$/.test(f.barcode)) out.barcode = f.barcode;   // set on custom foods so a scan finds them
   if (Array.isArray(f.portions)) out.portions = f.portions.filter(x => plainObject(x) && typeof x.label === 'string' && numOr(x.g, 0) > 0).slice(0, 30).map(x => ({ label: str(x.label, 100), g: +x.g }));
   return out;
@@ -146,6 +216,7 @@ export function sanitize(d) {
   d.recent = Array.isArray(d.recent) ? d.recent.filter(usableFood) : [];
   d.custom = Array.isArray(d.custom) ? d.custom.filter(usableFood) : [];
   for (const f of [...d.recent, ...d.custom]) cleanNut(f);
+  d.custom = withFoodIds(d.custom);                       // every saved food has a valid unique id (D53)
   for (const list of Object.values(d.days)) if (Array.isArray(list)) for (const e of list) cleanNut(e);
   const tomb = {};
   if (plainObject(d.tombstones)) for (const [id, t] of Object.entries(d.tombstones)) if (Number.isFinite(+t) && +t >= 0) tomb[id] = +t;
@@ -171,8 +242,43 @@ export function migrate(d) {
   if (v < 6) d.schemaVersion = 6;        // v5 -> v6: recipe.stated (added by sanitize, null)
   if (v < 7) d.schemaVersion = 7;        // v6 -> v7: syncApiKey (added by sanitize, false)
   if (v < 8) d.schemaVersion = 8;        // v7 -> v8: optional `nut` on foods and entries (nothing added)
-  // future: if (v < 9) { ...; d.schemaVersion = 9; }
+  if (v < 9) {                                // v8 -> v9: ids for saved foods, their measures under the id, foodId on copies (D53)
+    sanitize(d);                              // gives every saved food its id first
+    moveMeasuresToIds(d);
+    stampCopies(d);
+    d.schemaVersion = 9;
+  }
   return sanitize(d);
+}
+
+/** v9 step 2: a saved food's measures move from measures[name|brand|source] to measures[id] (lists merged, the id bucket wins ties). Other buckets stay. */
+function moveMeasuresToIds(d) {
+  const src = d.measures, out = {}, saved = new Set(d.custom.map(foodKeyOf));
+  for (const [k, list] of Object.entries(src)) if (isSafeKey(k) && !saved.has(k)) out[k] = list;
+  for (const f of d.custom) {
+    const k = foodKeyOf(f);
+    if (!Object.prototype.hasOwnProperty.call(src, k)) continue;
+    const list = unionMeasures(Array.isArray(out[f.id]) ? out[f.id] : Array.isArray(src[f.id]) ? src[f.id] : [], src[k], true);
+    if (list.length) out[f.id] = list;
+  }
+  d.measures = out;
+}
+
+/** v9 step 3: copies of a saved food get its id as `foodId` when exactly one saved food matches (see spec D-D). Nothing else on the copy changes. */
+function stampCopies(d) {
+  const byKey = new Map();
+  for (const f of d.custom) { const k = foodKeyOf(f); byKey.set(k, [...(byKey.get(k) || []), f]); }
+  const same = (a, b) => { const x = String(a || '').replace(/^0+/, ''), y = String(b || '').replace(/^0+/, ''); return x.length >= 6 && x === y; };
+  const stamp = c => {
+    if (!plainObject(c) || isFoodId(c.foodId)) return;
+    const cands = byKey.get(foodKeyOf(c)); if (!cands) return;
+    const bar = sanitizeBarcode(c.barcode), hit = bar ? cands.filter(f => same(f.barcode, bar)) : cands;
+    if (hit.length === 1) c.foodId = hit[0].id;
+  };
+  d.recent.forEach(stamp);
+  for (const list of Object.values(d.days)) if (Array.isArray(list)) list.forEach(stamp);
+  for (const r of Object.values(d.recipes)) for (const i of r.ingredients) stamp(i.food);
+  for (const day of Object.values(d.plan)) for (const items of Object.values(day.slots)) for (const it of items) stamp(it.food);
 }
 
 /** A USDA key that arrived from another device: a plain string without control characters, trimmed, at most 200 characters, else ''. */
