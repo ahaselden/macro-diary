@@ -19,6 +19,7 @@
 // records, which is arbitrary but identical on every device. Pass { preferLocal: true } to break ties
 // in favour of the first argument instead (used for restoring an old backup that has no timestamps);
 // that mode is NOT commutative and must not be used for sync.
+import { isLegitKey, isPlaceholderKey } from '../core/schema.js';
 import { foodKey } from './food.js';
 import { validEntry } from './entries.js';
 
@@ -90,8 +91,13 @@ export function mergeStates(local, remote, opts = {}) {
   };
   const winner = pick();
   const settings = Object.fromEntries(SETTINGS_KEYS.map(k => [k, winner[k] !== undefined ? winner[k] : local[k]]));
-  // USDA key: adopted only from a winning record whose sync switch is on; a switch turned off elsewhere never wipes this device's key
-  const apiKey = winner.syncApiKey === true && typeof winner.apiKey === 'string' ? winner.apiKey : local.apiKey;
+  // USDA key (D42, D46): a legitimate key always beats an empty or demo one, whichever settings record is newer. Otherwise it is adopted only
+  // from a winning record whose sync switch is on; a switch turned off elsewhere never wipes this device's key.
+  const offered = remote.syncApiKey === true && typeof remote.apiKey === 'string' ? remote.apiKey : undefined;
+  const apiKey = isLegitKey(local.apiKey) && isPlaceholderKey(offered) ? local.apiKey
+    : isPlaceholderKey(local.apiKey) && isLegitKey(offered) ? offered
+    : isPlaceholderKey(local.apiKey) && isPlaceholderKey(offered) && winner.syncApiKey === true ? winner.apiKey   // two placeholders: the winner's, so '' and absent converge
+    : winner.syncApiKey === true && typeof winner.apiKey === 'string' ? winner.apiKey : local.apiKey;
 
   // recipes (a deleted recipe stays deleted unless it was edited after the deletion)
   const isRecipe = r => r && typeof r.id === 'string' && typeof r.name === 'string';
@@ -129,7 +135,7 @@ export function mergeStates(local, remote, opts = {}) {
   return {
     ...local,                                              // theme, apiKey, recent… stay as this device has them
     ...settings,
-    ...(apiKey !== undefined ? { apiKey } : {}),
+    ...(apiKey !== undefined || 'apiKey' in local ? { apiKey } : {}),
     settingsUpdatedAt: Math.max(Number(local.settingsUpdatedAt) || 0, Number(remote.settingsUpdatedAt) || 0),
     schemaVersion: Math.max(Number(local.schemaVersion) || 0, Number(remote.schemaVersion) || 0),
     days, custom, measures, tombstones, recipes, plan, shopping: { checks, extras },

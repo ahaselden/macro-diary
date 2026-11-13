@@ -110,10 +110,14 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
       <h2>Food databases</h2>
       <div class="chk"><input type="checkbox" id="srcUSDA"><label style="margin:0;color:inherit">USDA FoodData Central</label></div>
       <div class="chk"><input type="checkbox" id="srcOFF"><label style="margin:0;color:inherit">Open Food Facts (packaged foods &amp; barcodes)</label></div>
-      <label for="apiKey">USDA API key</label>
-      <input id="apiKey" placeholder="DEMO_KEY" autocapitalize="off" autocomplete="off">
-      <div class="chk"><input type="checkbox" id="syncApiKey"><label style="margin:0;color:inherit" for="syncApiKey">Sync my USDA key to my other devices</label></div>
-      <p class="muted" style="margin:4px 0 0">The key is stored in your sync account, readable only by you.</p>
+      <div class="row" style="align-items:center;margin-top:8px"><span id="keyLine" class="muted"></span><button type="button" id="keyEdit" class="fit" aria-expanded="false" aria-controls="keyEditor">Edit</button></div>
+      <div id="keyEditor" hidden>
+        <label for="apiKey">USDA API key</label>
+        <input id="apiKey" placeholder="DEMO_KEY" autocapitalize="off" autocomplete="off">
+        <div class="chk"><input type="checkbox" id="syncApiKey"><label style="margin:0;color:inherit" for="syncApiKey">Sync my USDA key to my other devices</label></div>
+        <p class="muted" style="margin:4px 0 0">The key is stored in your sync account, readable only by you.</p>
+        <div class="row" style="margin-top:8px"><button type="button" id="keySave" class="primary">Save</button><button type="button" id="keyCancel">Cancel</button></div>
+      </div>
       <p class="muted">The built-in DEMO_KEY is heavily rate-limited. Get a free key at fdc.nal.usda.gov/api-key-signup and paste it here.</p>
     </div>
     <div class="card" id="syncCard">

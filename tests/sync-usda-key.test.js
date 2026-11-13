@@ -68,12 +68,12 @@ test('B4 switch off: settings record has syncApiKey false and no apiKey property
   assert.ok(!all.includes('TOPSECRET')); assert.ok(!all.includes('theme')); assert.ok(!all.includes('recent'));
 });
 
-test('B5 switch on: key is in the record (empty key as empty string); turning off removes it', () => {
+test('B5 switch on: key is in the record (an empty key is NOT sent, see usda-key-safeguards S11); turning off removes it', () => {
   const on = st({ apiKey: 'KEY-1', syncApiKey: true, settingsUpdatedAt: 5 });
   const r = settingsOf(on);
   assert.equal(r.value.syncApiKey, true); assert.equal(r.value.apiKey, 'KEY-1');
   const empty = settingsOf(st({ apiKey: '', syncApiKey: true, settingsUpdatedAt: 5 }));
-  assert.equal(Object.hasOwn(empty.value, 'apiKey'), true); assert.equal(empty.value.apiKey, '');
+  assert.equal(Object.hasOwn(empty.value, 'apiKey'), false); assert.equal(empty.value.syncApiKey, true);
   const off = settingsOf({ ...on, syncApiKey: false });
   assert.equal('apiKey' in off.value, false);
   assert.ok(!JSON.stringify(toRecords({ ...on, syncApiKey: false })).includes('KEY-1'));
@@ -112,7 +112,7 @@ test('B8 newer remote settings with syncApiKey true: local adopts key and flag, 
   assert.equal(mergeStates(olderOn, newer).apiKey, 'NEW'); assert.equal(mergeStates(newer, olderOn).apiKey, 'NEW');
 });
 
-test('B9 winning record with sync on and empty key clears the local key', () => {
+test('B9 winning record with sync on and empty key clears a local key that is not legit (a legit key is protected, see usda-key-safeguards S3)', () => {
   const local = dev({ apiKey: 'OLD', syncApiKey: true, settingsUpdatedAt: 100 });
   const remote = dev({ apiKey: '', syncApiKey: true, settingsUpdatedAt: 200 });
   assert.equal(mergeStates(local, remote).apiKey, '');
