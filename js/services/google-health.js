@@ -39,7 +39,9 @@ export async function readTakeout(blob, { scope = 'year', today, tz = deviceTz, 
   const since = cutoffDay(today, scope);
   const wanted = [];
   let anyHealthFile = false;
-  for (const e of await listEntries(blob, { signal })) {
+  const seen = new Map();
+  for (const e of await listEntries(blob, { signal })) seen.set(e.name, e);   // a name listed twice counts once (the last entry wins, as extractors do)
+  for (const e of seen.values()) {
     if (e.name.startsWith('__MACOSX/')) continue;
     const m = STEPS.exec(e.name);
     if (m) {
@@ -66,6 +68,7 @@ export async function readTakeout(blob, { scope = 'year', today, tz = deviceTz, 
     if (onProgress) onProgress({ done, total });
     await breathe();
   }
+  if (signal && signal.aborted) throw new ZipError('aborted', 'Cancelled.');   // Cancel pressed during the last file
   const { days, left } = combineActivity({ steps: chooseDaily(totals), sleep: sleepByDay(sleepRows, tz), workouts: workoutsByDay(exerciseRows, tz) }, since);
   return { days, counts: countActivity(days), left, files: done };
 }

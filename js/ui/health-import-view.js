@@ -30,6 +30,7 @@ export function initHealthImport() {
         scope: scope.value === 'all' ? 'all' : 'year', today: fmt(new Date()), tz: ms => -new Date(ms).getTimezoneOffset(), signal: running.signal,
         onProgress: ({ done, total }) => { status.textContent = `Reading ${done} of ${total} files…`; },
       });
+      if (running && running.signal && running.signal.aborted) throw new ZipError('aborted', 'Cancelled.');   // never save after Cancel
       applyActivityImport(state, out.days, Date.now());                // an identical re-import changes nothing (updatedAt is not bumped)
       save();
       emit('diary:changed');

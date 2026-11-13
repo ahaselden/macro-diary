@@ -106,7 +106,7 @@ export default async ({ page, url, check, screenshot }) => {
   await item('C7', async () => {
     await start(seed()); await openSettings();
     const heads = await page.evaluate(() => [...document.querySelectorAll('#v-settings h2, #v-settings #themeToggle')].map(e => e.id === 'themeToggle' ? 'Appearance' : e.textContent.trim()));
-    check(JSON.stringify(heads) === JSON.stringify(['Units', 'Daily goals', 'Appearance', 'Food databases', 'Sync between devices', 'Export your data', 'Backup']), 'C7: headings ' + JSON.stringify(heads));
+    check(JSON.stringify(heads) === JSON.stringify(['Units', 'Daily goals', 'Appearance', 'Food databases', 'Import from Google Health', 'Sync between devices', 'Export your data', 'Backup']), 'C7: headings ' + JSON.stringify(heads));
     const tops = await page.evaluate(() => ['wUnit', 'gK', 'themeToggle', 'srcUSDA', 'syncCard', 'bkExport'].map(i => document.getElementById(i).getBoundingClientRect().top));
     check(tops.every((t, i) => i === 0 || t > tops[i - 1]), 'C7: tops ' + tops.join(','));
   });
