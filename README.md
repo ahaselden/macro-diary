@@ -19,7 +19,7 @@ Deploys as static files (GitHub Pages). After changing a shipped file, bump `CAC
 | Plan | Week view of planned recipes/foods with calories vs goal; "Log" turns a plan item into a diary entry |
 | Recipes | Paste/type ingredients, link them to real foods, see nutrition per serving |
 | Shop | Shopping list derived from the plan (aisles, tick off, extras, share/CSV) |
-| More | Export (daily/weekly/monthly/yearly CSV, JSON) and Settings (goals, units, themes, API key, **Sync**, backup/restore) |
+| Settings | Goals, units, themes, API key, **Sync**, Export (daily/weekly/monthly/yearly CSV, JSON), backup/restore |
 
 ## Documentation (read in this order)
 0. [docs/VISION.md](docs/VISION.md) — what the project is for and what it should eventually do (draft for the owner to review).

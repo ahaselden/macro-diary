@@ -54,7 +54,7 @@ A planned recipe becomes ONE diary entry "N servings" whose grams are the recipe
 ## D16. Shopping list aggregation is conservative — *made without the owner*
 Same ingredient is summed only across compatible units (weight→g, volume→ml, counts per unit word); weight and volume of the same ingredient stay as separate lines. **Why:** a wrong merge in a shopping list (buying 1 cup when you need 500 g) is worse than two lines. Grouping ignores size words ("large eggs" = "eggs") and plurals; names shown are as written in the first recipe. Ticks are keyed by `range start | normalised name | unit family`: they survive quantity changes, but belong to ONE shopping trip (a reviewer found that ticking onions this week also ticked them next week when ticks were keyed by name alone). Old ticks from past weeks accumulate as tiny records until "Untick all"; a rename orphans a tick (harmless). Aisles come from a keyword table, most specific aisle first; unknown → *Other*.
 
-## D17. Navigation: Diary | Plan | Recipes | Shop | More — *made without the owner*
+## D17. Navigation: Diary | Plan | Recipes | Shop | More — *made without the owner* (superseded by D50: the fifth button is now Settings, with Export inside it)
 Five bottom tabs fit a 360 px phone; Export and Settings moved under **More** (with a "‹ More" back button) rather than shrinking the bar. `showTab('export'|'settings')` still works and highlights *More*.
 
 ## D18. Sync is scheduled by any data event, and sync results refresh every screen
@@ -189,3 +189,7 @@ Open Food Facts answers a barcode it does not know with HTTP 404 and a "product 
 ## D49. Settings: Units and Daily goals first, Appearance as a collapsed card
 **What.** Settings now lists Units, Daily goals, Appearance, Food databases, Sync, Backup. Appearance is one button (`#themeToggle`, `aria-expanded`, `aria-controls="themePanel"`) that shows the current theme's name (`Appearance · Auto`) and expands `#themePanel` (the intro and the colour swatches); the panel uses the `hidden` attribute so it is out of the tab order when collapsed. Choosing a theme works as before and keeps the panel open; every time Settings opens it is collapsed again (the open state is not saved). `themeLabel(key)` gives the name (an unknown stored theme shows `Light`, as the theme itself does; a non-string shows `Auto`).
 **Why.** The owner asked (2026-11-13) for a minimised Appearance card and for the everyday settings above it. No saved-shape change.
+
+## D50. The bottom bar's fifth button is Settings, and Export lives inside Settings
+**What.** The `More` tab and its hub page are gone. The fifth button is `⚙️ Settings` and opens the Settings page directly; the whole export UI (period and date, range, stats, table, download and share buttons, ids unchanged) is now the last group of cards in Settings, before Backup (order: Units, Daily goals, Appearance, Food databases, Sync, Export your data, Backup). Opening Settings refreshes the export report (`renderExport`, called from the single `registerTab('settings')` callback, because a tab keeps one callback) and still collapses Appearance and the USDA key editor. `showTab` falls back to the Diary for an unknown name (such as the old `more` or `export`).
+**Why.** The owner asked (2026-11-13). No saved-shape change.

@@ -23,7 +23,7 @@ export default async ({ page, url, check, screenshot }) => {
     await page.reload();
     await page.waitForSelector('.tabs');
   };
-  const openSettings = async () => { await page.click('[data-tab="more"]'); await page.click('#moreSettings'); await page.waitForSelector('#keyEdit', { state: 'visible' }); };
+  const openSettings = async () => { await page.click('[data-tab="settings"]'); await page.waitForSelector('#keyEdit', { state: 'visible' }); };
   const edit = async () => { await page.click('#keyEdit'); await page.waitForSelector('#apiKey', { state: 'visible' }); };
   const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('macrodiary.v1')));
   const toast = async () => { const l = page.locator('#toast'); return (await l.isVisible()) ? (await l.textContent()).trim() : ''; };
@@ -125,12 +125,12 @@ export default async ({ page, url, check, screenshot }) => {
     return await page.evaluate(() => window.__dl);
   };
   await start(withEntry({ apiKey: 'SECRETKEY999', syncApiKey: true }));
-  await page.click('[data-tab="more"]'); await page.click('#moreExport');
+  await page.click('[data-tab="settings"]');
   await page.waitForSelector('#xEntries', { state: 'visible' });
   const seen = [];
   for (const id of ['#xEntries', '#xSummary', '#xJson']) seen.push(await grab(() => page.click(id)));
   check(seen.length === 3 && seen.every(f => !/SECRETKEY999|apiKey|syncApiKey/.test(f.text)), 'S10: three report exports contain no key/apiKey/syncApiKey');
-  await page.click('[data-more]'); await openSettings();
+  await page.click('[data-tab="diary"]'); await openSettings();
   const bk = await grab(() => page.click('#bkExport'));
   console.log('S11 REPORT (' + bk.name + '): "syncApiKey":true = ' + /"syncApiKey":\s*true/.test(bk.text) + '; contains SECRETKEY999 = ' + bk.text.includes('SECRETKEY999'));
   check(/"syncApiKey":\s*true/.test(bk.text) && bk.text.includes('SECRETKEY999'), 'S11: backup file contains the key and the switch (documented current behaviour)');

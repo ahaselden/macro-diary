@@ -58,38 +58,8 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
   <!-- SHOP -->
   <section class="view" id="v-shop"></section>
 
-  <!-- MORE (hub for Export and Settings) -->
-  <section class="view" id="v-more">
-    <div class="card">
-      <button class="more-btn" id="moreExport"><span>📤</span>Export data</button>
-      <button class="more-btn" id="moreSettings"><span>⚙️</span>Settings</button>
-    </div>
-  </section>
-
-  <!-- EXPORT -->
-  <section class="view" id="v-export">
-    <button class="ghost back-more" data-more>‹ More</button>
-    <div class="card">
-      <h2>Export your data</h2>
-      <div class="row">
-        <div><label for="xKind">Period</label>
-          <select id="xKind"><option value="day">Daily</option><option value="week" selected>Weekly</option><option value="month">Monthly</option><option value="year">Yearly</option></select></div>
-        <div><label for="xDate">Containing date</label><input type="date" id="xDate"></div>
-      </div>
-      <div class="muted" id="xRange" style="margin-top:8px"></div>
-    </div>
-    <div class="card" id="xStats"></div>
-    <div class="card tscroll" id="xTable"></div>
-    <div class="card">
-      <div class="row"><button class="primary" id="xEntries">Download entries (CSV)</button></div>
-      <div class="row" style="margin-top:8px"><button id="xSummary">Download summary (CSV)</button><button id="xJson">Download JSON</button></div>
-      <div class="row" style="margin-top:8px"><button id="xShare">⤴ Share this summary</button></div>
-    </div>
-  </section>
-
   <!-- SETTINGS -->
   <section class="view" id="v-settings">
-    <button class="ghost back-more" data-more>‹ More</button>
     <div class="card">
       <h2>Units</h2>
       <label for="wUnit">Show weights in</label>
@@ -127,6 +97,22 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
       <div id="syncBox"></div>
     </div>
     <div class="card">
+      <h2>Export your data</h2>
+      <div class="row">
+        <div><label for="xKind">Period</label>
+          <select id="xKind"><option value="day">Daily</option><option value="week" selected>Weekly</option><option value="month">Monthly</option><option value="year">Yearly</option></select></div>
+        <div><label for="xDate">Containing date</label><input type="date" id="xDate"></div>
+      </div>
+      <div class="muted" id="xRange" style="margin-top:8px"></div>
+    </div>
+    <div class="card" id="xStats"></div>
+    <div class="card tscroll" id="xTable"></div>
+    <div class="card">
+      <div class="row"><button class="primary" id="xEntries">Download entries (CSV)</button></div>
+      <div class="row" style="margin-top:8px"><button id="xSummary">Download summary (CSV)</button><button id="xJson">Download JSON</button></div>
+      <div class="row" style="margin-top:8px"><button id="xShare">⤴ Share this summary</button></div>
+    </div>
+    <div class="card">
       <h2>Backup</h2>
       <p class="muted">Your data is stored on this device only. Use backup/restore to move it between your phone and PC.</p>
       <div class="row"><button id="bkExport">Backup to file</button><button id="bkImport">Restore from file</button></div>
@@ -141,7 +127,7 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
   <button data-tab="plan"><span>📅</span>Plan</button>
   <button data-tab="recipes"><span>🍲</span>Recipes</button>
   <button data-tab="shop"><span>🛒</span>Shop</button>
-  <button data-tab="more"><span>⋯</span>More</button>
+  <button data-tab="settings"><span>⚙️</span>Settings</button>
 </nav>
 
 <dialog id="dlg"><div class="dlg-in">

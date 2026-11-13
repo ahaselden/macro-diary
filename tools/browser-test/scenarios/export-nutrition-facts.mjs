@@ -63,8 +63,8 @@ export default async ({ page, url, check, screenshot }) => {
     return await page.evaluate(() => window.__dl);
   };
   const openExport = async () => {
-    await page.click('[data-tab="more"]'); await page.click('#moreExport');
-    await page.waitForSelector('#xEntries', { state: 'visible' });
+    await page.click('[data-tab="settings"]');
+    await page.locator('#xKind').scrollIntoViewIfNeeded(); await page.waitForSelector('#xEntries', { state: 'visible' });
     await page.selectOption('#xKind', { label: 'Daily' }).catch(() => page.selectOption('#xKind', 'day'));
     await page.fill('#xDate', TODAY); await page.dispatchEvent('#xDate', 'change');
   };

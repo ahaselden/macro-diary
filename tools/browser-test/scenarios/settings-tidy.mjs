@@ -18,7 +18,7 @@ export default async ({ page, url, check, screenshot }) => {
     await page.reload();
     await page.waitForSelector('.tabs');
   };
-  const openSettings = async () => { await page.click('[data-tab="more"]'); await page.click('#moreSettings'); await page.waitForSelector('#themeToggle', { state: 'visible' }); };
+  const openSettings = async () => { await page.click('[data-tab="settings"]'); await page.waitForSelector('#themeToggle', { state: 'visible' }); };
   const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('macrodiary.v1')));
   const exp = () => page.getAttribute('#themeToggle', 'aria-expanded');
   const norm = async sel => (await page.locator(sel).innerText()).replace(/\s+/g, ' ').trim();
@@ -94,8 +94,8 @@ export default async ({ page, url, check, screenshot }) => {
     await start(seed()); await openSettings();
     await page.click('#themeToggle');
     check(await exp() === 'true', 'C6: expanded first');
-    await page.click('[data-more]:visible'); await page.click('#moreSettings'); await page.waitForSelector('#themeToggle', { state: 'visible' });
-    check(await exp() === 'false' && !(await page.locator('#themePanel').isVisible()), 'C6: collapsed after More round trip');
+    await page.click('[data-tab="diary"]'); await page.click('[data-tab="settings"]'); await page.waitForSelector('#themeToggle', { state: 'visible' });
+    check(await exp() === 'false' && !(await page.locator('#themePanel').isVisible()), 'C6: collapsed after Diary-and-back round trip');
     check((await page.locator('#themeName').innerText()).trim() === 'Auto', 'C6: name unchanged');
     await page.click('#themeToggle');
     await page.click('[data-tab="diary"]');
@@ -106,7 +106,7 @@ export default async ({ page, url, check, screenshot }) => {
   await item('C7', async () => {
     await start(seed()); await openSettings();
     const heads = await page.evaluate(() => [...document.querySelectorAll('#v-settings h2, #v-settings #themeToggle')].map(e => e.id === 'themeToggle' ? 'Appearance' : e.textContent.trim()));
-    check(JSON.stringify(heads) === JSON.stringify(['Units', 'Daily goals', 'Appearance', 'Food databases', 'Sync between devices', 'Backup']), 'C7: headings ' + JSON.stringify(heads));
+    check(JSON.stringify(heads) === JSON.stringify(['Units', 'Daily goals', 'Appearance', 'Food databases', 'Sync between devices', 'Export your data', 'Backup']), 'C7: headings ' + JSON.stringify(heads));
     const tops = await page.evaluate(() => ['wUnit', 'gK', 'themeToggle', 'srcUSDA', 'syncCard', 'bkExport'].map(i => document.getElementById(i).getBoundingClientRect().top));
     check(tops.every((t, i) => i === 0 || t > tops[i - 1]), 'C7: tops ' + tops.join(','));
   });

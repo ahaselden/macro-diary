@@ -6,7 +6,6 @@ import { pretty } from '../core/dates.js';
 import { xData, rollup, exportFiles } from '../domain/reports.js';
 import { download } from '../services/files.js';
 import { view } from './ctx.js';
-import { registerTab } from './tabs.js';
 import { shareResult } from './share-result.js';
 
 const curX = () => xData(state, $('#xKind').value, $('#xDate').value || view.day);
@@ -39,5 +38,4 @@ export function initExport() {
     const n = x.rows.length, t = x.rows.reduce((t, r) => (t.k += r.k, t.p += r.p, t.c += r.c, t.f += r.f, t), { k: 0, p: 0, c: 0, f: 0 });
     shareResult(`My ${x.kind}ly summary (${x.a}${x.a === x.b ? '' : ' → ' + x.b})\n${n} days logged · avg ${rd(t.k / n)} kcal/day\nAvg P ${rd(t.p / n)}g · C ${rd(t.c / n)}g · F ${rd(t.f / n)}g`, 'Macro Diary summary');
   };
-  registerTab('export', renderExport);
 }

@@ -48,7 +48,7 @@ export default async ({ page, url, check, screenshot }) => {
     await page.reload();
     await page.waitForSelector('.tabs');
   };
-  const openSettings = async () => { await page.click('[data-tab="more"]'); await page.click('#moreSettings'); await page.waitForSelector('#syncBox', { state: 'visible' }); };
+  const openSettings = async () => { await page.click('[data-tab="settings"]'); await page.waitForSelector('#syncBox', { state: 'visible' }); };
   const msg = async () => ((await page.locator('#syncMsg').textContent()) || '').trim();
   const toasts = () => page.evaluate(() => window.__toasts.slice());
   const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('macrodiary.sync.v1')));
