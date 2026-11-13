@@ -122,8 +122,10 @@ test('S2 source: the network-first fetch uses cache "no-cache", and the OCR / no
   assert.match(fetchPart, /caches\.match\('index\.html'\)/);
 });
 
-test('S3 CACHE is bumped to macro-diary-v56 (main is v54; the open Settings-tab PR uses v55)', () => {
-  assert.match(swSource, /const CACHE = 'macro-diary-v56'/);
+test('S3 CACHE is at least v56 (main is v54; the open Settings-tab PR uses v55)', () => {
+  const m = swSource.match(/const CACHE = 'macro-diary-v(\d+)'/);
+  assert.ok(m, 'CACHE constant not found');
+  assert.ok(Number(m[1]) >= 56, `CACHE is v${m[1]}, expected v56 or later`);
 });
 
 // ---------- sandbox behaviour (stronger: runs the real file against fakes) ----------

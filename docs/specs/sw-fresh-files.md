@@ -16,7 +16,7 @@ Only `sw.js` (root, not a module; no new files, SHELL unchanged) changes. No sav
 7. (B7) The `/vendor/tesseract/` branch stays cache-first on `OCR_CACHE` (hit: no network; miss: one fetch, stored in OCR cache only).
 8. (B8) Non-GET and cross-origin requests are not intercepted (no `respondWith`, worker makes no fetch).
 9. (B9) Activate deletes every cache except `CACHE` and `OCR_CACHE`, then `clients.claim()`.
-10. (S3) `CACHE === 'macro-diary-v56'`.
+10. (S3) `CACHE` version number is at least 56 (greater than main's v54; never pinned exactly).
 
 B6 to B9 and the unchanged-branch checks in S2 describe existing behaviour and PASS before the fix; they are regression guards, not proof of the fix.
 
