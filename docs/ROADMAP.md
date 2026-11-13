@@ -1,6 +1,6 @@
 # Roadmap
 
-Written before implementation so it can be reviewed against what actually got built. Status is updated at the end of each stage (see the table at the bottom). Decisions made without the owner are listed in [DECISIONS.md](DECISIONS.md) so they can be overruled.
+**This is the original staged plan and a record of what landed. The live queue of work, in priority order, is [BACKLOG.md](BACKLOG.md); do not add new work here.** Written before implementation so it can be reviewed against what actually got built. Status is updated at the end of each stage (see the table at the bottom). Decisions made without the owner are listed in [DECISIONS.md](DECISIONS.md) so they can be overruled.
 
 ## The four parts the owner asked for
 
@@ -77,13 +77,10 @@ Model (ported in spirit from `MealPlannerPC/Models`): `Recipe{id,name,descriptio
 | Sync setup defaults + setup link | **done, merged (PR #8)** | Built-in default project (set to the owner's project, D25) and an "Add another device" link. QR code not built. |
 | Favourite recipes | **done, merged (PR #10)** | `favorite` flag on recipes (schema v5, D26), star on cards and in the editor, Favourites filter. Auto-fill (next) can read the flag. |
 | Auto-fill week | **done, merged (PR #12)** | `domain/autoplan.js`, preview/Accept/Reroll dialog on the Plan tab (D27). Month range not built. |
-| Plan month view + month auto-fill | **in PR (feature/plan-month), not merged** | Week/Month toggle, calendar grid with kcal per day, auto-fill range choice, past days skipped (D28). |
-| Nutrition details page | **in PR #40, not merged** | Tap the Diary summary for fiber, sugars, saturated fat, sodium and cholesterol over the day; optional `nut` on foods and entries, schema v8 (D43). Only foods from a database record them. |
-| Nutrition facts on the item + scanned barcode kept | **in PR #42, not merged** | Amount screen shows the five extras for the chosen amount; barcode kept on foods and entries (D45, no schema bump). |
+| Plan month view + month auto-fill | **done, merged (PR #13)** | Week/Month toggle, calendar grid with kcal per day, auto-fill range choice, past days skipped (D28). |
+| Nutrition details page | **done, merged (PR #40)** | Tap the Diary summary for fiber, sugars, saturated fat, sodium and cholesterol over the day; optional `nut` on foods and entries, schema v8 (D43). |
+| Nutrition facts on the item + scanned barcode kept | **done, merged (PR #42)** | Amount screen shows the five extras for the chosen amount; barcode kept on foods and entries (D45, no schema bump). |
 | Part 4 store integrations | **not built, by design** | Research notes above; needs a backend + the owner's developer accounts. |
 
-### What the owner needs to do next (in order)
-1. Run the real two-device sync test in `docs/SYNC-SETUP.md` section 6b and report any failing step (KNOWN-ISSUES #12).
-2. Try the app on the phone: install, barcode scan, label photo (camera and upload), offline (KNOWN-ISSUES #21, #29, #31, #33, #36).
-3. Answer the open questions at the end of [VISION.md](VISION.md) (households first: it changes the database layout). The suggested order of next features is in its section 6.
-4. Decide on the open design questions in `docs/DECISIONS.md` marked *made without the owner* (D9, D10, D13-D17).
+### What is next
+See [BACKLOG.md](BACKLOG.md) (the queue and the owner's own to-dos).
