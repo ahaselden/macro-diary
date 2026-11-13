@@ -1,7 +1,7 @@
 // Caches the app shell so it opens offline. Food-database requests always go to the network.
 // Keep SHELL in sync with the files that ship: tests/sw.test.js fails if a js/css file is missing from it.
 // After changing ANY shipped file, bump CACHE so installed copies (phones) pick up the update.
-const CACHE = 'macro-diary-v54';
+const CACHE = 'macro-diary-v56';
 const OCR_CACHE = 'macro-diary-ocr-v1';   // ~7 MB OCR engine, fetched on first label scan; survives CACHE bumps. Change the name if /vendor/tesseract/ is ever updated.
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png',
@@ -80,8 +80,16 @@ const SHELL = [
   'js/vendor/zxing.min.js',
 ];
 
+// Install: fetch every shell file straight from the network (cache: 'reload' skips the browser's HTTP cache, which GitHub Pages lets keep files for
+// ~10 minutes), so a new version can never be built from a mix of new and stale files. All or nothing: one failure fails the install and removes the half-built cache.
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE).then(async c => {
+    await Promise.all(SHELL.map(async url => {
+      const r = await fetch(new Request(url, { cache: 'reload' }));
+      if (!r.ok) throw new Error('precache failed: ' + url + ' (' + r.status + ')');
+      await c.put(url, r);
+    }));
+  }).then(() => self.skipWaiting(), async err => { await caches.delete(CACHE); throw err; }));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE && k !== OCR_CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));
@@ -100,7 +108,7 @@ self.addEventListener('fetch', e => {
     return;
   }
   // network first so updates show up, fall back to cache when offline
-  e.respondWith(fetch(e.request).then(r => {
+  e.respondWith(fetch(e.request, { cache: 'no-cache' }).then(r => {   // no-cache: revalidate, never use a stale browser-cached copy while online
     const copy = r.clone(); caches.open(CACHE).then(c => c.put(e.request, copy)); return r;
   }).catch(() => caches.match(e.request).then(r => r || caches.match('index.html'))));
 });
