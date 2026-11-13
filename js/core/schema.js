@@ -180,3 +180,16 @@ export function cleanApiKey(v) {
   if (typeof v !== 'string') return '';
   return v.slice(0, 1000).replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim().slice(0, 200);
 }
+
+/** An empty, whitespace-only, non-string or DEMO_KEY (any case) USDA key: nothing worth keeping over a real one. */
+export function isPlaceholderKey(v) {
+  if (typeof v !== 'string') return true;
+  const t = v.trim();
+  return t === '' || t.toLowerCase() === 'demo_key';
+}
+
+/** A USDA key that looks real: 20 to 200 letters, digits, '-' or '_' after trimming. A heuristic, not validation. */
+export function isLegitKey(v) {
+  return typeof v === 'string' && /^[A-Za-z0-9_-]{20,200}$/.test(v.trim());
+}
+

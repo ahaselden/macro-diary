@@ -37,6 +37,7 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 | `js/domain/nutrition.js` | Calories/macros of an entry and of a list. |
 | `js/domain/units.js` | Which units a food can be entered in (g/oz/lb, servings, household measures, volume units derived from a known density). |
 | `js/domain/details.js` | `dayDetails`: a day's macros against goals and the optional extra nutrients (`nut`), counting only entries that recorded them. |
+| `js/domain/api-key.js` | `apiKeySummary`: the one-line description of the USDA key shown in Settings (last 4 characters at most). |
 | `js/domain/entries.js` | The only sanctioned way to add/edit/remove diary entries (`addEntry/updateEntry/removeEntry/touchSettings`): stamps `updatedAt`, leaves tombstones on delete; also `validEntry`. |
 | `js/domain/merge.js` | `mergeStates(a, b)`: conflict-free last-writer-wins merge of two states (see [D9](DECISIONS.md)). Used by restore now and by sync later. |
 | `js/domain/backup.js` | Restore: `validEntry`, `newEntries` (preview count), `mergeRestore` (sanitise the file, then `mergeStates` preferring this device on ties). |
@@ -92,7 +93,7 @@ Nutrition is stored **per 100 g** and an entry stores the grams eaten, so changi
 - Everything that came from a database, a file or the user is escaped with `esc()` before it goes into HTML; numbers are coerced.
 - A restored backup is passed through `sanitize()` (goals must be finite non-negative numbers, units/theme must be known values) so a crafted file can't smuggle markup via fields that are rendered ([KNOWN-ISSUES #1](KNOWN-ISSUES.md)).
 - CSV cells starting with `= + - @` are neutralised against spreadsheet formula injection.
-- The USDA key is typed by the user and stays in their browser; nothing secret is in the repo.
+- The USDA key is typed by the user and stays in their browser (it may sync to their own account if they switch that on, D42, D46); nothing secret is in the repo.
 
 ## Recipes
 
