@@ -78,6 +78,7 @@ Model (ported in spirit from `MealPlannerPC/Models`): `Recipe{id,name,descriptio
 | Favourite recipes | **done, merged (PR #10)** | `favorite` flag on recipes (schema v5, D26), star on cards and in the editor, Favourites filter. Auto-fill (next) can read the flag. |
 | Auto-fill week | **done, merged (PR #12)** | `domain/autoplan.js`, preview/Accept/Reroll dialog on the Plan tab (D27). Month range not built. |
 | Plan month view + month auto-fill | **in PR (feature/plan-month), not merged** | Week/Month toggle, calendar grid with kcal per day, auto-fill range choice, past days skipped (D28). |
+| Nutrition details page | **in PR #40, not merged** | Tap the Diary summary for fiber, sugars, saturated fat, sodium and cholesterol over the day; optional `nut` on foods and entries, schema v8 (D43). Only foods from a database record them. |
 | Part 4 store integrations | **not built, by design** | Research notes above; needs a backend + the owner's developer accounts. |
 
 ### What the owner needs to do next (in order)

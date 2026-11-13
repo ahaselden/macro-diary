@@ -8,9 +8,11 @@
 //            4 = meal planner data: recipes {id: recipe}, plan {date: {updatedAt, slots}}, shopping {checks, extras}
 //            5 = recipes gain `favorite` (boolean; missing = false)
 //            6 = recipes gain `stated` (null, or the page's per-serving { k, p, c, f, per }; missing = null)
+//            7 = syncApiKey (the opt-in to carry the USDA key in the sync account)
+//            8 = foods and diary entries may carry `nut` (optional extra nutrients per 100 g; absent = not recorded)
 import { MEALS } from './constants.js';
 
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 export const defaults = () => ({
   schemaVersion: SCHEMA_VERSION, theme: 'auto', weightUnit: 'g', measures: {}, goals: { k: 2000, p: 150, c: 200, f: 65 },
@@ -28,6 +30,22 @@ const ts = v => numOr(v, 0, 0, 8.64e15);
 // a unit is a short word like 'cup' or 'fl oz': keep letters, spaces and dots only (it is later used in a pattern match)
 const unitText = v => str(v, 40).toLowerCase().replace(/[^a-z .]/g, '').trim();
 const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Optional extra nutrients per 100 g (sodium and cholesterol in mg, the rest in g) and their allowed ranges. Absent = "not recorded", never 0. */
+export const NUT_KEYS = ['fiber', 'sugars', 'satFat', 'sodium', 'cholesterol'];
+const NUT_MAX = { fiber: 100, sugars: 100, satFat: 100, sodium: 40000, cholesterol: 5000 };
+/** A fresh object holding only the known keys whose value is a finite in-range number; undefined when nothing valid is left. */
+export function sanitizeNut(v) {
+  if (!plainObject(v)) return undefined;
+  const out = {};
+  for (const k of NUT_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(v, k)) continue;
+    const x = v[k];
+    if (typeof x === 'number' && Number.isFinite(x) && x >= 0 && x <= NUT_MAX[k]) out[k] = x;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+const cleanNut = o => { if (!plainObject(o) || !('nut' in o)) return; const n = sanitizeNut(o.nut); if (n) o.nut = n; else delete o.nut; };
 
 /**
  * A recipe's stated nutrition: per SERVING calories and grams of protein/carbs/fat as the source (a web page, or the user) says, plus the
@@ -50,6 +68,7 @@ export function sanitizeFood(f) {
   const out = { name: str(f.name, 200), brand: str(f.brand, 200), source: str(f.source, 40),
     per100: { k: numOr(p.k, 0), p: numOr(p.p, 0), c: numOr(p.c, 0), f: numOr(p.f, 0) },
     servingG: numOr(f.servingG, 0), servingLabel: str(f.servingLabel, 100) };
+  const nut = sanitizeNut(f.nut); if (nut) out.nut = nut;
   if (typeof f.fdcId === 'number' || typeof f.fdcId === 'string') out.fdcId = f.fdcId;
   if (typeof f.barcode === 'string' && /^\d{8,14}$/.test(f.barcode)) out.barcode = f.barcode;   // set on custom foods so a scan finds them
   if (Array.isArray(f.portions)) out.portions = f.portions.filter(x => plainObject(x) && typeof x.label === 'string' && numOr(x.g, 0) > 0).slice(0, 30).map(x => ({ label: str(x.label, 100), g: +x.g }));
@@ -120,6 +139,8 @@ export function sanitize(d) {
   const usableFood = f => plainObject(f) && typeof f.name === 'string' && plainObject(f.per100);
   d.recent = Array.isArray(d.recent) ? d.recent.filter(usableFood) : [];
   d.custom = Array.isArray(d.custom) ? d.custom.filter(usableFood) : [];
+  for (const f of [...d.recent, ...d.custom]) cleanNut(f);
+  for (const list of Object.values(d.days)) if (Array.isArray(list)) for (const e of list) cleanNut(e);
   const tomb = {};
   if (plainObject(d.tombstones)) for (const [id, t] of Object.entries(d.tombstones)) if (Number.isFinite(+t) && +t >= 0) tomb[id] = +t;
   d.tombstones = tomb;
@@ -143,7 +164,8 @@ export function migrate(d) {
   if (v < 5) d.schemaVersion = 5;        // v4 -> v5: recipe.favorite (added by sanitize, false)
   if (v < 6) d.schemaVersion = 6;        // v5 -> v6: recipe.stated (added by sanitize, null)
   if (v < 7) d.schemaVersion = 7;        // v6 -> v7: syncApiKey (added by sanitize, false)
-  // future: if (v < 8) { ...; d.schemaVersion = 8; }
+  if (v < 8) d.schemaVersion = 8;        // v7 -> v8: optional `nut` on foods and entries (nothing added)
+  // future: if (v < 9) { ...; d.schemaVersion = 9; }
   return sanitize(d);
 }
 

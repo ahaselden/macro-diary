@@ -1,6 +1,7 @@
 // USDA FoodData Central search and portions.
 import { getJSON } from './http.js';
 import { frac } from '../domain/units.js';
+import { sanitizeNut } from '../core/schema.js';
 import { usdaBarcodeQueries, usdaBarcodeMatch } from '../domain/barcode.js';
 
 export function usdaNut(list, num, unit){ const n = list.find(x => String(x.nutrientNumber) === num && (!unit || (x.unitName||'').toUpperCase() === unit)); return n ? +n.value : null; }
@@ -12,9 +13,11 @@ export function mapUSDA(f){
   const sg = f.servingSize && /^g/i.test(f.servingSizeUnit || '') ? +f.servingSize : 0;
   const name = f.description.toLowerCase() === f.description || f.description === f.description.toUpperCase()
     ? f.description.charAt(0).toUpperCase() + f.description.slice(1).toLowerCase() : f.description;
+  const ok = v => (v != null && Number.isFinite(v) && v >= 0 ? v : undefined);
+  const nut = sanitizeNut({ fiber: ok(usdaNut(ns,'291')), sugars: ok(usdaNut(ns,'269')), satFat: ok(usdaNut(ns,'606')), sodium: ok(usdaNut(ns,'307')), cholesterol: ok(usdaNut(ns,'601')) });
   return {name, brand:f.brandOwner || f.brandName || '', source:'USDA',
     per100:{k, p:usdaNut(ns,'203')||0, c:usdaNut(ns,'205')||0, f:usdaNut(ns,'204')||0}, servingG:sg,
-    servingLabel:f.householdServingFullText || '', fdcId:f.fdcId};
+    servingLabel:f.householdServingFullText || '', fdcId:f.fdcId, ...(nut ? { nut } : {})};
 }
 export async function searchUSDA(q, apiKey){
   const key = encodeURIComponent((apiKey || '').trim() || 'DEMO_KEY');

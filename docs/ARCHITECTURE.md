@@ -36,6 +36,7 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 | `js/core/dom.js` `bus.js` | `$`, `toast`, dialog helpers; tiny pub/sub (`on`/`emit`) so screens can react to each other without importing each other. |
 | `js/domain/nutrition.js` | Calories/macros of an entry and of a list. |
 | `js/domain/units.js` | Which units a food can be entered in (g/oz/lb, servings, household measures, volume units derived from a known density). |
+| `js/domain/details.js` | `dayDetails`: a day's macros against goals and the optional extra nutrients (`nut`), counting only entries that recorded them. |
 | `js/domain/entries.js` | The only sanctioned way to add/edit/remove diary entries (`addEntry/updateEntry/removeEntry/touchSettings`): stamps `updatedAt`, leaves tombstones on delete; also `validEntry`. |
 | `js/domain/merge.js` | `mergeStates(a, b)`: conflict-free last-writer-wins merge of two states (see [D9](DECISIONS.md)). Used by restore now and by sync later. |
 | `js/domain/backup.js` | Restore: `validEntry`, `newEntries` (preview count), `mergeRestore` (sanitise the file, then `mergeStates` preferring this device on ties). |
@@ -83,7 +84,7 @@ state = {
 entry = { id, updatedAt, meal, name, brand, source, per100: {k,p,c,f}, servingG, servingLabel, fdcId, portions,
           grams, unitKey, amount, disp }
 ```
-History: v1 = original app, v2 = added `schemaVersion`, v3 = tombstones/`settingsUpdatedAt` and `updatedAt` on edited records, v4 = recipes/plan/shopping ([D13](DECISIONS.md)), v5 = `recipe.favorite` boolean, v6 = `recipe.stated` per-serving nutrition or null ([D31](DECISIONS.md)) ([D26](DECISIONS.md)). Planner shapes: `recipe = {id, name, description, source, servings, totalTime, tags[], steps[], ingredients[], favorite, updatedAt}`; `ingredient = {id, raw, name, qty, unit, prep, food|null, grams|null}`; plan `item = {id, type: "recipe"|"food", recipeId, servings, name, food, grams}`. Missing `updatedAt` means 0 ("older than any real edit"), so upgrading rewrites nothing. Changes to entries must go through `domain/entries.js` so they are stamped and deletions leave tombstones.
+History: v1 = original app, v2 = added `schemaVersion`, v3 = tombstones/`settingsUpdatedAt` and `updatedAt` on edited records, v4 = recipes/plan/shopping ([D13](DECISIONS.md)), v5 = `recipe.favorite` boolean, v6 = `recipe.stated` per-serving nutrition or null ([D31](DECISIONS.md)), v7 = `syncApiKey` ([D42](DECISIONS.md)), v8 = optional `nut` extra nutrients on foods and entries ([D43](DECISIONS.md)) ([D26](DECISIONS.md)). Planner shapes: `recipe = {id, name, description, source, servings, totalTime, tags[], steps[], ingredients[], favorite, updatedAt}`; `ingredient = {id, raw, name, qty, unit, prep, food|null, grams|null}`; plan `item = {id, type: "recipe"|"food", recipeId, servings, name, food, grams}`. Missing `updatedAt` means 0 ("older than any real edit"), so upgrading rewrites nothing. Changes to entries must go through `domain/entries.js` so they are stamped and deletions leave tombstones.
 
 Nutrition is stored **per 100 g** and an entry stores the grams eaten, so changing units never changes the calories. `disp` ("1.5 cup") remembers how the user entered it.
 

@@ -295,7 +295,7 @@ function openPicker(date, meal) {
       qtyStep(r.name, 'How many servings?', 'Servings', 1, () => show('recipe'), v => finish(recipeItem(newId(), r.id, v)));
     } else {
       const f = (res.dataset.from === 'l' ? local : remote)[+res.dataset.i]; if (!f) return;
-      const food = { name: f.name, brand: f.brand || '', source: f.source || '', per100: f.per100, servingG: f.servingG || 0, servingLabel: f.servingLabel || '' };
+      const food = { name: f.name, brand: f.brand || '', source: f.source || '', per100: f.per100, servingG: f.servingG || 0, servingLabel: f.servingLabel || '', ...(f.nut ? { nut: f.nut } : {}) };
       if (f.fdcId) food.fdcId = f.fdcId;
       if (f.portions) food.portions = f.portions;
       qtyStep(f.name, `${rd(f.per100.k)} kcal /100g`, 'Grams', Number(f.servingG) > 0 ? Number(f.servingG) : 100, () => show('food'), v => finish(foodItem(newId(), food, v)));

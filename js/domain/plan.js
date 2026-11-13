@@ -84,7 +84,7 @@ function entryFor(state, item, meal, idGen) {
   }
   if (!item.food || !(item.grams > 0)) return null;
   const f = item.food;
-  return { id: idGen(), meal, name: f.name, brand: f.brand || '', source: f.source || '', per100: f.per100, servingG: f.servingG || 0, servingLabel: f.servingLabel || '', grams: item.grams, unitKey: 'w:g', amount: item.grams, disp: '' };
+  return { id: idGen(), meal, name: f.name, brand: f.brand || '', source: f.source || '', per100: f.per100, servingG: f.servingG || 0, servingLabel: f.servingLabel || '', ...(f.nut ? { nut: f.nut } : {}), grams: item.grams, unitKey: 'w:g', amount: item.grams, disp: '' };
 }
 
 /**

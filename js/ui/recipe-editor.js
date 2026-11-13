@@ -275,7 +275,7 @@ function renderPicker(ing) {
     if (t.id === 'pkGo') { go(); return; }
     const r = t.closest('.res'); if (!r) return;
     const f = (r.dataset.from === 'l' ? local : remote)[+r.dataset.i]; if (!f) return;
-    const food = { name: f.name, brand: f.brand || '', source: f.source || '', per100: f.per100, servingG: f.servingG || 0, servingLabel: f.servingLabel || '' };
+    const food = { name: f.name, brand: f.brand || '', source: f.source || '', per100: f.per100, servingG: f.servingG || 0, servingLabel: f.servingLabel || '', ...(f.nut ? { nut: f.nut } : {}) };
     if (f.fdcId) food.fdcId = f.fdcId;
     if (f.portions) food.portions = f.portions;
     ing.food = food; ing.grams = resolveGrams(ing, state.measures); delete suggestions[ing.id];
