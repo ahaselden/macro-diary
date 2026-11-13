@@ -223,8 +223,14 @@ function openAutofill() {
 function localMatches(q) {
   q = q.toLowerCase();
   const all = [...state.custom.map(f => ({ ...f, tag: 'My food' })), ...state.recent.map(f => ({ ...f, tag: 'Recent' }))];
-  const seen = new Set();
-  return all.filter(f => (!q || (f.name + ' ' + (f.brand || '')).toLowerCase().includes(q)) && !seen.has(foodKey(f)) && seen.add(foodKey(f))).slice(0, 15);
+  // saved foods are told apart by id (two with the same name and different barcodes both show); a recent copy is hidden when its saved food is already listed
+  const ids = new Set(), keys = new Set();
+  return all.filter(f => {
+    if (!(!q || (f.name + ' ' + (f.brand || '')).toLowerCase().includes(q))) return false;
+    if (f.tag === 'My food') { const id = f.id || foodKey(f); if (ids.has(id)) return false; ids.add(id); keys.add(foodKey(f)); return true; }
+    if ((f.foodId && ids.has(f.foodId)) || keys.has(foodKey(f))) return false;
+    keys.add(foodKey(f)); return true;
+  }).slice(0, 15);
 }
 
 function openPicker(date, meal) {
