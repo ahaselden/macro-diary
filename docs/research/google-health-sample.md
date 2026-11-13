@@ -39,5 +39,12 @@ The export has two generations of data: the old **Google Fit** folders (`Takeout
 4. **Where your timezone comes from:** the phone's current timezone is fine for most days; acceptable?
 5. After the import works, the **automatic route** (the Google Health API with a small backend, see google-health.md) is the next, separate step.
 
+## 5b. The owner's answers (2026-11-13)
+
+1. **Step-source rule:** the owner agreed to pick it after seeing real days. In the last 12 days of the sample only two sources have data, the **phone** (`Phone Health Connect`, low and often small) and the **watch** (`Versa 2`, higher almost every day). Proposed default: per day, use the source with the larger total (almost always the watch), with the rule kept in one small function so it is easy to change. The owner still has to confirm which number matches the Google Health app on a given day.
+2. **Upload the zip.** The app reads the Takeout zip itself in the browser (a small vendored unzip, like `zxing.min.js`, D21), takes only the three data types and never uploads anything. A **CSV import for other apps** that export CSV is wanted later and goes further down the backlog.
+3. **Import the last year by default**, with an option to import all years.
+4. **Timezone: the device's current timezone** is fine.
+
 ## 6. Not verified
 Only file names, a few headers and aggregate counts were read; the full `UserExercises` header, the sleep stage names, the calorie fields and the Fit-era daily files were not examined. How the step sources overlap day by day was seen on one month only. No import code was written and none of the owner's values were copied.
