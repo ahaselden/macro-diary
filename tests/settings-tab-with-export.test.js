@@ -35,7 +35,9 @@ test('3. #v-settings order: Units, Daily goals, Appearance, Food databases, Sync
   for (let i = 1; i < order.length; i++) assert.ok(order[i - 1] < order[i], 'item ' + i + ' out of order');
   for (const id of ['xKind', 'xDate', 'xRange', 'xStats', 'xTable', 'xEntries', 'xSummary', 'xJson', 'xShare'])
     assert.equal(count(html, `id="${id}"`), 1, '#' + id + ' must appear exactly once in index.html');
-  assert.match(settings.slice(settings.indexOf('id="xTable"') - 40, settings.indexOf('id="xTable"') + 40), /class="card tscroll"|class="tscroll card"/);
+  // export-one-card: #xTable is no longer its own card; it keeps tscroll (horizontal scrolling) inside the single Export card
+  const xt = settings.slice(settings.lastIndexOf('<', settings.indexOf('id="xTable"')), settings.indexOf('>', settings.indexOf('id="xTable"')) + 1);
+  assert.match(xt, /\btscroll\b/); assert.doesNotMatch(xt, /class="([^"]*\s)?card(\s[^"]*)?"/);
   assert.equal(count(settings, 'Export your data'), 1);
   assert.ok(settings.lastIndexOf('<div class="card') > settings.indexOf('<h2>Backup</h2>') - 60, 'Backup must be the last card');
 });
