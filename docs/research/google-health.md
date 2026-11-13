@@ -43,6 +43,16 @@ Health data is sensitive (VISION principles: the user's data stays theirs). Anyt
 4. **Which phone** do you use (Android or iPhone)? That decides whether Health Connect is even possible later.
 5. Can you export your data from the Google Health app and put a **sample file** where I can read it, with dates and names removed if you like?
 
+## 6b. The owner's answers (2026-11-13)
+
+1. **A manual import is acceptable as a first step**, but the owner notes that exporting is not simple: it means going to Google Takeout and selecting the data each time. So the import is a stepping stone to learn the data shape, not the end goal.
+2. **A weekly sign-in is acceptable**, so the automatic route (the Google Health API in an unverified, testing-mode Google Cloud project, with the owner as the one test user, plus a small backend function holding the secret) is a real option, not ruled out by the verification rules. It is still **not verified** that the API can be used this way (see section 7).
+3. **All three data types** (steps, workouts, sleep). Once the data can be read, adding the others is expected to be easy; the spec should still be written from real samples.
+4. **Android phone.** Health Connect exists there (native-only), but it is not needed if the Google Health API route works.
+5. **The owner is waiting for Google to send the Takeout export** (sample file for the spec).
+
+**Plan this implies.** (a) When the Takeout file arrives, read it to see the real file layout and fields for steps, workouts and sleep. (b) Write the spec from that sample and build the import first (it is the cheapest way to prove the data shape and the per-day storage, sync and display). (c) Then research and try the automatic route in a small, separate step: a Google Cloud project in testing mode with the owner as the test user, one backend function for the token exchange and refresh, and a check that a browser app can call the API at all. The item stays research-only until the sample arrives.
+
 ## 7. Not verified
 Google's own current pages were not opened; every date above comes from search snippets and third-party posts (the Fitbit Web API shutdown date moved at least twice). Whether the Health API works from a browser (CORS, token flow), whether a single-user app can stay unverified and what the refresh-token lifetime would be, the exact Takeout file layout for workouts, and the exact steps in the Google Health app's export menu.
 
