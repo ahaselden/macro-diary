@@ -18,6 +18,8 @@ let ocrRun = 0;   // bumped on every render and every photo: a result from an ol
 export function editCustomFood(food) {
   renderCustom(food);
   head('Edit food', true);
+  const seg = document.querySelector('#dBody .seg'), photo = $('#cCam') && $('#cCam').parentElement;   // editing is not adding: no Search/Custom switch, no label photo
+  for (const el of [seg, photo, photo && photo.previousElementSibling]) if (el) el.style.display = 'none';
 }
 
 export function renderCustom(editing) {
