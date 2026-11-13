@@ -164,3 +164,6 @@ A "Cook" button on each recipe card and in the planned-meal recipe popup opens `
 **Why.** Past entries are copies of the food at logging time, so the extras have to be stored when a food is chosen; a separate object keeps every existing reader of `per100` unchanged.
 **Honesty rule.** Absent means "not recorded", never 0; a reported 0 is kept. Each nutrient shows how many items recorded it ("from 3 of 5 items"), so a total is a lower bound.
 **Limits.** Merge stays whole-entry last-writer-wins, so a newer edit without `nut` wins over an older copy with it. Foods typed by hand cannot record extras yet.
+
+## D44. An unknown barcode at Open Food Facts is "no result", not an error
+Open Food Facts answers a barcode it does not know with HTTP 404 and a "product not found" body. `searchOFF` now returns [] for a 404 on the barcode endpoint, so the normal not-found path and the USDA fallback (D39) run and no "HTTP 404" message is shown. Every other failure (network, timeout, 429, 4xx other than 404, 5xx) and name searches are unchanged.
