@@ -28,8 +28,10 @@ The unit that travels is a **record**: `{ key, value, updatedAt }`.
 |-----|----------|
 | `day:2026-03-04` | all entries logged that day |
 | `settings` | goals, weight unit, database toggles (+ their timestamp) |
-| `custom`, `measures` | your custom foods; saved measures like "1 cup = 125 g" |
+| `custom`, `measures` | your saved (custom) foods, each with a stable `id`; saved measures like "1 cup = 125 g", keyed by the saved food's id (D53) |
 | `tombstones` | ids of deleted things, with deletion times |
+
+**Saved foods match by `id` (D53).** Two devices agree on which saved food is which by its `id`, so a rename on one device updates the same food on the other instead of leaving the old name behind. The newest edit of a food wins as a whole record, and a tombstone for a food id hides a food last edited before it. A food from a device still on the old app has no `id`: merge derives one from its name, brand, source and barcode (the same id the migration gives it), so it meets the same food. That device also keeps writing measures under the food's name; merge folds those into the id bucket. Copies of a saved food (diary entries, recipe and plan foods) carry its id as `foodId`; one that arrives from an old-app device has none.
 
 Why records: only what changed is uploaded and downloaded, so a five-year history does not re-send on every change; and a conflict only affects one day, not your whole diary. Why *not* one record per entry: more rows and requests for no benefit at this size.
 

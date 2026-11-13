@@ -1,5 +1,5 @@
 // Units & amount-picker logic extracted from the legacy inline script. Pure.
-import { foodKey } from './food.js';
+import { measuresKey } from './food.js';
 import { OZ } from '../core/constants.js';
 import { rd } from '../core/format.js';
 
@@ -16,12 +16,12 @@ export function volOf(label){
 }
 
 // every unit this food can be entered in; g = grams per 1 unit
-// measures = saved custom measures map { [foodKey]: [{label, g}] }
+// measures = saved custom measures map { [measuresKey(food)]: [{label, g}] }: the saved food's id, or foodKey for foods that are not saved
 export function unitsFor(food, measures){
   const u = [{key:'w:g', label:'grams (g)', short:'g', g:1}, {key:'w:oz', label:'ounces (oz)', short:'oz', g:OZ}, {key:'w:lb', label:'pounds (lb)', short:'lb', g:453.592}];
   if (food.servingG > 0) u.push({key:'s', short:'serving', g:food.servingG,
     label:`serving (${food.servingLabel ? food.servingLabel : rd(food.servingG) + ' g'})`});
-  const ports = [...(food.portions || []), ...((measures || {})[foodKey(food)] || [])];
+  const ports = [...(food.portions || []), ...((measures || {})[measuresKey(food)] || [])];
   ports.forEach(p => u.push({key:'p:' + p.label, label:`${p.label} (${rd(p.g)} g)`, short:p.label, g:p.g}));
   const cands = ports.map(p => [p.label, p.g]); if (food.servingG > 0 && food.servingLabel) cands.unshift([food.servingLabel, food.servingG]);
   let d = null; for (const [l, g] of cands) { const ml = volOf(l); if (ml > 0) { d = g / ml; break; } }

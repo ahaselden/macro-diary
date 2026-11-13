@@ -4,7 +4,7 @@ import { state, save } from '../core/store.js';
 import { $, toast, dialog, head, setCloseGuard, canClose } from '../core/dom.js';
 import { emit } from '../core/bus.js';
 import { esc, rd, r1 } from '../core/format.js';
-import { foodKey } from '../domain/food.js';
+import { foodKey, foodIdOf } from '../domain/food.js';
 import { parseIngredient, formatQty } from '../domain/ingredient-parse.js';
 import { newRecipe, newIngredient, resolveGrams, recipeNutrition, saveRecipe, deleteRecipe, scaleIngredientText, setFavorite, ingredientStatus } from '../domain/recipes.js';
 import { shouldSuggest, suggestionFood } from '../domain/food-match.js';
@@ -275,7 +275,7 @@ function renderPicker(ing) {
     if (t.id === 'pkGo') { go(); return; }
     const r = t.closest('.res'); if (!r) return;
     const f = (r.dataset.from === 'l' ? local : remote)[+r.dataset.i]; if (!f) return;
-    const food = { name: f.name, brand: f.brand || '', source: f.source || '', per100: f.per100, servingG: f.servingG || 0, servingLabel: f.servingLabel || '', ...(f.nut ? { nut: f.nut } : {}) };
+    const food = { name: f.name, brand: f.brand || '', source: f.source || '', per100: f.per100, servingG: f.servingG || 0, servingLabel: f.servingLabel || '', ...(f.nut ? { nut: f.nut } : {}), ...(foodIdOf(f) ? { foodId: foodIdOf(f) } : {}) };
     if (f.fdcId) food.fdcId = f.fdcId;
     if (f.portions) food.portions = f.portions;
     ing.food = food; ing.grams = resolveGrams(ing, state.measures); delete suggestions[ing.id];

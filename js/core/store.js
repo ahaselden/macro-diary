@@ -10,8 +10,10 @@ export { SCHEMA_VERSION, defaults, migrate, sanitize };
 
 /** `storage` is anything with getItem/setItem (localStorage in the browser, a fake in tests, or null). */
 export function createStore(storage) {
+  // the version is read BEFORE the defaults are spread in: a save without schemaVersion is v1 and must run every migration step, not look current
+  const load = d => migrate({ ...defaults(), ...d, schemaVersion: Number.isFinite(d && d.schemaVersion) ? d.schemaVersion : 1 });
   const read = () => {
-    try { const raw = storage && storage.getItem(STORAGE_KEY); if (raw) { const d = JSON.parse(raw); if (d) return migrate({ ...defaults(), ...d }); } } catch { /* corrupt or blocked: fall back */ }
+    try { const raw = storage && storage.getItem(STORAGE_KEY); if (raw) { const d = JSON.parse(raw); if (d) return load(d); } } catch { /* corrupt or blocked: fall back */ }
     return defaults();
   };
   const state = read();
@@ -26,7 +28,7 @@ export function createStore(storage) {
     /** Swap in a whole new state while keeping the same `state` object identity. */
     replace(next) {
       for (const k of Object.keys(state)) delete state[k];
-      Object.assign(state, migrate({ ...defaults(), ...next }));
+      Object.assign(state, load(next));
     },
   };
   return store;

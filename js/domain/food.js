@@ -1,5 +1,24 @@
 // Identity of a food across sources/recents/custom foods/saved measures. Pure.
+import { isFoodId, legacyFoodId } from '../core/schema.js';
+
 export const foodKey = f => [f.name, f.brand, f.source].join('|');
+
+/**
+ * A new id for a saved food: 'f' + the time in base 36 (at least 2 characters) + 4 random base-36 characters, e.g. 'floyw3v28i000'. No '-', so it can never
+ * look like a derived id. `now` and `rnd` are arguments (the UI passes Date.now() and Math.random) so this stays pure. Never throws; always isFoodId.
+ */
+export function makeFoodId(now, rnd) {
+  const t = typeof now === 'number' && Number.isFinite(now) ? Math.min(Math.max(Math.floor(now), 0), 8.64e15) : 0;
+  let r = 0;
+  try { const x = typeof rnd === 'function' ? rnd() : 0; r = typeof x === 'number' && Number.isFinite(x) && x >= 0 && x < 1 ? x : 0; } catch { r = 0; }
+  return 'f' + t.toString(36).padStart(2, '0') + Math.floor(r * 36 ** 4).toString(36).padStart(4, '0');
+}
+
+/** The saved-food id a food or a copy of it carries: a valid `foodId`, else a valid `id`, else ''. Anything that fails isFoodId is ignored. */
+export const foodIdOf = f => (f && typeof f === 'object' ? (isFoodId(f.foodId) ? f.foodId : isFoodId(f.id) ? f.id : '') : '');
+
+/** Where this food's saved measures live in state.measures: its saved-food id when it has one, else foodKey (database foods, old copies). Pure. */
+export const measuresKey = f => foodIdOf(f) || foodKey(f);
 
 /** A scanned/typed product code: 8-14 digits (EAN-8, UPC-A/E, EAN-13, GTIN-14). */
 export const isBarcode = q => /^\d{8,14}$/.test(String(q || '').trim());
@@ -48,16 +67,44 @@ const isOwn = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 const num = v => typeof v === 'number' && Number.isFinite(v);
 
 /**
- * Edit a saved custom food in place (state.custom). `key` is foodKey() of the food; `patch` may hold name, brand, servingG, barcode ('' removes it)
- * and k, p, c, f (per SERVING, stored per 100 g). Stamps updatedAt = now and moves saved measures to the new key on a rename.
- * Returns the food, or null with `state` untouched for: unknown key, empty name, bad numbers or barcode, a collision with a DIFFERENT saved food, unusable input.
+ * Save a NEW custom food (D53). It REPLACES every saved food `f` with replacesCustom(f, food): it inherits the id of the first replaced food (so that food's
+ * measures and its copies on other devices follow), the ids of any further replaced foods get a tombstone at `now`, and the food goes first with
+ * updatedAt = now. With nothing replaced it gets `makeId()`. The list is then cut to 100 (the oldest drop; that is NOT a deletion, no tombstone).
+ * Mutates `state` (custom, tombstones) and returns the saved food; the input `food` is not changed. Returns null with `state` untouched for an unusable
+ * state or food (no name, no per100), a non-finite `now`, a `makeId` that is not a function or gives an invalid or already used id.
  */
-export function updateCustomFood(state, key, patch, now) {
+export function addCustomFood(state, food, now, makeId) {
   try {
-    if (!state || typeof state !== 'object' || !Array.isArray(state.custom) || typeof key !== 'string' || !num(now)) return null;
+    if (!state || typeof state !== 'object' || !Array.isArray(state.custom) || typeof makeId !== 'function' || !num(now)) return null;
+    if (!food || typeof food !== 'object' || Array.isArray(food) || typeof food.name !== 'string' || !food.name || !food.per100 || typeof food.per100 !== 'object') return null;
+    const live = state.custom.filter(f => f && typeof f === 'object');
+    const replaced = live.filter(f => replacesCustom(f, food));
+    const idOf = f => (isFoodId(f.id) ? f.id : legacyFoodId(f));
+    const id = replaced.length ? idOf(replaced[0]) : makeId();
+    if (!isFoodId(id) || (!replaced.length && live.some(f => f.id === id))) return null;
+    const saved = { ...food, id, updatedAt: now };
+    delete saved.foodId;
+    const tomb = state.tombstones && typeof state.tombstones === 'object' && !Array.isArray(state.tombstones) ? state.tombstones : {};
+    for (const f of replaced.slice(1)) if (idOf(f) !== id) tomb[idOf(f)] = now;      // the extra replaced foods are deleted on every device
+    delete tomb[id];                                                                  // adding an id again undoes an earlier deletion of it
+    state.tombstones = tomb;
+    state.custom = [saved, ...state.custom.filter(f => !replaced.includes(f))].slice(0, 100);
+    return saved;
+  } catch { return null; }
+}
+
+/**
+ * Edit a saved custom food in place (state.custom). `id` is the food's `id` (D53); `patch` may hold name, brand, servingG, barcode ('' removes it)
+ * and k, p, c, f (per SERVING, stored per 100 g). Stamps updatedAt = now; the id never changes and saved measures never move (they live under the id).
+ * Returns the food, or null with `state` untouched for: anything that is not the id of a saved food, empty name, bad numbers or barcode, a collision
+ * with a DIFFERENT saved food, unusable input.
+ */
+export function updateCustomFood(state, id, patch, now) {
+  try {
+    if (!state || typeof state !== 'object' || !Array.isArray(state.custom) || !isFoodId(id) || !num(now)) return null;
     if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return null;
-    const hits = state.custom.reduce((a, f, j) => (f && typeof f === 'object' && foodKey(f) === key ? [...a, j] : a), []);
-    if (hits.length !== 1) return null;                 // unknown key, or two saved foods share it (different barcodes): refuse rather than edit the wrong one
+    const hits = state.custom.reduce((a, f, j) => (f && typeof f === 'object' && f.id === id ? [...a, j] : a), []);
+    if (hits.length !== 1) return null;                 // unknown id, or (corrupt data) two saved foods share it: refuse rather than edit the wrong one
     const i = hits[0];
     const old = state.custom[i], has = k => isOwn(patch, k) && patch[k] !== undefined;
     const next = { name: old.name, brand: old.brand || '', servingG: old.servingG, per100: { ...old.per100 }, barcode: old.barcode };
@@ -77,13 +124,6 @@ export function updateCustomFood(state, key, patch, now) {
     const cand = { name: next.name, brand: next.brand, source: old.source, barcode: next.barcode };
     if (state.custom.some((f, j) => j !== i && f && typeof f === 'object' && replacesCustom(f, cand))) return null;   // would be the same product as another saved food
 
-    const newKey = foodKey({ name: next.name, brand: next.brand, source: old.source });
-    if (newKey !== key && state.measures && typeof state.measures === 'object' && isOwn(state.measures, key)) {
-      const moved = Array.isArray(state.measures[key]) ? state.measures[key] : [];
-      const there = isOwn(state.measures, newKey) && Array.isArray(state.measures[newKey]) ? state.measures[newKey] : [];
-      state.measures[newKey] = [...there, ...moved.filter(m => !there.some(t => t && m && t.label === m.label))];
-      delete state.measures[key];
-    }
     old.name = next.name; old.brand = next.brand; old.per100 = next.per100; old.updatedAt = now;
     if (has('servingG')) old.servingG = next.servingG;
     if (has('barcode')) { if (next.barcode) old.barcode = next.barcode; else delete old.barcode; }

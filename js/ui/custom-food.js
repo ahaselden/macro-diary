@@ -1,7 +1,7 @@
 // "Custom" tab of the add-food dialog: enter a food by hand, or prefill it from a photo of a nutrition label.
 import { state, save } from '../core/store.js';
 import { $, toast, head } from '../core/dom.js';
-import { isBarcode, replacesCustom, servingSummary, cleanFoodName, updateCustomFood, foodKey } from '../domain/food.js';
+import { isBarcode, replacesCustom, servingSummary, cleanFoodName, updateCustomFood, addCustomFood, makeFoodId } from '../domain/food.js';
 import { normalizeBarcode, barcodeOffer } from '../domain/barcode.js';
 import { esc, rd } from '../core/format.js';
 import { add } from './ctx.js';
@@ -44,7 +44,6 @@ export function renderCustom(editing) {
     $('#cName').value = editing.name || ''; $('#cBar').value = editing.barcode || ''; $('#cSize').value = String(size);
     $('#cK').value = per('k'); $('#cP').value = per('p'); $('#cC').value = per('c'); $('#cF').value = per('f');
   }
-  const editKey = editing ? foodKey(editing) : '';
   const was = editing ? { name: $('#cName').value, bar: $('#cBar').value, size: $('#cSize').value, k: $('#cK').value, p: $('#cP').value, c: $('#cC').value, f: $('#cF').value } : null;
   // anything the user types is theirs: a later photo must not overwrite it, and it is no longer "from the photo"
   for (const id of NUMBER_FIELDS) $(id).addEventListener('input', e => { e.target.removeAttribute('data-ocr'); e.target.dataset.user = '1'; });
@@ -66,19 +65,22 @@ export function renderCustom(editing) {
       if ($('#cBar').value !== was.bar) patch.barcode = bar;
       if ($('#cSize').value !== was.size) patch.servingG = size;
       for (const [id, n, v] of [['#cK', 'k', k], ['#cP', 'p', +$('#cP').value || 0], ['#cC', 'c', +$('#cC').value || 0], ['#cF', 'f', +$('#cF').value || 0]]) if ($(id).value !== was[n]) patch[n] = v;
-      const clash = state.custom.some(f => foodKey(f) !== editKey && replacesCustom(f, { name, brand: editing.brand || '', source: editing.source, barcode: bar || undefined }));
-      const done = updateCustomFood(state, editKey, patch, Date.now());
+      const clash = state.custom.some(f => f.id !== editing.id && replacesCustom(f, { name, brand: editing.brand || '', source: editing.source, barcode: bar || undefined }));
+      const done = updateCustomFood(state, editing.id, patch, Date.now());
       if (!done) { toast(clash ? 'You already have a food with that name' : "Couldn't save the changes"); return; }
       save(); toast('Food updated'); add.tab = 'search'; add.onFoodEdited && add.onFoodEdited();
       return;
     }
     const s = 100 / size, food = { name, brand: '', source: 'Custom', servingG: size,
       per100: { k: k * s, p: (+$('#cP').value || 0) * s, c: (+$('#cC').value || 0) * s, f: (+$('#cF').value || 0) * s } };
-    food.updatedAt = Date.now();
     if (bar) food.barcode = bar;
     add.barcode = '';
-    if ($('#cSave').checked) { state.custom = [food, ...state.custom.filter(f => !replacesCustom(f, food))].slice(0, 100); save(); }
-    showFood(food);
+    let shown = food;
+    if ($('#cSave').checked) {
+      const made = addCustomFood(state, food, Date.now(), () => makeFoodId(Date.now(), Math.random));   // replaces the same product, keeping its id and so its measures
+      if (made) { save(); shown = made; }
+    }
+    showFood(shown);
   };
 }
 

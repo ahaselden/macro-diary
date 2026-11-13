@@ -2,7 +2,7 @@
 import { state } from '../core/store.js';
 import { $, toast, dialog, head, canClose, setCloseGuard } from '../core/dom.js';
 import { esc, rd, r1 } from '../core/format.js';
-import { foodKey, isBarcode, sameBarcode, servingSummary } from '../domain/food.js';
+import { foodKey, foodIdOf, isBarcode, sameBarcode, servingSummary } from '../domain/food.js';
 import { pickFoodBarcode } from '../domain/barcode.js';
 import { searchAll } from '../services/foods.js';
 import { canScan, startScan, stopScan } from '../services/barcode.js';
@@ -81,7 +81,8 @@ function renderResults(msg) {
     if (eb) { const f = localList[+eb.dataset.editFood]; if (f) editCustomFood(f); return; }   // "Edit" on a saved food opens the form, not the amount screen
     const f = (r.dataset.from === 'l' ? localList : add.results)[+r.dataset.i];
     const bc = f && pickFoodBarcode(add.q, f.barcode);   // a code the user scanned or typed is kept on the food
-    showFood(f && bc ? { ...f, barcode: bc } : f); };
+    const fid = f && foodIdOf(f);   // a saved food (or a recent copy of one) hands its id on as foodId, so its saved measures are found and the diary entry is linked
+    showFood(f && (bc || fid) ? { ...f, ...(bc ? { barcode: bc } : {}), ...(fid ? { foodId: fid } : {}) } : f); };
 }
 
 async function doSearch() {

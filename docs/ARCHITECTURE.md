@@ -30,7 +30,7 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 | `index.html` | Markup only (all screens + the dialog). Loads `css/*` and `js/main.js`. A tiny inline script sets the saved theme before first paint to avoid a flash. |
 | `css/base.css` `themes.css` `components.css` | Reset/controls; the 14 colour palettes as `[data-theme=…]` blocks of CSS variables; widgets/layout. |
 | `js/main.js` | Boot and wiring only. |
-| `js/core/schema.js` | Pure: `defaults`, `migrate` (version steps), `sanitize` (forces untrusted fields to safe types), `SCHEMA_VERSION`. |
+| `js/core/schema.js` | Pure: `defaults`, `migrate` (version steps), `sanitize` (forces untrusted fields to safe types), `SCHEMA_VERSION`; saved-food ids: `isFoodId`, `legacyFoodId` (the derived id, FNV-1a 64), `withFoodIds`, `unionMeasures` (D53). |
 | `js/core/store.js` | The single `state` object, load/save, `replace()`. The only place that touches `localStorage`; uses `schema.js`. |
 | `js/core/constants.js` `format.js` `dates.js` | Shared constants; `esc`, rounding, `fmtW`, `amtLabel`; local-date helpers. Pure. |
 | `js/core/dom.js` `bus.js` | `$`, `toast`, dialog helpers; tiny pub/sub (`on`/`emit`) so screens can react to each other without importing each other. |
@@ -49,7 +49,7 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 | `js/domain/recipe-import.js` | Recipe import: schema.org JSON-LD and pasted text to a result, then `toRecipe` (pure, bounded, never throws), see D29. |
 | `js/domain/shopping.js` | Shopping list derived from plan + recipes; aisles; ticks/extras; text/CSV. |
 | `js/domain/sync-records.js` | State ⇄ sync records (`day:…`, `recipe:…`, `plan:…`, `settings`, …) and record hashing ([SYNC.md](SYNC.md)). |
-| `js/domain/food.js` | `foodKey` — identity of a food across sources. |
+| `js/domain/food.js` | `foodKey` (identity of a food across sources), `makeFoodId`, `foodIdOf`, `measuresKey` (where a food's saved measures live), `addCustomFood`, `updateCustomFood` (by id), D53. |
 | `js/services/http.js` | `getJSON` with timeout and friendly errors. |
 | `js/services/usda.js` `off.js` `foods.js` | USDA FoodData Central and Open Food Facts lookups, mapping their responses to our food shape, and `searchAll` which queries both and interleaves results. |
 | `js/services/sync/*.js` | Sync: `engine.js` (pull→merge→push), `index.js` (service: config, sign-in, debounce), `config.js`, adapters `supabase-adapter.js` / `memory-adapter.js`. |
@@ -66,26 +66,26 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 3. Replacing everything (restore/wipe) goes through `replace()`, which keeps the same `state` object so every module's reference stays valid ([D4](DECISIONS.md#d4-application-state-is-one-mutable-object-state-replaced-via-replace)), then emits `settings:changed` and `diary:changed`.
 4. `save()` writes JSON to `localStorage`; if that fails (storage full/blocked) `store.onSaveError` shows a toast.
 
-## Data shape (schema v6)
+## Data shape (schema v9)
 
 ```
 state = {
-  schemaVersion: 6,
+  schemaVersion: 9,
   theme: 'auto' | 'dark' | …,   weightUnit: 'g' | 'oz',            // theme, recent: per-device, never synced (D10); apiKey syncs only while syncApiKey is on (D42)
   goals: { k, p, c, f },        apiKey, syncApiKey, useUSDA, useOFF,
   settingsUpdatedAt: ms,                                             // stamps the synced settings as ONE record
   days: { 'YYYY-MM-DD': [ entry, … ] },
   tombstones: { entryId: deletedAtMs },                              // so deletions propagate between devices
-  recent: [ food, … ],  custom: [ food (+updatedAt), … ],
-  measures: { foodKey: [ { label, g, updatedAt } ] },
+  recent: [ food (+foodId), … ],  custom: [ food (+id, +updatedAt), … ],   // saved foods have a stable id (D53); copies carry it as foodId
+  measures: { savedFoodId | foodKey: [ { label, g, updatedAt } ] },       // by id for saved foods, by foodKey for database foods
   recipes: { id: recipe },                                           // see recipe / ingredient below
   plan: { 'YYYY-MM-DD': { updatedAt, slots: { Breakfast|Lunch|Dinner|Snacks: [ item ] } } },
   shopping: { checks: { itemKey: { on, updatedAt } }, extras: { id: { id, text, on, updatedAt } } }
 }
 entry = { id, updatedAt, meal, name, brand, source, per100: {k,p,c,f}, servingG, servingLabel, fdcId, portions,
-          grams, unitKey, amount, disp }
+          grams, unitKey, amount, disp, foodId? }
 ```
-History: v1 = original app, v2 = added `schemaVersion`, v3 = tombstones/`settingsUpdatedAt` and `updatedAt` on edited records, v4 = recipes/plan/shopping ([D13](DECISIONS.md)), v5 = `recipe.favorite` boolean, v6 = `recipe.stated` per-serving nutrition or null ([D31](DECISIONS.md)), v7 = `syncApiKey` ([D42](DECISIONS.md)), v8 = optional `nut` extra nutrients on foods and entries ([D43](DECISIONS.md)) ([D26](DECISIONS.md)). Planner shapes: `recipe = {id, name, description, source, servings, totalTime, tags[], steps[], ingredients[], favorite, updatedAt}`; `ingredient = {id, raw, name, qty, unit, prep, food|null, grams|null}`; plan `item = {id, type: "recipe"|"food", recipeId, servings, name, food, grams}`. Missing `updatedAt` means 0 ("older than any real edit"), so upgrading rewrites nothing. Changes to entries must go through `domain/entries.js` so they are stamped and deletions leave tombstones.
+History: v1 = original app, v2 = added `schemaVersion`, v3 = tombstones/`settingsUpdatedAt` and `updatedAt` on edited records, v4 = recipes/plan/shopping ([D13](DECISIONS.md)), v5 = `recipe.favorite` boolean, v6 = `recipe.stated` per-serving nutrition or null ([D31](DECISIONS.md)), v7 = `syncApiKey` ([D42](DECISIONS.md)), v8 = optional `nut` extra nutrients on foods and entries ([D43](DECISIONS.md)), v9 = ids for saved foods, `foodId` on copies, measures keyed by id ([D53](DECISIONS.md)) ([D26](DECISIONS.md)). Planner shapes: `recipe = {id, name, description, source, servings, totalTime, tags[], steps[], ingredients[], favorite, updatedAt}`; `ingredient = {id, raw, name, qty, unit, prep, food|null, grams|null}`; plan `item = {id, type: "recipe"|"food", recipeId, servings, name, food, grams}`. Missing `updatedAt` means 0 ("older than any real edit"), so upgrading rewrites nothing. Changes to entries must go through `domain/entries.js` so they are stamped and deletions leave tombstones.
 
 Nutrition is stored **per 100 g** and an entry stores the grams eaten, so changing units never changes the calories. `disp` ("1.5 cup") remembers how the user entered it.
 

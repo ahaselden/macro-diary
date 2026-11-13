@@ -2,8 +2,8 @@
 //
 // A record is { key, value, updatedAt }. Keys:
 //   settings            value { goals, weightUnit, useUSDA, useOFF, settingsUpdatedAt }
-//   custom              value { custom: [foods] }
-//   measures            value { measures: { foodKey: [{label,g,updatedAt}] } }
+//   custom              value { custom: [foods] }            (each saved food carries its `id`; an old-app device sends none and merge derives it, D53)
+//   measures            value { measures: { savedFoodId | foodKey: [{label,g,updatedAt}] } }
 //   tombstones          value { tombstones: { id: deletedAtMs } }
 //   day:YYYY-MM-DD      value { entries: [entry, ...] }
 //   recipe:<id>         value { recipe }
@@ -13,7 +13,7 @@
 // theme / recent never become records; the USDA key only travels in the settings record while the owner's syncApiKey switch is on (D42, reverses part of D10).
 import { mergeStates } from './merge.js';
 import { validEntry } from './entries.js';
-import { sanitize, sanitizeRecipe, sanitizePlanDay, sanitizeShopping, cleanApiKey, isPlaceholderKey, sanitizeNut, sanitizeBarcode } from '../core/schema.js';
+import { sanitize, sanitizeRecipe, sanitizePlanDay, sanitizeShopping, cleanApiKey, isPlaceholderKey, sanitizeNut, sanitizeBarcode, isFoodId, isSafeKey, withFoodIds } from '../core/schema.js';
 
 const DAY_KEY = /^day:(\d{4}-\d{2}-\d{2})$/;
 const PLAN_KEY = /^plan:(\d{4}-\d{2}-\d{2})$/;
@@ -65,6 +65,7 @@ const clone = v => JSON.parse(JSON.stringify(v));
 const withCleanNut = o => {
   if ('nut' in o) { const n = sanitizeNut(o.nut); if (n) o.nut = n; else delete o.nut; }
   if ('barcode' in o) { const b = sanitizeBarcode(o.barcode); if (b) o.barcode = b; else delete o.barcode; }
+  if ('foodId' in o && !isFoodId(o.foodId)) delete o.foodId;
   return o;
 };
 
@@ -81,13 +82,13 @@ function toPartial(rec) {
   }
   if (key === 'custom') {
     if (!Array.isArray(v.custom)) return null;
-    return { custom: v.custom.filter(f => plain(f) && typeof f.name === 'string' && f.name && plain(f.per100)).map(withCleanNut) };
+    return { custom: withFoodIds(v.custom.filter(f => plain(f) && typeof f.name === 'string' && f.name && plain(f.per100)).map(withCleanNut)) };   // a hostile or missing id becomes the derived one
   }
   if (key === 'measures') {
     if (!plain(v.measures)) return null;
     const measures = {};
     for (const [k, list] of Object.entries(v.measures)) {
-      if (Array.isArray(list)) measures[k] = list.filter(m => plain(m) && typeof m.label === 'string' && m.label && m.g > 0 && isFinite(m.g));
+      if (isSafeKey(k) && Array.isArray(list)) measures[k] = list.filter(m => plain(m) && typeof m.label === 'string' && m.label && m.g > 0 && isFinite(m.g));
     }
     return { measures };
   }
