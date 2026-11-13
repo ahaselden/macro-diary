@@ -21,7 +21,7 @@ export function mapOFF(p){
   const nut = sanitizeNut({ fiber: num(n.fiber_100g), sugars: num(n.sugars_100g), satFat: num(n['saturated-fat_100g']), sodium: mg(n.sodium_100g), cholesterol: mg(n.cholesterol_100g) });
   return {name:p.product_name, brand:(p.brands||'').split(',')[0].trim(), source:'OFF',
     per100:{k:+k, p:+n.proteins_100g||0, c:+n.carbohydrates_100g||0, f:+n.fat_100g||0}, servingG:servingGrams(p), servingLabel:p.serving_size == null ? '' : String(p.serving_size),
-    ...(nut ? { nut } : {}), ...(normalizeBarcode(p.code) ? { barcode: p.code } : {})};
+    ...(nut ? { nut } : {}), ...(normalizeBarcode(p.code) ? { barcode: normalizeBarcode(p.code) } : {})};
 }
 export async function searchOFF(q){
   if (isBarcode(q)) {

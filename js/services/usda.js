@@ -2,8 +2,7 @@
 import { getJSON } from './http.js';
 import { frac } from '../domain/units.js';
 import { sanitizeNut } from '../core/schema.js';
-import { normalizeBarcode } from '../domain/barcode.js';
-import { usdaBarcodeQueries, usdaBarcodeMatch } from '../domain/barcode.js';
+import { usdaBarcodeQueries, usdaBarcodeMatch, normalizeBarcode } from '../domain/barcode.js';
 
 export function usdaNut(list, num, unit){ const n = list.find(x => String(x.nutrientNumber) === num && (!unit || (x.unitName||'').toUpperCase() === unit)); return n ? +n.value : null; }
 export function mapUSDA(f){
@@ -18,7 +17,7 @@ export function mapUSDA(f){
   const nut = sanitizeNut({ fiber: ok(usdaNut(ns,'291')), sugars: ok(usdaNut(ns,'269')), satFat: ok(usdaNut(ns,'606')), sodium: ok(usdaNut(ns,'307')), cholesterol: ok(usdaNut(ns,'601')) });
   return {name, brand:f.brandOwner || f.brandName || '', source:'USDA',
     per100:{k, p:usdaNut(ns,'203')||0, c:usdaNut(ns,'205')||0, f:usdaNut(ns,'204')||0}, servingG:sg,
-    servingLabel:f.householdServingFullText || '', fdcId:f.fdcId, ...(nut ? { nut } : {}), ...(normalizeBarcode(f.gtinUpc) ? { barcode: f.gtinUpc } : {})};
+    servingLabel:f.householdServingFullText || '', fdcId:f.fdcId, ...(nut ? { nut } : {}), ...(normalizeBarcode(f.gtinUpc) ? { barcode: normalizeBarcode(f.gtinUpc) } : {})};
 }
 export async function searchUSDA(q, apiKey){
   const key = encodeURIComponent((apiKey || '').trim() || 'DEMO_KEY');
