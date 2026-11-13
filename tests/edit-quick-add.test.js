@@ -19,14 +19,15 @@ const DAY = '2026-11-12';
 const cf = (name, over = {}) => ({ name, brand: '', source: 'Custom', servingG: 30, per100: { k: 500, p: 10, c: 60, f: 25 }, updatedAt: 1000, ...over });
 const fresh = () => {
   const s = { ...defaults(), days: {}, tombstones: {}, recent: [], measures: {} };
-  s.custom = [cf('Cheez-it Duo'), cf('Homemade chili', { servingG: 250, per100: { k: 100, p: 8, c: 10, f: 3 }, updatedAt: 900 }), cf('Rice bar', { barcode: '5012345678900' })];
-  s.measures = { 'Cheez-it Duo||Custom': [{ label: 'box', g: 200, updatedAt: 1000 }] };
+  s.custom = [cf('Cheez-it Duo', { id: ID }), cf('Homemade chili', { id: CHILI, servingG: 250, per100: { k: 100, p: 8, c: 10, f: 3 }, updatedAt: 900 }), cf('Rice bar', { id: RICE, barcode: '5012345678900' })];
+  s.measures = { [ID]: [{ label: 'box', g: 200, updatedAt: 1000 }] };   // saved foods' measures are keyed by id since schema 9
   s.recent = [{ name: 'Cheez-it Duo', brand: '', source: 'Custom', per100: { k: 500, p: 10, c: 60, f: 25 } }];
   addEntry(s, DAY, { id: 'e1', meal: 'Breakfast', name: 'Cheez-it Duo', brand: '', source: 'Custom', per100: { k: 500, p: 10, c: 60, f: 25 }, grams: 30, unitKey: 'w:g', amount: 30, disp: '' }, 1000);
   addEntry(s, DAY, { id: 'e2', meal: 'Breakfast', name: 'Quick add', brand: '', source: 'Custom', per100: { k: 200, p: 5, c: 20, f: 10 }, grams: 100, unitKey: 'w:g', amount: 100, disp: '' }, 1000);
   return s;
 };
 const KEY = 'Cheez-it Duo||Custom';
+const ID = 'fduo0001', CHILI = 'fchili01', RICE = 'frice001';   // saved foods carry an id since schema 9 (saved-food-ids); the editor is addressed by id
 const unchanged = (s, fn) => { const before = structuredClone(s); const r = fn(); assert.equal(r, null); assert.deepEqual(s, before); };
 
 test('B1 cleanFoodName trims and collapses whitespace', () => {
@@ -57,7 +58,7 @@ test('B4 cleanFoodName keeps hostile text as plain data and never throws', () =>
 
 test('B5 updateCustomFood renames in place: stamped, same position, nothing else moved', () => {
   const s = fresh(), others = structuredClone([s.custom[1], s.custom[2]]);
-  const r = updateCustomFood(s, KEY, { name: '  Cheez-it   Duo 2pk ' }, 5000);
+  const r = updateCustomFood(s, ID, { name: '  Cheez-it   Duo 2pk ' }, 5000);
   assert.ok(r);
   assert.equal(s.custom.length, 3);
   assert.equal(s.custom[0], r);
@@ -69,53 +70,54 @@ test('B5 updateCustomFood renames in place: stamped, same position, nothing else
 
 test('B6 updateCustomFood stores per-serving numbers per 100 g (30 g: 150 kcal, 3 P, 18 C, 7.5 F -> 500/10/60/25)', () => {
   const s = fresh();
-  const r = updateCustomFood(s, 'Homemade chili||Custom', { servingG: 30, k: 150, p: 3, c: 18, f: 7.5 }, 7000);
+  const r = updateCustomFood(s, CHILI, { servingG: 30, k: 150, p: 3, c: 18, f: 7.5 }, 7000);
   assert.ok(r);
   assert.equal(r.servingG, 30);
   for (const [k, v] of Object.entries({ k: 500, p: 10, c: 60, f: 25 })) assert.ok(Math.abs(r.per100[k] - v) < 1e-9, k + ' ' + r.per100[k]);
   // name-only patch leaves numbers alone
   const s2 = fresh(), before = structuredClone(s2.custom[1]);
-  const r2 = updateCustomFood(s2, 'Homemade chili||Custom', { name: 'Chili' }, 7000);
+  const r2 = updateCustomFood(s2, CHILI, { name: 'Chili' }, 7000);
   assert.deepEqual(r2.per100, before.per100);
   assert.equal(r2.servingG, before.servingG);
 });
 
-test('B7 a rename moves saved measures to the new key; a key-preserving edit leaves measures alone', () => {
+test('B7 (changed by saved-food-ids) a rename or brand change does NOT move measures: they are keyed by the food id, which never changes', () => {
   const s = fresh();
-  updateCustomFood(s, KEY, { name: 'Duo box' }, 5000);
-  assert.deepEqual(Object.keys(s.measures), ['Duo box||Custom']);
-  assert.equal(s.measures['Duo box||Custom'].length, 1);
-  assert.equal(s.measures['Duo box||Custom'][0].label, 'box');
-  assert.equal(s.measures['Duo box||Custom'][0].g, 200);
+  updateCustomFood(s, ID, { name: 'Duo box' }, 5000);
+  assert.deepEqual(Object.keys(s.measures), [ID]);
+  assert.equal(s.measures[ID].length, 1);
+  assert.equal(s.measures[ID][0].label, 'box');
+  assert.equal(s.measures[ID][0].g, 200);
+  assert.equal(s.custom[0].id, ID);
   const s2 = fresh(), m = structuredClone(s2.measures);
-  updateCustomFood(s2, KEY, { k: 160 }, 5000);
+  updateCustomFood(s2, ID, { k: 160 }, 5000);
   assert.deepEqual(s2.measures, m);
-  const s3 = fresh();
-  updateCustomFood(s3, KEY, { brand: 'Sunshine' }, 5000);       // brand is part of the key too
-  assert.deepEqual(Object.keys(s3.measures), ['Cheez-it Duo|Sunshine|Custom']);
+  const s3 = fresh(), m3 = structuredClone(s3.measures);
+  updateCustomFood(s3, ID, { brand: 'Sunshine' }, 5000);       // brand is part of the old key too: still nothing moves
+  assert.deepEqual(s3.measures, m3);
 });
 
 test('B8 empty, blank or non-string name is refused with state unchanged', () => {
   for (const name of ['', '   ', null, 5, {}, ['x']]) {
     const s = fresh();
-    unchanged(s, () => updateCustomFood(s, KEY, { name }, 5000));
+    unchanged(s, () => updateCustomFood(s, ID, { name }, 5000));
   }
 });
 
 test('B9 collision with a DIFFERENT saved food is refused; own name and different-barcode twins are allowed', () => {
   const s = fresh();
-  unchanged(s, () => updateCustomFood(s, 'Homemade chili||Custom', { name: 'Cheez-it Duo' }, 5000));   // both have no barcode
+  unchanged(s, () => updateCustomFood(s, CHILI, { name: 'Cheez-it Duo' }, 5000));   // both have no barcode
   const s2 = fresh();
-  unchanged(s2, () => updateCustomFood(s2, KEY, { barcode: '5012345678900' }, 5000));                  // same barcode as Rice bar
+  unchanged(s2, () => updateCustomFood(s2, ID, { barcode: '5012345678900' }, 5000));                  // same barcode as Rice bar
   const s3 = fresh();
-  assert.ok(updateCustomFood(s3, KEY, { name: 'Cheez-it Duo', k: 160 }, 5000));                         // itself: not a collision
+  assert.ok(updateCustomFood(s3, ID, { name: 'Cheez-it Duo', k: 160 }, 5000));                         // itself: not a collision
   const s4 = fresh();
-  assert.ok(updateCustomFood(s4, KEY, { name: 'Rice bar', barcode: '4006381333931' }, 5000));           // same name, different barcodes: two products
+  assert.ok(updateCustomFood(s4, ID, { name: 'Rice bar', barcode: '4006381333931' }, 5000));           // same name, different barcodes: two products
   assert.equal(s4.custom.filter(f => f.name === 'Rice bar').length, 2);
 });
 
-test('B10 unknown key is refused (including prototype keys)', () => {
-  for (const key of ['nope||Custom', '', '__proto__', 'constructor', 'toString', undefined, null, 5]) {
+test('B10 unknown id is refused (including prototype keys and a foodKey, which is no longer an address)', () => {
+  for (const key of [KEY, 'nope||Custom', 'fnotthere', '', '__proto__', 'constructor', 'toString', undefined, null, 5]) {
     const s = fresh();
     unchanged(s, () => updateCustomFood(s, key, { name: 'X' }, 5000));
   }
@@ -123,47 +125,47 @@ test('B10 unknown key is refused (including prototype keys)', () => {
 
 test('B11 barcode: valid stored, empty string removes it, invalid refused', () => {
   const s = fresh();
-  assert.equal(updateCustomFood(s, KEY, { barcode: '036000291452' }, 5000).barcode, '036000291452');
-  const r = updateCustomFood(s, 'Rice bar||Custom', { barcode: '' }, 5001);
+  assert.equal(updateCustomFood(s, ID, { barcode: '036000291452' }, 5000).barcode, '036000291452');
+  const r = updateCustomFood(s, RICE, { barcode: '' }, 5001);
   assert.ok(r);
   assert.ok(!r.barcode);
   for (const barcode of ['1234567', 'abc12345678', '123456789012345', '12 34']) {
     const t = fresh();
-    unchanged(t, () => updateCustomFood(t, KEY, { barcode }, 5000));
+    unchanged(t, () => updateCustomFood(t, ID, { barcode }, 5000));
   }
 });
 
 test('B12 hostile numbers and input: refused or safe, never throws, never pollutes', () => {
   for (const patch of [{ k: NaN }, { k: Infinity }, { k: -1 }, { p: -0.5 }, { c: NaN }, { f: 'abc' }, { servingG: 0 }, { servingG: -5 }, { servingG: NaN }, { servingG: 'x' }]) {
     const s = fresh();
-    unchanged(s, () => updateCustomFood(s, KEY, patch, 5000));
+    unchanged(s, () => updateCustomFood(s, ID, patch, 5000));
   }
   const big = fresh();
-  assert.doesNotThrow(() => updateCustomFood(big, KEY, { k: 1e308, servingG: 1e-300 }, 5000));
+  assert.doesNotThrow(() => updateCustomFood(big, ID, { k: 1e308, servingG: 1e-300 }, 5000));
   for (const v of Object.values(big.custom[0].per100)) assert.ok(Number.isFinite(v));
   const evil = JSON.parse('{"__proto__":{"polluted":1},"constructor":{"prototype":{"polluted":2}},"name":"Safe"}');
   const s = fresh();
-  assert.doesNotThrow(() => updateCustomFood(s, KEY, evil, 5000));
+  assert.doesNotThrow(() => updateCustomFood(s, ID, evil, 5000));
   assert.equal({}.polluted, undefined);
   assert.equal(Object.prototype.polluted, undefined);
   assert.equal(s.custom[0].polluted, undefined);
   assert.equal(Object.hasOwn(s.custom[0], 'constructor'), false);
   for (const [st, patch, now] of [[null, {}, 1], [undefined, {}, 1], [{}, {}, 1], [{ custom: 'x' }, {}, 1], [fresh(), null, 1], [fresh(), 'str', 1], [fresh(), [1], 1], [fresh(), { name: 'Y' }, NaN], [fresh(), { name: 'Y' }, 'now']]) {
-    let out; assert.doesNotThrow(() => { out = updateCustomFood(st, KEY, patch, now); });
+    let out; assert.doesNotThrow(() => { out = updateCustomFood(st, ID, patch, now); });
     assert.equal(out, null);
   }
 });
 
 test('B13 HTML in a new name or brand is stored literally', () => {
   const s = fresh();
-  const r = updateCustomFood(s, KEY, { name: '<img src=x onerror=alert(1)>', brand: '<b>Acme</b> & "co"' }, 5000);
+  const r = updateCustomFood(s, ID, { name: '<img src=x onerror=alert(1)>', brand: '<b>Acme</b> & "co"' }, 5000);
   assert.equal(r.name, '<img src=x onerror=alert(1)>');
   assert.equal(r.brand, '<b>Acme</b> & "co"');
 });
 
 test('B14 editing a food never changes past diary entries or recent', () => {
   const s = fresh(), days = structuredClone(s.days), recent = structuredClone(s.recent);
-  assert.ok(updateCustomFood(s, KEY, { name: 'Renamed', k: 999, servingG: 50 }, 5000));
+  assert.ok(updateCustomFood(s, ID, { name: 'Renamed', k: 999, servingG: 50 }, 5000));
   assert.deepEqual(s.days, days);
   assert.deepEqual(s.recent, recent);
   assert.deepEqual(s.tombstones, {});
@@ -186,7 +188,7 @@ test('B15 renaming an entry changes only that entry (name + updatedAt)', () => {
 
 test('B16 sync: edited food and renamed entry win a merge over their older copies; custom record stamped by the edit', () => {
   const older = fresh(), newer = structuredClone(older);
-  updateCustomFood(newer, KEY, { k: 300, p: 6, c: 36, f: 15 }, 9000);
+  updateCustomFood(newer, ID, { k: 300, p: 6, c: 36, f: 15 }, 9000);
   assert.equal(toRecords(newer).find(r => r.key === 'custom').updatedAt, 9000);
   for (const [a, b] of [[older, newer], [newer, older]]) {
     const m = mergeStates(a, b);

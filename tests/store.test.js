@@ -89,7 +89,7 @@ test('sanitising leaves valid diary data untouched', () => {
 
 test('migrate never removes data and never lowers the version', () => {
   assert.equal(migrate({ days: { a: [] } }).schemaVersion, SCHEMA_VERSION);
-  assert.equal(migrate({ schemaVersion: 7 }).schemaVersion, 8);
+  assert.equal(migrate({ schemaVersion: 7 }).schemaVersion, 9);
 });
 
 test('v3+ adds tombstones + settingsUpdatedAt to old data without touching entries', () => {
