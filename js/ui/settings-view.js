@@ -17,7 +17,7 @@ export function loadSettings() {
 }
 
 /** Inputs back to the saved values (the key and its sync switch are only changed through Edit + Save). */
-function resetKeyEditor() { $('#apiKey').value = state.apiKey; $('#syncApiKey').checked = state.syncApiKey === true; }
+function resetKeyEditor() { $('#apiKey').value = typeof state.apiKey === 'string' ? state.apiKey : ''; $('#syncApiKey').checked = state.syncApiKey === true; }
 function setKeyEditor(open) {
   $('#keyEditor').hidden = !open; $('#keyEdit').hidden = open; $('#keyEdit').setAttribute('aria-expanded', String(open));
 }

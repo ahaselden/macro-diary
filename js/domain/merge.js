@@ -96,7 +96,8 @@ export function mergeStates(local, remote, opts = {}) {
   const offered = remote.syncApiKey === true && typeof remote.apiKey === 'string' ? remote.apiKey : undefined;
   const apiKey = isLegitKey(local.apiKey) && isPlaceholderKey(offered) ? local.apiKey
     : isPlaceholderKey(local.apiKey) && isLegitKey(offered) ? offered
-    : isPlaceholderKey(local.apiKey) && isPlaceholderKey(offered) && winner.syncApiKey === true ? winner.apiKey   // two placeholders: the winner's, so '' and absent converge
+    : isPlaceholderKey(local.apiKey) && isPlaceholderKey(offered) && winner.syncApiKey === true
+      ? (typeof winner.apiKey === 'string' ? winner.apiKey : typeof local.apiKey === 'string' ? local.apiKey : typeof offered === 'string' ? offered : local.apiKey)   // two placeholders: a string whenever either side has one, the same in either order
     : winner.syncApiKey === true && typeof winner.apiKey === 'string' ? winner.apiKey : local.apiKey;
 
   // recipes (a deleted recipe stays deleted unless it was edited after the deletion)

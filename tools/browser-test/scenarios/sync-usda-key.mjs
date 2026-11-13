@@ -1,10 +1,12 @@
-// Sync the USDA key (docs/specs/sync-usda-key.md, checklist C1..C11).
+// Sync the USDA key (docs/specs/sync-usda-key.md intent, rewritten for the collapsed key area of
+// docs/specs/usda-key-safeguards.md: the key and the switch change only through Edit then Save).
 const pad = n => String(n).padStart(2, '0');
 const TODAY = (d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`)(new Date());
+const LEGIT = 'abcdefghijklmnopqrstuvwxyz0123456789f3a9';
 
 const seed = (extra = {}) => ({
-  schemaVersion: 6, theme: 'auto', weightUnit: 'g', measures: {},
-  goals: { k: 2000, p: 150, c: 200, f: 65 }, apiKey: '', useUSDA: false, useOFF: false,
+  schemaVersion: 8, theme: 'auto', weightUnit: 'g', measures: {},
+  goals: { k: 2000, p: 150, c: 200, f: 65 }, apiKey: '', syncApiKey: false, useUSDA: false, useOFF: false,
   recent: [], custom: [], tombstones: {}, settingsUpdatedAt: 1000, recipes: {}, plan: {}, shopping: { checks: {}, extras: {} },
   days: {}, ...extra,
 });
@@ -21,88 +23,93 @@ export default async ({ page, url, check, screenshot }) => {
     await page.reload();
     await page.waitForSelector('.tabs');
   };
-  const openSettings = async () => { await page.click('[data-tab="more"]'); await page.click('#moreSettings'); await page.waitForSelector('#syncApiKey', { state: 'visible' }); };
+  const openSettings = async () => { await page.click('[data-tab="more"]'); await page.click('#moreSettings'); await page.waitForSelector('#keyEdit', { state: 'visible' }); };
+  const edit = async () => { await page.click('#keyEdit'); await page.waitForSelector('#apiKey', { state: 'visible' }); };
   const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('macrodiary.v1')));
-  const toast = async () => (await page.locator('#toast').textContent()).trim();
+  const toast = async () => { const l = page.locator('#toast'); return (await l.isVisible()) ? (await l.textContent()).trim() : ''; };
   const near = t => Math.abs(t - Date.now()) < 60000;
-  const typeKey = async v => { await page.fill('#apiKey', v); await page.press('#apiKey', 'Tab'); };
+  const saveKey = async v => { await edit(); await page.fill('#apiKey', v); await page.click('#keySave'); };
+  const records = () => page.evaluate(async () => {
+    const m = await import('/js/domain/sync-records.js');
+    return m.toRecords(JSON.parse(localStorage.getItem('macrodiary.v1')));
+  });
+  // find the settings record whatever the exact record envelope is
+  const settingsValue = recs => {
+    const arr = Array.isArray(recs) ? recs : Object.values(recs);
+    const r = arr.find(x => JSON.stringify(x).includes('syncApiKey'));
+    return r && (r.value || r.data || r);
+  };
+  let st;
 
-  // C1
+  // switch is only visible in the editor
   await start(seed()); await openSettings();
-  check(await page.locator('#syncApiKey').isVisible(), 'C1: #syncApiKey visible');
-  check(!(await page.locator('#syncApiKey').isChecked()), 'C1: not checked by default');
-  check((await page.locator('label[for="syncApiKey"]').textContent()).trim() === 'Sync my USDA key to my other devices', 'C1: label text');
-  check(await page.getByText('The key is stored in your sync account, readable only by you.', { exact: true }).isVisible(), 'C1: sentence visible');
-  check(await page.locator('.card', { has: page.locator('h2', { hasText: 'Food databases' }) }).locator('#syncApiKey, #apiKey').count() === 2, 'C1: switch in Food databases card with #apiKey');
-  let st = await stored();
-  console.log('C1 info: stored schemaVersion=' + st.schemaVersion + ' syncApiKey=' + JSON.stringify(st.syncApiKey) + ' (not required before a save)');
-  console.log('screenshot settings card: ' + await screenshot('sync-usda-key-settings'));
+  check(!(await page.locator('#syncApiKey').isVisible()), 'S1: switch hidden while collapsed');
+  await edit();
+  check(await page.locator('#syncApiKey').isVisible() && !(await page.locator('#syncApiKey').isChecked()), 'S1: switch visible and off after Edit');
+  check((await page.locator('label[for="syncApiKey"]').textContent()).trim() === 'Sync my USDA key to my other devices', 'S1: label text');
+  check(await page.getByText('The key is stored in your sync account, readable only by you.', { exact: true }).isVisible(), 'S1: sentence visible');
+  check(await page.locator('.card', { has: page.locator('h2', { hasText: 'Food databases' }) }).locator('#syncApiKey, #apiKey').count() === 2, 'S1: both in Food databases card');
   const lay = await page.evaluate(() => {
     const r = el => el.getBoundingClientRect();
     const cb = r(document.getElementById('syncApiKey')), lb = r(document.querySelector('label[for="syncApiKey"]'));
     const sent = [...document.querySelectorAll('#v-settings p.muted')].find(p => /sync account/.test(p.textContent));
     const sr = r(sent), card = r(sent.closest('.card')), ak = r(document.getElementById('apiKey'));
-    const lh = parseFloat(getComputedStyle(sent).lineHeight) || 20;
     const hit = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
-    return { vw: innerWidth, labelLines: Math.round(lb.height / (parseFloat(getComputedStyle(document.querySelector('label[for="syncApiKey"]')).lineHeight) || 20)), labelH: lb.height, sentH: sr.height, sentLines: Math.round(sr.height / lh),
-      overlapCbLabel: hit(cb, lb), overlapLabelSent: hit(lb, sr), overlapKeySwitch: hit(ak, cb) || hit(ak, lb), sentOutsideCard: sr.right > card.right + 1 || sr.left < card.left - 1, hScroll: document.documentElement.scrollWidth > innerWidth };
+    return { vw: innerWidth, overlapCbLabel: hit(cb, lb), overlapLabelSent: hit(lb, sr), overlapKeySwitch: hit(ak, cb) || hit(ak, lb),
+      sentOutsideCard: sr.right > card.right + 1 || sr.left < card.left - 1, hScroll: document.documentElement.scrollWidth > innerWidth };
   });
   console.log('LAYOUT ' + JSON.stringify(lay));
-  check(!lay.overlapCbLabel && !lay.overlapLabelSent && !lay.overlapKeySwitch && !lay.sentOutsideCard && !lay.hScroll, 'layout: no overlap, nothing outside card, no horizontal scroll');
+  console.log('screenshot editor: ' + await screenshot('sync-usda-key-editor'));
+  check(!lay.overlapCbLabel && !lay.overlapLabelSent && !lay.overlapKeySwitch && !lay.sentOutsideCard && !lay.hScroll, 'S1: layout no overlap, inside card, no horizontal scroll');
 
-  // C2
+  // switch on via Save
+  await start(seed({ apiKey: LEGIT })); await openSettings();
+  await edit(); await page.click('#syncApiKey'); await page.click('#keySave');
+  st = await stored();
+  check(await toast() === 'Saved' && st.syncApiKey === true && near(st.settingsUpdatedAt) && st.settingsUpdatedAt > 1000, 'S2: switch on stored, ts now: ' + JSON.stringify([st.syncApiKey, st.settingsUpdatedAt]));
+  await page.reload(); await openSettings(); await edit();
+  check(await page.locator('#syncApiKey').isChecked(), 'S2: checked after reload');
+
+  // key save, switch off: trimmed, no bump
   await start(seed()); await openSettings();
-  await page.click('#syncApiKey');
-  check(await toast() === 'Saved', 'C2: toast Saved, got ' + await toast());
+  await saveKey('  abc123KEY  ');
   st = await stored();
-  check(st.syncApiKey === true && st.settingsUpdatedAt > 1000 && near(st.settingsUpdatedAt), 'C2: stored syncApiKey true, settingsUpdatedAt now: ' + st.syncApiKey + ' ' + st.settingsUpdatedAt);
-  await page.reload(); await openSettings();
-  check(await page.locator('#syncApiKey').isChecked(), 'C2: checked after reload');
+  check(st.apiKey === 'abc123KEY' && !st.syncApiKey && st.settingsUpdatedAt === 1000, 'S3: trimmed, flag off, ts 1000: ' + JSON.stringify([st.apiKey, st.syncApiKey, st.settingsUpdatedAt]));
 
-  // C3
-  await start(seed()); await openSettings();
-  await typeKey('  abc123KEY  ');
-  check(await toast() === 'Saved', 'C3: toast Saved, got ' + await toast());
-  st = await stored();
-  check(st.apiKey === 'abc123KEY' && !st.syncApiKey && st.settingsUpdatedAt === 1000, 'C3: apiKey trimmed, flag off, settingsUpdatedAt 1000: ' + JSON.stringify([st.apiKey, st.syncApiKey, st.settingsUpdatedAt]));
-
-  // C4
+  // key change with switch on bumps
   await start(seed({ syncApiKey: true, apiKey: 'old' })); await openSettings();
-  await typeKey('newKEY');
+  await saveKey('newKEY');
   st = await stored();
-  check(st.apiKey === 'newKEY' && near(st.settingsUpdatedAt) && st.settingsUpdatedAt > 1000, 'C4: apiKey newKEY, timestamp bumped: ' + JSON.stringify([st.apiKey, st.settingsUpdatedAt]));
-  check(await page.locator('#syncApiKey').isChecked(), 'C4: switch still checked');
+  check(st.apiKey === 'newKEY' && near(st.settingsUpdatedAt) && st.settingsUpdatedAt > 1000 && st.syncApiKey === true, 'S4: key changed, ts bumped: ' + JSON.stringify([st.apiKey, st.settingsUpdatedAt]));
 
-  // C5
-  await start(seed({ syncApiKey: true, apiKey: 'old' })); await openSettings();
-  await typeKey('');
-  st = await stored();
-  check(st.apiKey === '' && near(st.settingsUpdatedAt) && st.settingsUpdatedAt > 1000, 'C5: apiKey empty, timestamp bumped: ' + JSON.stringify([st.apiKey, st.settingsUpdatedAt]));
-
-  // C6
+  // switch off keeps the key
   await start(seed({ syncApiKey: true, apiKey: 'keepME' })); await openSettings();
-  await page.click('#syncApiKey');
+  await edit(); await page.click('#syncApiKey'); await page.click('#keySave');
   st = await stored();
-  check(st.syncApiKey === false && st.apiKey === 'keepME' && near(st.settingsUpdatedAt) && st.settingsUpdatedAt > 1000, 'C6: stored flag false, key kept, timestamp bumped: ' + JSON.stringify([st.syncApiKey, st.apiKey, st.settingsUpdatedAt]));
-  await page.reload(); await openSettings();
-  check(!(await page.locator('#syncApiKey').isChecked()) && (await page.inputValue('#apiKey')) === 'keepME', 'C6: after reload unchecked, key keepME');
+  check(st.syncApiKey === false && st.apiKey === 'keepME' && near(st.settingsUpdatedAt) && st.settingsUpdatedAt > 1000, 'S5: off, key kept, ts bumped: ' + JSON.stringify([st.syncApiKey, st.apiKey, st.settingsUpdatedAt]));
 
-  // C7
-  await start(seed({ syncApiKey: true, apiKey: 'loadedKEY' })); await openSettings();
-  check(await page.locator('#syncApiKey').isChecked() && (await page.inputValue('#apiKey')) === 'loadedKEY', 'C7: checked and key loadedKEY');
+  // key in the sync record
+  await start(seed({ syncApiKey: true, apiKey: LEGIT }));
+  let recs = await records(); let sv = settingsValue(recs);
+  check(sv && sv.apiKey === LEGIT && sv.syncApiKey === true, 'S6: switch on + real key: record carries apiKey: ' + JSON.stringify(sv));
+  await start(seed({ syncApiKey: false, apiKey: LEGIT }));
+  recs = await records(); sv = settingsValue(recs);
+  check(sv && !('apiKey' in sv) && sv.syncApiKey === false && !JSON.stringify(recs).includes(LEGIT), 'S7: switch off: no apiKey anywhere in records');
+  await start(seed({ syncApiKey: true, apiKey: 'DEMO_KEY' }));
+  sv = settingsValue(await records());
+  check(sv && !('apiKey' in sv), 'S8: switch on + demo key: no apiKey in record');
+  await start(seed({ syncApiKey: true, apiKey: '' }));
+  sv = settingsValue(await records());
+  check(sv && !('apiKey' in sv), 'S8: switch on + empty key: no apiKey in record');
 
-  // C8
+  // hostile text through Save
   const evil = '<img src=x onerror=window.__x=1>';
   await start(seed()); await openSettings();
-  await typeKey(evil);
-  await page.reload(); await openSettings();
-  check((await page.inputValue('#apiKey')) === evil, 'C8: #apiKey value is the literal text');
-  check(await page.evaluate(() => window.__x) === undefined, 'C8: window.__x undefined');
-  check(await page.locator('#v-settings img').count() === 0, 'C8: no img in Settings');
+  await saveKey(evil);
+  await page.reload(); await openSettings(); await edit();
+  check(await page.inputValue('#apiKey') === evil && await page.evaluate(() => window.__x) === undefined && await page.locator('#v-settings img').count() === 0, 'S9: hostile key literal, no img, no script');
 
-  // C9 / C10
-  // The harness cannot close cleanly after a real browser download, so the page's download() is intercepted:
-  // the anchor click is swallowed and the Blob text it would have saved is read instead (same bytes, no file written).
+  // exports and backup file (download intercepted: same bytes, no file written)
   const grab = async click => {
     await page.evaluate(() => {
       window.__dl = null;
@@ -122,15 +129,12 @@ export default async ({ page, url, check, screenshot }) => {
   await page.waitForSelector('#xEntries', { state: 'visible' });
   const seen = [];
   for (const id of ['#xEntries', '#xSummary', '#xJson']) seen.push(await grab(() => page.click(id)));
-  check(seen.length === 3, 'C9: three export files captured: ' + JSON.stringify(seen.map(f => f.name)));
-  check(seen.every(f => !/SECRETKEY999|apiKey|syncApiKey/.test(f.text)), 'C9: no export file contains the key, apiKey or syncApiKey');
-
+  check(seen.length === 3 && seen.every(f => !/SECRETKEY999|apiKey|syncApiKey/.test(f.text)), 'S10: three report exports contain no key/apiKey/syncApiKey');
   await page.click('[data-more]'); await openSettings();
   const bk = await grab(() => page.click('#bkExport'));
-  console.log('C10 REPORT (' + bk.name + '): contains "syncApiKey":true = ' + /"syncApiKey":\s*true/.test(bk.text) + '; contains SECRETKEY999 = ' + bk.text.includes('SECRETKEY999'));
+  console.log('S11 REPORT (' + bk.name + '): "syncApiKey":true = ' + /"syncApiKey":\s*true/.test(bk.text) + '; contains SECRETKEY999 = ' + bk.text.includes('SECRETKEY999'));
+  check(/"syncApiKey":\s*true/.test(bk.text) && bk.text.includes('SECRETKEY999'), 'S11: backup file contains the key and the switch (documented current behaviour)');
+  await page.goto(url + '/index.html'); await page.waitForSelector('.tabs');
 
-  await page.goto(url + '/index.html'); await page.waitForSelector('.tabs');   // settle after downloads so closing the context is clean
-
-  // C11
-  check(errs.length === 0, 'C11: no page or console errors: ' + errs.join(' | '));
+  check(errs.length === 0, 'S12: no page or console errors: ' + errs.join(' | '));
 };
