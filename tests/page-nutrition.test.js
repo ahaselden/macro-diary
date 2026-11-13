@@ -31,8 +31,8 @@ const WEIRD = [null, undefined, true, false, 5, 0, -1, NaN, Infinity, 'x', '', '
 // ---- schema v6 --------------------------------------------------------------------------------------------------
 
 test('N1 SCHEMA_VERSION is 7, defaults() carries it, STORAGE_KEY is unchanged', () => {
-  assert.equal(SCHEMA_VERSION, 7);
-  assert.equal(defaults().schemaVersion, 7);
+  assert.equal(SCHEMA_VERSION, 8);
+  assert.equal(defaults().schemaVersion, 8);
   assert.equal(STORAGE_KEY, 'macrodiary.v1');
 });
 
@@ -42,14 +42,14 @@ test('N2 migrate v5 -> v6: recipes without `stated` load with stated null and NO
   const day = { updatedAt: 5, slots: { Breakfast: [], Lunch: [{ id: 'p1', type: 'recipe', recipeId: 'r1', name: '', servings: 2, food: null, grams: null, entryId: '' }], Dinner: [], Snacks: [] } };
   const old = { schemaVersion: 5, recipes: { r1: clone(r1) }, plan: { '2025-01-06': clone(day) }, shopping: { checks: {}, extras: {} }, tombstones: { gone: 5 }, days: { '2025-01-01': [] }, goals: { k: 1800, p: 100, c: 150, f: 50 } };
   const d = migrate(clone(old));
-  assert.equal(d.schemaVersion, 7);
+  assert.equal(d.schemaVersion, 8);
   assert.deepEqual(d.recipes.r1, { ...r1, stated: null });
   assert.equal(d.recipes.r1.updatedAt, 777, 'migration must not re-stamp the recipe');
   assert.deepEqual(d.plan['2025-01-06'], day);
   assert.deepEqual(d.tombstones, { gone: 5 });
   assert.deepEqual(d.goals, old.goals);
   assert.deepEqual(d.days, old.days);
-  for (const v of [undefined, 1, 2, 3, 4]) assert.equal(migrate({ ...(v ? { schemaVersion: v } : {}), recipes: { a: { name: 'x' } } }).schemaVersion, 7, `from ${v}`);
+  for (const v of [undefined, 1, 2, 3, 4]) assert.equal(migrate({ ...(v ? { schemaVersion: v } : {}), recipes: { a: { name: 'x' } } }).schemaVersion, 8, `from ${v}`);
   assert.equal(migrate({ schemaVersion: 4, recipes: { a: { name: 'x' } } }).recipes.a.stated, null);
 });
 

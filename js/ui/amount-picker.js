@@ -66,7 +66,7 @@ export function showFood(food, existing) {
     if (existing) { updateEntry(state, view.day, existing.id, { name: newName, grams: g, meal, unitKey: un.key, amount, disp }, Date.now()); }
     else {
       const info = { name: food.name, brand: food.brand || '', source: food.source || '', per100: food.per100, servingG: food.servingG || 0,
-        servingLabel: food.servingLabel || '', fdcId: food.fdcId, portions: food.portions };
+        servingLabel: food.servingLabel || '', fdcId: food.fdcId, portions: food.portions, ...(food.nut ? { nut: food.nut } : {}) };
       addEntry(state, view.day, { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), meal, ...info, grams: g, unitKey: un.key, amount, disp }, Date.now());
       state.recent = [info, ...state.recent.filter(f => foodKey(f) !== foodKey(info))].slice(0, 30);
     }

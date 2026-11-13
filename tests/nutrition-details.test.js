@@ -148,11 +148,11 @@ test('D8 mapUSDA reads nutrient numbers 291 269 606 307 601', () => {
 
 // ---------- dayDetails ----------
 test('D9 dayDetails scales by grams/100 and sums', () => {
-  // fiber: 10*50/100 = 5 ; 2*300/100 = 6  -> 11.  sodium: 400*25/100 = 100
+  // fiber: 10*50/100 = 5 ; 2*300/100 = 6  -> 11.  sodium: 400*50/100 = 200 plus 400*25/100 = 100 -> 300
   const r = dayDetails([entry('a', { grams: 50, nut: { fiber: 10, sodium: 400 } }), entry('b', { grams: 300, nut: { fiber: 2 } }), entry('c', { grams: 25, nut: { sodium: 400, sugars: 8 } })], { k: 2000, p: 150, c: 200, f: 65 });
   assert.equal(r.items, 3);
   near(r.nutrients.fiber.total, 11); assert.equal(r.nutrients.fiber.recorded, 2); assert.equal(r.nutrients.fiber.missing, 1);
-  near(r.nutrients.sodium.total, 200); assert.equal(r.nutrients.sodium.recorded, 2);
+  near(r.nutrients.sodium.total, 300); assert.equal(r.nutrients.sodium.recorded, 2);
   near(r.nutrients.sugars.total, 2); assert.equal(r.nutrients.sugars.recorded, 1); assert.equal(r.nutrients.sugars.missing, 2);
   assert.deepEqual(Object.keys(r.nutrients), NUT_KEYS);
 });

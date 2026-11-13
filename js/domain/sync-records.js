@@ -13,7 +13,7 @@
 // theme / recent never become records; the USDA key only travels in the settings record while the owner's syncApiKey switch is on (D42, reverses part of D10).
 import { mergeStates } from './merge.js';
 import { validEntry } from './entries.js';
-import { sanitize, sanitizeRecipe, sanitizePlanDay, sanitizeShopping, cleanApiKey } from '../core/schema.js';
+import { sanitize, sanitizeRecipe, sanitizePlanDay, sanitizeShopping, cleanApiKey, sanitizeNut } from '../core/schema.js';
 
 const DAY_KEY = /^day:(\d{4}-\d{2}-\d{2})$/;
 const PLAN_KEY = /^plan:(\d{4}-\d{2}-\d{2})$/;
@@ -61,6 +61,8 @@ export function toRecords(state) {
 }
 
 const clone = v => JSON.parse(JSON.stringify(v));
+/** Replace a food's / entry's `nut` by its sanitised form, or drop it (a copy arriving from another device is untrusted). */
+const withCleanNut = o => { if ('nut' in o) { const n = sanitizeNut(o.nut); if (n) o.nut = n; else delete o.nut; } return o; };
 
 /** Turn one (untrusted) record into a partial state mergeStates understands, or null. */
 function toPartial(rec) {
@@ -75,7 +77,7 @@ function toPartial(rec) {
   }
   if (key === 'custom') {
     if (!Array.isArray(v.custom)) return null;
-    return { custom: v.custom.filter(f => plain(f) && typeof f.name === 'string' && f.name && plain(f.per100)) };
+    return { custom: v.custom.filter(f => plain(f) && typeof f.name === 'string' && f.name && plain(f.per100)).map(withCleanNut) };
   }
   if (key === 'measures') {
     if (!plain(v.measures)) return null;
@@ -97,7 +99,7 @@ function toPartial(rec) {
   if (RECIPE_KEY.test(key)) { const r = sanitizeRecipe(v.recipe, key.slice(7)); return r ? { recipes: { [r.id]: r } } : null; }
   if (PLAN_KEY.test(key)) { const d = sanitizePlanDay(v.plan); return d ? { plan: { [key.slice(5)]: d } } : null; }
   if (!Array.isArray(v.entries)) return null;
-  return { days: { [key.slice(4)]: v.entries.filter(e => plain(e) && validEntry(e)) } };
+  return { days: { [key.slice(4)]: v.entries.filter(e => plain(e) && validEntry(e)).map(withCleanNut) } };
 }
 
 /** NEW state = `state` with the remote records merged in (symmetric LWW; never throws on junk). */
