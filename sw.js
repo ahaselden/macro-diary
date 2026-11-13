@@ -82,6 +82,7 @@ const SHELL = [
 
 // Install: fetch every shell file straight from the network (cache: 'reload' skips the browser's HTTP cache, which GitHub Pages lets keep files for
 // ~10 minutes), so a new version can never be built from a mix of new and stale files. All or nothing: one failure fails the install and removes the half-built cache.
+// (This relies on the rule that CACHE is bumped whenever a shipped file changes: the cache deleted on failure is always the NEW name, never the live one.)
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(async c => {
     await Promise.all(SHELL.map(async url => {
