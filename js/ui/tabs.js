@@ -8,9 +8,8 @@ export const registerTab = (name, fn) => { onShow[name] = fn; };
 export function showTab(name) {
   // an unknown name (for example the old 'more' or 'export' pages) falls back to the Diary instead of leaving a blank screen
   if (typeof name !== 'string' || !document.getElementById('v-' + name)) name = 'diary';
-  const navName = name;
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + name));
-  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === navName));
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
   $('#datebar').style.display = name === 'diary' ? '' : 'none';
   if (onShow[name]) onShow[name](name);
   window.scrollTo(0, 0);
