@@ -1,12 +1,12 @@
 // Diary screen: day summary, meal lists, date navigation, share-day button.
 import { state, save } from '../core/store.js';
-import { $, toast } from '../core/dom.js';
+import { $, toast, dialog, head } from '../core/dom.js';
 import { on, emit } from '../core/bus.js';
 import { MEALS } from '../core/constants.js';
 import { esc, rd, amtLabel } from '../core/format.js';
 import { fmt, addDays, pretty } from '../core/dates.js';
 import { entryMacros, totals } from '../domain/nutrition.js';
-import { removeEntry } from '../domain/entries.js';
+import { removeEntry, copyEntries } from '../domain/entries.js';
 import { dayText } from '../domain/summary.js';
 import { dayImage } from '../services/share.js';
 import { view } from './ctx.js';
@@ -32,11 +32,30 @@ export function renderDiary() {
   $('#meals').innerHTML = MEALS.map(m => {
     const es = list.filter(e => e.meal === m), mk = es.reduce((a, e) => a + entryMacros(e).k, 0);
     return `<div class="card"><div class="meal-h"><div><h2>${m}</h2><span class="muted">${rd(mk)} kcal</span></div>
-      <button class="primary fit" data-add="${esc(m)}">+ Add</button></div>` +
+      <div class="row" style="gap:6px;flex:0 0 auto"><button class="fit" data-copy-meal="${esc(m)}">Copy meal</button><button class="primary fit" data-add="${esc(m)}">+ Add</button></div></div>` +
       es.map(e => `<div class="entry" data-edit="${esc(e.id)}"><div class="nm"><div>${esc(e.name)}</div>
         <div class="muted">${esc(e.brand ? e.brand + ' · ' : '')}${esc(amtLabel(e, state.weightUnit))} · P${rd(entryMacros(e).p)} C${rd(entryMacros(e).c)} F${rd(entryMacros(e).f)}</div></div>
-        <div class="k">${rd(entryMacros(e).k)}</div><button class="x" data-del="${esc(e.id)}" aria-label="Delete">✕</button></div>`).join('') + `</div>`;
+        <div class="k">${rd(entryMacros(e).k)}</div><button class="x" data-copy="${esc(e.id)}" aria-label="Copy" title="Copy to another meal or day" style="font-size:14px;flex:0 0 auto;padding:0 8px">Copy</button><button class="x" data-del="${esc(e.id)}" aria-label="Delete">✕</button></div>`).join('') + `</div>`;
   }).join('');
+}
+
+/** Small dialog: pick a meal and a day, then copy the given entries there (the originals stay). */
+function openCopy(fromDay, ids, meal) {
+  const dlg = dialog();
+  head('Copy to', false);
+  $('#dBody').innerHTML = `<label>Meal</label><select id="copyMeal">${MEALS.map(m => `<option${m === meal ? ' selected' : ''}>${m}</option>`).join('')}</select>
+    <label>Day</label><input type="date" id="copyDate" value="${esc(fromDay)}">
+    <button class="primary" style="width:100%;margin-top:12px" id="copyGo">Copy</button>`;
+  if (!dlg.open) dlg.showModal();
+  $('#copyGo').onclick = () => {
+    const toDay = $('#copyDate').value, toMeal = $('#copyMeal').value;
+    if (!toDay) { toast('Pick a day'); return; }
+    const made = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    const out = copyEntries(state, fromDay, ids, toDay, toMeal, Date.now(), made);
+    if (!out.length) { toast('Nothing to copy'); return; }
+    save(); dlg.close(); emit('diary:changed');
+    toast(`Copied ${out.length} ${out.length === 1 ? 'item' : 'items'} to ${toMeal}`);
+  };
 }
 
 export function initDiary() {
@@ -44,9 +63,11 @@ export function initDiary() {
   $('#next').onclick = () => { view.day = addDays(view.day, 1); renderDiary(); };
   $('#todayBtn').onclick = () => { view.day = fmt(new Date()); renderDiary(); };
   $('#meals').onclick = ev => {
-    const del = ev.target.closest('[data-del]'), addBtn = ev.target.closest('[data-add]'), ed = ev.target.closest('[data-edit]');
+    const cp = ev.target.closest('[data-copy]'), cpm = ev.target.closest('[data-copy-meal]'), del = ev.target.closest('[data-del]'), addBtn = ev.target.closest('[data-add]'), ed = ev.target.closest('[data-edit]');
     const cur = view.day;
-    if (del) {
+    if (cp) { ev.stopPropagation(); openCopy(cur, [cp.dataset.copy], (state.days[cur] || []).find(x => x.id === cp.dataset.copy)?.meal); }
+    else if (cpm) openCopy(cur, (state.days[cur] || []).filter(e => e.meal === cpm.dataset.copyMeal).map(e => e.id), cpm.dataset.copyMeal);
+    else if (del) {
       ev.stopPropagation();
       removeEntry(state, cur, del.dataset.del, Date.now());   // leaves a tombstone so the deletion syncs
       save(); emit('diary:changed');
