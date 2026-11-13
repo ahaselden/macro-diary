@@ -78,7 +78,7 @@ export function renderCustom(editing) {
     let shown = food;
     if ($('#cSave').checked) {
       const made = addCustomFood(state, food, Date.now(), () => makeFoodId(Date.now(), Math.random));   // replaces the same product, keeping its id and so its measures
-      if (made) { save(); shown = made; }
+      if (made) { save(); shown = made; } else toast("Couldn't save this food to My foods");   // practically unreachable (an id clash); say so instead of staying silent
     }
     showFood(shown);
   };
