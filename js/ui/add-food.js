@@ -61,7 +61,7 @@ function resHTML(list, from) {
   return list.map((f, i) => { const ss = esc(servingSummary(f));
     return `<div class="res" data-i="${i}" data-from="${esc(from)}"><div class="nm"><div>${esc(f.name)}</div>
     <div class="muted">${esc(f.brand ? f.brand + ' · ' : '')}${ss ? ss + ' · ' : ''}${rd(f.per100.k)} kcal /100g · P${r1(f.per100.p)} C${r1(f.per100.c)} F${r1(f.per100.f)}</div></div>
-    <span class="badge">${esc(f.tag || f.source)}</span>${f.tag === 'My food' ? `<button class="fit" data-edit-food="${i}">Edit</button>` : ''}</div>`; }).join('');
+    <span class="badge">${esc(f.tag || f.source)}</span>${f.tag === 'My food' ? `<button class="fit" data-edit-food="${i}" aria-label="Edit ${esc(f.name)}">Edit</button>` : ''}</div>`; }).join('');
 }
 
 let localList = [];

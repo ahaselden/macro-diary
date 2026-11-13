@@ -43,6 +43,7 @@ export function renderCustom(editing) {
     $('#cK').value = per('k'); $('#cP').value = per('p'); $('#cC').value = per('c'); $('#cF').value = per('f');
   }
   const editKey = editing ? foodKey(editing) : '';
+  const was = editing ? { name: $('#cName').value, bar: $('#cBar').value, size: $('#cSize').value, k: $('#cK').value, p: $('#cP').value, c: $('#cC').value, f: $('#cF').value } : null;
   // anything the user types is theirs: a later photo must not overwrite it, and it is no longer "from the photo"
   for (const id of NUMBER_FIELDS) $(id).addEventListener('input', e => { e.target.removeAttribute('data-ocr'); e.target.dataset.user = '1'; });
   $('#cBar').addEventListener('input', e => { e.target.dataset.user = '1'; });         // a barcode the user typed is theirs: a photo must not replace it
@@ -58,8 +59,14 @@ export function renderCustom(editing) {
     const size = +$('#cSize').value || 100, k = +$('#cK').value;
     if (!(k >= 0) || $('#cK').value === '') { toast('Enter calories'); return; }
     if (editing) {
-      const done = updateCustomFood(state, editKey, { name, servingG: size, k, p: +$('#cP').value || 0, c: +$('#cC').value || 0, f: +$('#cF').value || 0, barcode: bar }, Date.now());
-      if (!done) { toast('You already have a food with that name'); return; }
+      const patch = {};                                          // only what the user changed, so untouched numbers are not re-rounded
+      if ($('#cName').value !== was.name) patch.name = name;
+      if ($('#cBar').value !== was.bar) patch.barcode = bar;
+      if ($('#cSize').value !== was.size) patch.servingG = size;
+      for (const [id, n, v] of [['#cK', 'k', k], ['#cP', 'p', +$('#cP').value || 0], ['#cC', 'c', +$('#cC').value || 0], ['#cF', 'f', +$('#cF').value || 0]]) if ($(id).value !== was[n]) patch[n] = v;
+      const clash = state.custom.some(f => foodKey(f) !== editKey && replacesCustom(f, { name, brand: editing.brand || '', source: editing.source, barcode: bar || undefined }));
+      const done = updateCustomFood(state, editKey, patch, Date.now());
+      if (!done) { toast(clash ? 'You already have a food with that name' : "Couldn't save the changes"); return; }
       save(); toast('Food updated'); add.tab = 'search'; add.onFoodEdited && add.onFoodEdited();
       return;
     }

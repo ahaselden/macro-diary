@@ -56,8 +56,9 @@ export function updateCustomFood(state, key, patch, now) {
   try {
     if (!state || typeof state !== 'object' || !Array.isArray(state.custom) || typeof key !== 'string' || !num(now)) return null;
     if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return null;
-    const i = state.custom.findIndex(f => f && typeof f === 'object' && foodKey(f) === key);
-    if (i < 0) return null;
+    const hits = state.custom.reduce((a, f, j) => (f && typeof f === 'object' && foodKey(f) === key ? [...a, j] : a), []);
+    if (hits.length !== 1) return null;                 // unknown key, or two saved foods share it (different barcodes): refuse rather than edit the wrong one
+    const i = hits[0];
     const old = state.custom[i], has = k => isOwn(patch, k) && patch[k] !== undefined;
     const next = { name: old.name, brand: old.brand || '', servingG: old.servingG, per100: { ...old.per100 }, barcode: old.barcode };
     if (has('name')) { next.name = cleanFoodName(patch.name); if (!next.name) return null; }
