@@ -11,6 +11,8 @@
 //   • plan             → record = one planned DAY (the newer edit replaces the whole day; clearing a day is an edit)
 //   • shopping         → ticked items (per key) and hand-added extras (per id; tombstones apply)
 // Never merged (stay as this device has them): theme, recent. The USDA key follows the settings record only while `syncApiKey` is on (D42).
+// One deliberate exception to commutativity: when the winning settings record has the switch OFF, `apiKey` stays whatever THIS device has, so that field
+// depends on which side is local (a key is never wiped by another device's switch). Every other synced field commutes.
 //
 // Properties (tested): commutative, associative, idempotent — so any number of devices syncing in any
 // order converge on the same result. Ties on equal timestamps are broken by comparing the serialised

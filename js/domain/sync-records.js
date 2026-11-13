@@ -33,7 +33,7 @@ export function toRecords(state) {
   out.push({
     key: 'settings',
     value: { goals: { ...g }, weightUnit: state.weightUnit, useUSDA: state.useUSDA, useOFF: state.useOFF, syncApiKey: state.syncApiKey === true,
-      ...(state.syncApiKey === true ? { apiKey: typeof state.apiKey === 'string' ? state.apiKey : '' } : {}), settingsUpdatedAt: su },
+      ...(state.syncApiKey === true ? { apiKey: cleanApiKey(state.apiKey) } : {}), settingsUpdatedAt: su },
     updatedAt: su,
   });
   if (Array.isArray(state.custom) && state.custom.length) out.push({ key: 'custom', value: { custom: state.custom }, updatedAt: maxStamp(state.custom) });
