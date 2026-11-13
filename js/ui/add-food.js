@@ -6,7 +6,7 @@ import { foodKey, isBarcode, sameBarcode, servingSummary } from '../domain/food.
 import { searchAll } from '../services/foods.js';
 import { canScan, startScan, stopScan } from '../services/barcode.js';
 import { add } from './ctx.js';
-import { renderCustom } from './custom-food.js';
+import { renderCustom, editCustomFood } from './custom-food.js';
 import { showFood } from './amount-picker.js';
 
 export function initAddFood() {
@@ -16,6 +16,7 @@ export function initAddFood() {
   dlg.addEventListener('cancel', e => { if (!canClose()) e.preventDefault(); });          // Esc key
   dlg.addEventListener('click', e => { if (e.target === dlg && canClose()) { stopScan(); dlg.close(); } });
   $('#dBack').onclick = () => { stopScan(); renderSearchTab(); };
+  add.onFoodEdited = () => renderAddTabs();                  // back to the search list after a saved food was edited
   add.searchCode = code => { add.q = code; add.tab = 'search'; renderAddTabs(); doSearch(); };       // used by "Use this product" after a barcode was read from a photo
 }
 
@@ -60,7 +61,7 @@ function resHTML(list, from) {
   return list.map((f, i) => { const ss = esc(servingSummary(f));
     return `<div class="res" data-i="${i}" data-from="${esc(from)}"><div class="nm"><div>${esc(f.name)}</div>
     <div class="muted">${esc(f.brand ? f.brand + ' · ' : '')}${ss ? ss + ' · ' : ''}${rd(f.per100.k)} kcal /100g · P${r1(f.per100.p)} C${r1(f.per100.c)} F${r1(f.per100.f)}</div></div>
-    <span class="badge">${esc(f.tag || f.source)}</span></div>`; }).join('');
+    <span class="badge">${esc(f.tag || f.source)}</span>${f.tag === 'My food' ? `<button class="fit" data-edit-food="${i}" aria-label="Edit ${esc(f.name)}">Edit</button>` : ''}</div>`; }).join('');
 }
 
 let localList = [];
@@ -75,6 +76,8 @@ function renderResults(msg) {
     + (add.results.length ? `<div class="muted" style="margin-top:12px">Database results</div>` + resHTML(add.results, 'r') : '');
   if ($('#mkBarcode')) $('#mkBarcode').onclick = () => { add.barcode = add.q; add.tab = 'custom'; renderAddTabs(); };
   el.onclick = ev => { const r = ev.target.closest('.res'); if (!r) return;
+    const eb = ev.target.closest('[data-edit-food]');
+    if (eb) { const f = localList[+eb.dataset.editFood]; if (f) editCustomFood(f); return; }   // "Edit" on a saved food opens the form, not the amount screen
     showFood((r.dataset.from === 'l' ? localList : add.results)[+r.dataset.i]); };
 }
 
