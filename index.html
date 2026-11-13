@@ -91,11 +91,6 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
   <section class="view" id="v-settings">
     <button class="ghost back-more" data-more>‹ More</button>
     <div class="card">
-      <h2>Appearance</h2>
-      <p class="muted" style="margin:4px 0 0">Choose a theme. Auto switches between Light and Dark with your device.</p>
-      <div class="themes" id="themes"></div>
-    </div>
-    <div class="card">
       <h2>Units</h2>
       <label for="wUnit">Show weights in</label>
       <select id="wUnit"><option value="g">Grams (g)</option><option value="oz">Ounces (oz)</option></select>
@@ -105,6 +100,13 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
       <h2>Daily goals</h2>
       <div class="row"><div><label>Calories</label><input id="gK" type="number" inputmode="numeric"></div><div><label>Protein (g)</label><input id="gP" type="number" inputmode="numeric"></div></div>
       <div class="row"><div><label>Carbs (g)</label><input id="gC" type="number" inputmode="numeric"></div><div><label>Fat (g)</label><input id="gF" type="number" inputmode="numeric"></div></div>
+    </div>
+    <div class="card">
+      <button type="button" id="themeToggle" class="acc" aria-expanded="false" aria-controls="themePanel"><span>Appearance · <span id="themeName">Auto</span></span><span class="chev" aria-hidden="true">▾</span></button>
+      <div id="themePanel" hidden>
+        <p class="muted" style="margin:4px 0 0">Choose a theme. Auto switches between Light and Dark with your device.</p>
+        <div class="themes" id="themes"></div>
+      </div>
     </div>
     <div class="card">
       <h2>Food databases</h2>
