@@ -1,7 +1,7 @@
 // Caches the app shell so it opens offline. Food-database requests always go to the network.
 // Keep SHELL in sync with the files that ship: tests/sw.test.js fails if a js/css file is missing from it.
 // After changing ANY shipped file, bump CACHE so installed copies (phones) pick up the update.
-const CACHE = 'macro-diary-v58';
+const CACHE = 'macro-diary-v59';
 const OCR_CACHE = 'macro-diary-ocr-v1';   // ~7 MB OCR engine, fetched on first label scan; survives CACHE bumps. Change the name if /vendor/tesseract/ is ever updated.
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png',
@@ -15,6 +15,7 @@ const SHELL = [
   'js/core/format.js',
   'js/core/schema.js',
   'js/core/store.js',
+  'js/domain/activity.js',
   'js/domain/backup.js',
   'js/domain/cooking.js',
   'js/domain/api-key.js',
@@ -22,6 +23,7 @@ const SHELL = [
   'js/domain/details.js',
   'js/domain/food-match.js',
   'js/domain/food.js',
+  'js/domain/health-import.js',
   'js/domain/ingredient-parse.js',
   'js/domain/ingredient-tokens.js',
   'js/domain/label-parse.js',
@@ -42,6 +44,7 @@ const SHELL = [
   'js/services/files.js',
   'js/services/food-suggest.js',
   'js/services/foods.js',
+  'js/services/google-health.js',
   'js/services/http.js',
   'js/services/ocr.js',
   'js/services/off.js',
@@ -58,6 +61,7 @@ const SHELL = [
   'js/services/sync/setup-link.js',
   'js/services/sync/supabase-adapter.js',
   'js/services/usda.js',
+  'js/services/zip.js',
   'js/ui/add-food.js',
   'js/ui/amount-picker.js',
   'js/ui/cook-view.js',
@@ -65,6 +69,7 @@ const SHELL = [
   'js/ui/custom-food.js',
   'js/ui/diary.js',
   'js/ui/export-view.js',
+  'js/ui/health-import-view.js',
   'js/ui/plan-view.js',
   'js/ui/recipe-editor.js',
   'js/ui/recipe-view.js',

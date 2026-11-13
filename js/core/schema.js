@@ -12,15 +12,16 @@
 //            8 = foods and diary entries may carry `nut` (optional extra nutrients per 100 g; absent = not recorded)
 //            9 = saved foods (`custom`) carry a stable `id`; copies of a saved food (entries, recents, recipe and plan foods) may carry `foodId`;
 //                saved measures of a saved food are keyed by that id instead of its name|brand|source (D53)
+//           10 = `activity`: { 'YYYY-MM-DD': { updatedAt, source, steps?, sleepMinutes?, sleepStart?, sleepEnd?, workouts? } } imported from Google Health (D54); nothing else changes
 import { MEALS } from './constants.js';
 
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 10;
 
 export const defaults = () => ({
   schemaVersion: SCHEMA_VERSION, theme: 'auto', weightUnit: 'g', measures: {}, goals: { k: 2000, p: 150, c: 200, f: 65 },
   apiKey: '', syncApiKey: false, useUSDA: true, useOFF: true, days: {}, recent: [], custom: [],
   tombstones: {}, settingsUpdatedAt: 0,
-  recipes: {}, plan: {}, shopping: { checks: {}, extras: {} },
+  recipes: {}, plan: {}, shopping: { checks: {}, extras: {} }, activity: {},
 });
 
 const goalNum = (v, fallback) => (v !== null && v !== '' && v !== true && v !== false && Number.isFinite(+v) && +v >= 0 ? +v : fallback);
@@ -195,6 +196,61 @@ export function sanitizeShopping(s) {
   return out;
 }
 
+// ---- imported activity (D54) ----------------------------------------------------------------------------------------------------------------
+/** Is `s` a real calendar date written as YYYY-MM-DD (2026-02-30 is not)? Never throws. */
+export function isDateKey(s) {
+  if (typeof s !== 'string' || !DATE_KEY.test(s)) return false;
+  const d = new Date(Date.UTC(+s.slice(0, 4), +s.slice(5, 7) - 1, +s.slice(8, 10)));
+  return d.toISOString().slice(0, 10) === s;
+}
+const UTC_TEXT = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})Z$/;
+/** Milliseconds of a time written exactly as YYYY-MM-DDTHH:MM:SSZ, or NaN. */
+const utcMs = v => {
+  const m = typeof v === 'string' && UTC_TEXT.exec(v);
+  if (!m) return NaN;
+  const ms = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
+  return Number.isFinite(ms) && new Date(ms).toISOString().slice(0, 19) + 'Z' === v ? ms : NaN;
+};
+/** A number only when it IS a number (numeric text, booleans, null do not count) inside min..max; rounded to a whole number. Else undefined. */
+const wholeIn = (v, min, max) => (typeof v === 'number' && Number.isFinite(v) && v >= min && v <= max ? Math.round(v) : undefined);
+const ACTIVITY_SOURCE = /^[a-z][a-z0-9-]{0,39}$/;
+const CONTROL = /[\u0000-\u001f\u007f-\u009f]/g;
+
+function sanitizeWorkout(w) {
+  if (!plainObject(w) || typeof w.id !== 'string' || w.id.length < 1 || w.id.length > 80 || !Number.isFinite(utcMs(w.start))) return null;
+  const out = { id: w.id, name: str(w.name, 2000).replace(CONTROL, '').trim().slice(0, 60) || 'Workout', start: w.start, minutes: wholeIn(w.minutes, 0, 1440) ?? 0 };
+  for (const [k, lo, hi] of [['kcal', 0, 20000], ['steps', 0, 200000], ['distanceM', 0, 1000000], ['avgHr', 20, 300], ['peakHr', 20, 300]]) {
+    const n = wholeIn(w[k], lo, hi); if (n !== undefined) out[k] = n;
+  }
+  return out;
+}
+
+/**
+ * One day of imported activity from untrusted input (saved data, a backup, a synced record): a NEW object with only the known keys, or null when
+ * nothing usable is left. Numbers must be real numbers in range (out of range: the key is dropped, never clamped).
+ */
+export function sanitizeActivityDay(d) {
+  if (!plainObject(d) || typeof d.source !== 'string' || !ACTIVITY_SOURCE.test(d.source)) return null;
+  const out = { updatedAt: ts(typeof d.updatedAt === 'number' ? d.updatedAt : -1), source: d.source };
+  const steps = wholeIn(d.steps, 0, 200000); if (steps !== undefined) out.steps = steps;
+  const sleep = wholeIn(d.sleepMinutes, 1, 1440);
+  if (sleep !== undefined) {
+    out.sleepMinutes = sleep;
+    const a = utcMs(d.sleepStart), b = utcMs(d.sleepEnd);
+    if (Number.isFinite(a) && Number.isFinite(b) && b > a) { out.sleepStart = d.sleepStart; out.sleepEnd = d.sleepEnd; }
+  }
+  if (Array.isArray(d.workouts)) {
+    const seen = new Set(), list = [];
+    for (const w of d.workouts) {
+      if (list.length >= 20) break;
+      const c = sanitizeWorkout(w);
+      if (c && !seen.has(c.id)) { seen.add(c.id); list.push(c); }
+    }
+    if (list.length) out.workouts = list;
+  }
+  return out.steps === undefined && out.sleepMinutes === undefined && out.workouts === undefined ? null : out;
+}
+
 /**
  * Make loaded/restored data safe to use: right types, finite non-negative goals, known units.
  * Untrusted input (a restored backup file) reaches HTML through these fields, so they are forced to
@@ -229,6 +285,9 @@ export function sanitize(d) {
   if (plainObject(d.plan)) for (const [date, day] of Object.entries(d.plan)) { const s = DATE_KEY.test(date) && sanitizePlanDay(day); if (s) plan[date] = s; }
   d.plan = plan;
   d.shopping = sanitizeShopping(d.shopping);
+  const activity = {};
+  if (plainObject(d.activity)) for (const [day, rec] of Object.entries(d.activity)) { const s = isDateKey(day) && sanitizeActivityDay(rec); if (s) activity[day] = s; }
+  d.activity = activity;
   return d;
 }
 
@@ -248,6 +307,7 @@ export function migrate(d) {
     stampCopies(d);
     d.schemaVersion = 9;
   }
+  if (v < 10) d.schemaVersion = 10;      // v9 -> v10: `activity` (added by sanitize, empty)
   return sanitize(d);
 }
 

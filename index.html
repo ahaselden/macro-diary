@@ -34,6 +34,7 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
   <!-- DIARY -->
   <section class="view on" id="v-diary">
     <div class="card" id="summary" role="button" tabindex="0"></div>
+    <div class="muted" id="activityLine" hidden></div>
     <div id="meals"></div>
     <div class="row" style="margin-top:6px">
       <button id="shareBtn" class="fit">⤴ Share day</button>
@@ -91,6 +92,16 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
         <div class="row" style="margin-top:8px"><button type="button" id="keySave" class="primary">Save</button><button type="button" id="keyCancel">Cancel</button></div>
       </div>
       <p class="muted">The built-in DEMO_KEY is heavily rate-limited. Get a free key at fdc.nal.usda.gov/api-key-signup and paste it here.</p>
+    </div>
+    <div class="card" id="ghCard">
+      <h2>Import from Google Health</h2>
+      <p class="muted" style="margin-top:0">Adds the steps, sleep and workouts of each day to the Diary as a read-only line. Nothing is uploaded: the file is read on this device and not kept. Get the file from Google Takeout (takeout.google.com): choose Google Health only, then download the zip.</p>
+      <label for="ghFile">Takeout zip</label>
+      <input type="file" id="ghFile" accept=".zip,application/zip">
+      <label for="ghScope">Period</label>
+      <select id="ghScope"><option value="year" selected>Last year</option><option value="all">All years</option></select>
+      <div class="row" style="margin-top:8px"><button type="button" id="ghStart" class="primary" disabled>Start import</button><button type="button" id="ghCancel" hidden>Cancel</button></div>
+      <p id="ghStatus" class="muted" aria-live="polite"></p>
     </div>
     <div class="card" id="syncCard">
       <h2>Sync between devices</h2>

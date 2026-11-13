@@ -9,6 +9,7 @@ import { entryMacros, totals } from '../domain/nutrition.js';
 import { dayDetails, formatNut } from '../domain/details.js';
 import { removeEntry, copyEntries } from '../domain/entries.js';
 import { dayText } from '../domain/summary.js';
+import { activityForDay, activityLine } from '../domain/activity.js';
 import { dayImage } from '../services/share.js';
 import { view } from './ctx.js';
 import { openAdd } from './add-food.js';
@@ -31,6 +32,9 @@ export function renderDiary() {
      <div style="text-align:right"><div class="big" style="font-size:24px;${left < 0 ? 'color:var(--over)' : ''}">${rd(Math.abs(left))}</div><div class="muted">${left < 0 ? 'over' : 'remaining'}</div></div></div>
      ${bar(t.k, g.k)}
      <div class="macros">${mac('Protein', 'p', 'var(--p)')}${mac('Carbs', 'c', 'var(--c)')}${mac('Fat', 'f', 'var(--f)')}</div>`;
+  const line = activityLine(activityForDay(state, cur)), al = $('#activityLine');   // read-only, imported from Google Health; never part of the numbers above
+  al.textContent = line ? 'From Google Health: ' + line : '';
+  al.hidden = !line;
   $('#meals').innerHTML = MEALS.map(m => {
     const es = list.filter(e => e.meal === m), mk = es.reduce((a, e) => a + entryMacros(e).k, 0);
     return `<div class="card"><div class="meal-h"><div><h2>${m}</h2><span class="muted">${rd(mk)} kcal</span></div>
@@ -53,10 +57,12 @@ function openDetails() {
     const right = n.total == null ? '<span class="muted">Not recorded</span>' : `<b>${esc(formatNut(n.total, unit))}</b> <span class="muted">from ${n.recorded} of ${d.items} ${d.items === 1 ? 'item' : 'items'}</span>`;
     return `<div class="row" style="justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)"><span>${label}</span><span>${right}</span></div>`;
   }).join('');
+  const act = activityForDay(state, day), wk = act && Array.isArray(act.workouts) ? act.workouts : [];   // imported workouts: names come from a file, so they go through esc()
+  const workouts = wk.length ? `<h2 style="margin:14px 0 4px">Workouts</h2>${wk.map(w => `<div style="padding:6px 0;border-bottom:1px solid var(--line)">${esc(w.name)} · ${Number(w.minutes) || 0} min${typeof w.kcal === 'number' ? ` · ${w.kcal} kcal` : ''}</div>`).join('')}` : '';
   $('#dBody').innerHTML = `<div class="muted">${esc(day === fmt(new Date()) ? 'Today' : pretty(day))} · ${d.items} ${d.items === 1 ? 'item' : 'items'}</div>
     ${row('Calories', d.macros.k, g.k, ' kcal', d.pct.k)}${row('Protein', d.macros.p, g.p, ' g', d.pct.p)}${row('Carbs', d.macros.c, g.c, ' g', d.pct.c)}${row('Fat', d.macros.f, g.f, ' g', d.pct.f)}
     <h2 style="margin:14px 0 4px">Nutrition facts</h2>${facts}
-    <p class="muted">Only foods found in a food database record these extras. Older entries and foods you typed in yourself have none, so the totals count just the items that do.</p>`;
+    <p class="muted">Only foods found in a food database record these extras. Older entries and foods you typed in yourself have none, so the totals count just the items that do.</p>${workouts}`;
   if (!dlg.open) dlg.showModal();
 }
 

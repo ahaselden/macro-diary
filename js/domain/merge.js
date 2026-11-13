@@ -10,6 +10,7 @@
 //   • recipe           → record = one recipe (by id); tombstones apply to recipe ids too
 //   • plan             → record = one planned DAY (the newer edit replaces the whole day; clearing a day is an edit)
 //   • shopping         → ticked items (per key) and hand-added extras (per id; tombstones apply)
+//   • activity         → record = one imported day (Google Health, D54); the newer `updatedAt` replaces the whole day; tombstones do NOT apply (no delete action)
 // Never merged (stay as this device has them): theme, recent. The USDA key follows the settings record only while `syncApiKey` is on (D42).
 // One deliberate exception to commutativity: when the winning settings record has the switch OFF, `apiKey` stays whatever THIS device has, so that field
 // depends on which side is local (a key is never wiped by another device's switch). Every other synced field commutes.
@@ -19,7 +20,7 @@
 // records, which is arbitrary but identical on every device. Pass { preferLocal: true } to break ties
 // in favour of the first argument instead (used for restoring an old backup that has no timestamps);
 // that mode is NOT commutative and must not be used for sync.
-import { isLegitKey, isPlaceholderKey, withFoodIds, unionMeasures, isSafeKey } from '../core/schema.js';
+import { isLegitKey, isPlaceholderKey, withFoodIds, unionMeasures, isSafeKey, isDateKey } from '../core/schema.js';
 import { foodKey } from './food.js';
 import { validEntry } from './entries.js';
 
@@ -131,6 +132,16 @@ export function mergeStates(local, remote, opts = {}) {
     if (cands.length) plan[date] = cands.length === 2 ? newer(cands[0], cands[1], pref) : cands[0];
   }
 
+  // activity: one record per day, newest wins as a whole (keys must be real dates, so a hostile key such as __proto__ never becomes a bucket)
+  const activity = {};
+  const actOf = (src, day) => { const a = src && src.activity; return a && typeof a === 'object' && !Array.isArray(a) && Object.prototype.hasOwnProperty.call(a, day) ? a[day] : undefined; };
+  const isAct = r => !!r && typeof r === 'object' && !Array.isArray(r);
+  const actKeys = src => (src && src.activity && typeof src.activity === 'object' && !Array.isArray(src.activity) ? Object.keys(src.activity) : []);
+  for (const day of [...new Set([...actKeys(local), ...actKeys(remote)])].filter(isDateKey).sort()) {
+    const cands = [actOf(local, day), actOf(remote, day)].filter(isAct);
+    if (cands.length) activity[day] = cands.length === 2 ? newer(cands[0], cands[1], pref) : cands[0];
+  }
+
   // shopping: ticks per item key, extras per id
   const checks = {};
   for (const k of [...new Set([...Object.keys(local.shopping?.checks || {}), ...Object.keys(remote.shopping?.checks || {})])].sort()) {
@@ -152,7 +163,7 @@ export function mergeStates(local, remote, opts = {}) {
     ...(apiKey !== undefined || 'apiKey' in local ? { apiKey } : {}),
     settingsUpdatedAt: Math.max(Number(local.settingsUpdatedAt) || 0, Number(remote.settingsUpdatedAt) || 0),
     schemaVersion: Math.max(Number(local.schemaVersion) || 0, Number(remote.schemaVersion) || 0),
-    days, custom, measures, tombstones, recipes, plan, shopping: { checks, extras },
+    days, custom, measures, tombstones, recipes, plan, shopping: { checks, extras }, activity,
   };
 }
 
