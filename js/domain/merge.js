@@ -4,13 +4,15 @@
 //   • diary entry      → record = one entry (matched by id)
 //   • custom food      → record = one food (matched by foodKey)
 //   • saved measure    → record = one measure of one food (matched by label)
-//   • settings         → ONE record (goals, weightUnit, useUSDA, useOFF), stamped by `settingsUpdatedAt`
+//   • settings         → ONE record (goals, weightUnit, useUSDA, useOFF, syncApiKey and, when that is on, apiKey), stamped by `settingsUpdatedAt`
 //   • deletions        → `tombstones[id] = deletedAt`; a tombstone beats an entry last edited before it,
 //                        an edit made after the deletion beats the tombstone (resurrects the entry)
 //   • recipe           → record = one recipe (by id); tombstones apply to recipe ids too
 //   • plan             → record = one planned DAY (the newer edit replaces the whole day; clearing a day is an edit)
 //   • shopping         → ticked items (per key) and hand-added extras (per id; tombstones apply)
-// Never merged (stay as this device has them): theme, apiKey, recent  — see docs/DECISIONS.md D10.
+// Never merged (stay as this device has them): theme, recent. The USDA key follows the settings record only while `syncApiKey` is on (D42).
+// One deliberate exception to commutativity: when the winning settings record has the switch OFF, `apiKey` stays whatever THIS device has, so that field
+// depends on which side is local (a key is never wiped by another device's switch). Every other synced field commutes.
 //
 // Properties (tested): commutative, associative, idempotent — so any number of devices syncing in any
 // order converge on the same result. Ties on equal timestamps are broken by comparing the serialised
@@ -31,7 +33,7 @@ function newer(a, b, preferA) {
   return canon(a) >= canon(b) ? a : b;
 }
 
-const SETTINGS_KEYS = ['goals', 'weightUnit', 'useUSDA', 'useOFF'];
+const SETTINGS_KEYS = ['goals', 'weightUnit', 'useUSDA', 'useOFF', 'syncApiKey'];
 
 export function mergeStates(local, remote, opts = {}) {
   const pref = !!opts.preferLocal;
@@ -82,12 +84,14 @@ export function mergeStates(local, remote, opts = {}) {
 
   // settings: one record, newest wins as a whole
   const pick = (x, y) => {
-    const a = { updatedAt: local.settingsUpdatedAt, ...Object.fromEntries(SETTINGS_KEYS.map(k => [k, local[k]])) };
-    const b = { updatedAt: remote.settingsUpdatedAt, ...Object.fromEntries(SETTINGS_KEYS.map(k => [k, remote[k]])) };
+    const rec = x => ({ updatedAt: x.settingsUpdatedAt, ...Object.fromEntries(SETTINGS_KEYS.map(k => [k, x[k]])), ...(x.syncApiKey === true && typeof x.apiKey === 'string' ? { apiKey: x.apiKey } : {}) });   // the key is part of the record only while its sync switch is on
+    const a = rec(local), b = rec(remote);
     return newer(a, b, pref);
   };
   const winner = pick();
   const settings = Object.fromEntries(SETTINGS_KEYS.map(k => [k, winner[k] !== undefined ? winner[k] : local[k]]));
+  // USDA key: adopted only from a winning record whose sync switch is on; a switch turned off elsewhere never wipes this device's key
+  const apiKey = winner.syncApiKey === true && typeof winner.apiKey === 'string' ? winner.apiKey : local.apiKey;
 
   // recipes (a deleted recipe stays deleted unless it was edited after the deletion)
   const isRecipe = r => r && typeof r.id === 'string' && typeof r.name === 'string';
@@ -125,6 +129,7 @@ export function mergeStates(local, remote, opts = {}) {
   return {
     ...local,                                              // theme, apiKey, recent… stay as this device has them
     ...settings,
+    ...(apiKey !== undefined ? { apiKey } : {}),
     settingsUpdatedAt: Math.max(Number(local.settingsUpdatedAt) || 0, Number(remote.settingsUpdatedAt) || 0),
     schemaVersion: Math.max(Number(local.schemaVersion) || 0, Number(remote.schemaVersion) || 0),
     days, custom, measures, tombstones, recipes, plan, shopping: { checks, extras },

@@ -10,17 +10,17 @@ import { restoreFlow } from './restore-dialog.js';
 
 export function loadSettings() {
   $('#gK').value = state.goals.k; $('#gP').value = state.goals.p; $('#gC').value = state.goals.c; $('#gF').value = state.goals.f;
-  $('#wUnit').value = state.weightUnit; $('#apiKey').value = state.apiKey; $('#srcUSDA').checked = state.useUSDA; $('#srcOFF').checked = state.useOFF;
+  $('#wUnit').value = state.weightUnit; $('#apiKey').value = state.apiKey; $('#syncApiKey').checked = state.syncApiKey === true; $('#srcUSDA').checked = state.useUSDA; $('#srcOFF').checked = state.useOFF;
 }
 
 const num = (s, d) => { const v = parseFloat($(s).value); return v >= 0 ? v : d; };
 
 export function initSettings() {
-  ['#gK', '#gP', '#gC', '#gF', '#wUnit', '#apiKey', '#srcUSDA', '#srcOFF'].forEach(s => $(s).addEventListener('change', () => {
-    const synced = () => JSON.stringify([state.goals, state.weightUnit, state.useUSDA, state.useOFF]), before = synced();
+  ['#gK', '#gP', '#gC', '#gF', '#wUnit', '#apiKey', '#syncApiKey', '#srcUSDA', '#srcOFF'].forEach(s => $(s).addEventListener('change', () => {
+    const synced = () => JSON.stringify([state.goals, state.weightUnit, state.useUSDA, state.useOFF, state.syncApiKey, state.syncApiKey ? state.apiKey : '']), before = synced();
     state.goals = { k: num('#gK', state.goals.k), p: num('#gP', state.goals.p), c: num('#gC', state.goals.c), f: num('#gF', state.goals.f) };
-    state.weightUnit = $('#wUnit').value; state.apiKey = $('#apiKey').value.trim(); state.useUSDA = $('#srcUSDA').checked; state.useOFF = $('#srcOFF').checked;
-    if (synced() !== before) touchSettings(state, Date.now());   // only synced settings bump the sync timestamp (apiKey/theme are per-device)
+    state.weightUnit = $('#wUnit').value; state.apiKey = $('#apiKey').value.trim(); state.syncApiKey = $('#syncApiKey').checked; state.useUSDA = $('#srcUSDA').checked; state.useOFF = $('#srcOFF').checked;
+    if (synced() !== before) touchSettings(state, Date.now());   // only synced settings bump the sync timestamp (the key only counts while its sync switch is on; theme is per-device)
     save(); emit('diary:changed'); toast('Saved');
   }));
   $('#bkExport').onclick = () => download(`macro-diary-backup-${fmt(new Date())}.json`, JSON.stringify(state), 'application/json');

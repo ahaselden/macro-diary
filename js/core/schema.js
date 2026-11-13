@@ -10,11 +10,11 @@
 //            6 = recipes gain `stated` (null, or the page's per-serving { k, p, c, f, per }; missing = null)
 import { MEALS } from './constants.js';
 
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 export const defaults = () => ({
   schemaVersion: SCHEMA_VERSION, theme: 'auto', weightUnit: 'g', measures: {}, goals: { k: 2000, p: 150, c: 200, f: 65 },
-  apiKey: '', useUSDA: true, useOFF: true, days: {}, recent: [], custom: [],
+  apiKey: '', syncApiKey: false, useUSDA: true, useOFF: true, days: {}, recent: [], custom: [],
   tombstones: {}, settingsUpdatedAt: 0,
   recipes: {}, plan: {}, shopping: { checks: {}, extras: {} },
 });
@@ -111,6 +111,7 @@ export function sanitize(d) {
   if (d.weightUnit !== 'g' && d.weightUnit !== 'oz') d.weightUnit = 'g';
   if (typeof d.theme !== 'string') d.theme = 'auto';
   if (typeof d.apiKey !== 'string') d.apiKey = '';
+  d.syncApiKey = d.syncApiKey === true;                    // the owner's opt-in to carry the USDA key in the sync account (D42)
   d.useUSDA = d.useUSDA !== false;
   d.useOFF = d.useOFF !== false;
   if (!plainObject(d.days)) d.days = {};
@@ -141,6 +142,13 @@ export function migrate(d) {
   if (v < 4) d.schemaVersion = 4;        // v3 -> v4: recipes / plan / shopping (added by sanitize, empty)
   if (v < 5) d.schemaVersion = 5;        // v4 -> v5: recipe.favorite (added by sanitize, false)
   if (v < 6) d.schemaVersion = 6;        // v5 -> v6: recipe.stated (added by sanitize, null)
-  // future: if (v < 7) { ...; d.schemaVersion = 7; }
+  if (v < 7) d.schemaVersion = 7;        // v6 -> v7: syncApiKey (added by sanitize, false)
+  // future: if (v < 8) { ...; d.schemaVersion = 8; }
   return sanitize(d);
+}
+
+/** A USDA key that arrived from another device: a plain string without control characters, trimmed, at most 200 characters, else ''. */
+export function cleanApiKey(v) {
+  if (typeof v !== 'string') return '';
+  return v.slice(0, 1000).replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim().slice(0, 200);
 }

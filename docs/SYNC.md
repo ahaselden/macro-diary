@@ -49,7 +49,7 @@ A sync where nothing changed anywhere uploads nothing.
 
 ## What does not sync
 
-`theme`, the USDA key (`apiKey`) and the *recent foods* list stay on each device ([D10](DECISIONS.md)). The sync **session token** is also kept apart from your data (`macrodiary.sync.v1`), so it is never in a backup file or merged into anything.
+`theme` and the *recent foods* list stay on each device ([D10](DECISIONS.md)). The USDA key (`apiKey`) stays on the device **unless** the owner turns on "Sync my USDA key to my other devices" in Settings; then it travels, in plain text, inside the `settings` record ([D42](DECISIONS.md)). Devices on an older app version do not know the switch: update all devices before relying on it. The sync **session token** is also kept apart from your data (`macrodiary.sync.v1`), so it is never in a backup file or merged into anything.
 
 ## Security model
 
