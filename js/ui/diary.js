@@ -32,10 +32,10 @@ export function renderDiary() {
   $('#meals').innerHTML = MEALS.map(m => {
     const es = list.filter(e => e.meal === m), mk = es.reduce((a, e) => a + entryMacros(e).k, 0);
     return `<div class="card"><div class="meal-h"><div><h2>${m}</h2><span class="muted">${rd(mk)} kcal</span></div>
-      <div class="row" style="gap:6px;flex:0 0 auto"><button class="fit" data-copy-meal="${esc(m)}">Copy meal</button><button class="primary fit" data-add="${esc(m)}">+ Add</button></div></div>` +
+      <div class="row" style="gap:6px;flex:0 0 auto">${es.length ? `<button class="fit" data-copy-meal="${esc(m)}">Copy meal</button>` : ''}<button class="primary fit" data-add="${esc(m)}">+ Add</button></div></div>` +
       es.map(e => `<div class="entry" data-edit="${esc(e.id)}"><div class="nm"><div>${esc(e.name)}</div>
         <div class="muted">${esc(e.brand ? e.brand + ' · ' : '')}${esc(amtLabel(e, state.weightUnit))} · P${rd(entryMacros(e).p)} C${rd(entryMacros(e).c)} F${rd(entryMacros(e).f)}</div></div>
-        <div class="k">${rd(entryMacros(e).k)}</div><button class="x" data-copy="${esc(e.id)}" aria-label="Copy" title="Copy to another meal or day" style="font-size:14px;flex:0 0 auto;padding:0 8px">Copy</button><button class="x" data-del="${esc(e.id)}" aria-label="Delete">✕</button></div>`).join('') + `</div>`;
+        <div class="k">${rd(entryMacros(e).k)}</div><button class="x cp" data-copy="${esc(e.id)}" aria-label="Copy" title="Copy to another meal or day">Copy</button><button class="x" data-del="${esc(e.id)}" aria-label="Delete">✕</button></div>`).join('') + `</div>`;
   }).join('');
 }
 
