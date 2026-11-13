@@ -79,6 +79,7 @@ Model (ported in spirit from `MealPlannerPC/Models`): `Recipe{id,name,descriptio
 | Auto-fill week | **done, merged (PR #12)** | `domain/autoplan.js`, preview/Accept/Reroll dialog on the Plan tab (D27). Month range not built. |
 | Plan month view + month auto-fill | **in PR (feature/plan-month), not merged** | Week/Month toggle, calendar grid with kcal per day, auto-fill range choice, past days skipped (D28). |
 | Nutrition details page | **in PR #40, not merged** | Tap the Diary summary for fiber, sugars, saturated fat, sodium and cholesterol over the day; optional `nut` on foods and entries, schema v8 (D43). Only foods from a database record them. |
+| Nutrition facts on the item + scanned barcode kept | **in PR #42, not merged** | Amount screen shows the five extras for the chosen amount; barcode kept on foods and entries (D45, no schema bump). |
 | Part 4 store integrations | **not built, by design** | Research notes above; needs a backend + the owner's developer accounts. |
 
 ### What the owner needs to do next (in order)

@@ -6,6 +6,7 @@ import { MEALS } from '../core/constants.js';
 import { esc, rd, r1, r2, fmtW } from '../core/format.js';
 import { foodKey, cleanFoodName } from '../domain/food.js';
 import { addEntry, updateEntry } from '../domain/entries.js';
+import { itemFacts, formatNut } from '../domain/details.js';
 import { unitsFor as unitsForM, startingUnit } from '../domain/units.js';
 import { loadPortions } from '../services/usda.js';
 import { view, add } from './ctx.js';
@@ -32,6 +33,7 @@ export function showFood(food, existing) {
       <div><label for="mG">Grams in 1</label><input id="mG" type="number" inputmode="decimal"></div><button class="fit" id="mAdd" style="align-self:flex-end">Save</button></div></details>
     <label>Meal</label><select id="mealSel">${MEALS.map(m => `<option ${m === add.meal ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select>
     <div class="card" id="prev2" style="margin:14px 0"></div>
+    <div id="itemFacts" style="margin:0 0 14px"></div>
     <button class="primary" style="width:100%" id="addGo">${existing ? 'Save changes' : 'Add to diary'}</button>`;
   const unitNow = () => units.find(x => x.key === $('#unit').value) || units[0];
   const fill = key => { $('#unit').innerHTML = units.map(x => `<option value="${esc(x.key)}">${esc(x.label)}</option>`).join('');
@@ -40,7 +42,12 @@ export function showFood(food, existing) {
   let lastG = 0;
   const upd = () => { lastG = grams(); const f = lastG / 100, p = food.per100;
     $('#prev2').innerHTML = `<div class="big">${rd(p.k * f)} <span class="muted" style="font-size:14px;font-weight:400">kcal · ${fmtW(lastG, state.weightUnit)}</span></div>
-      <div class="macros"><div><span class="muted">Protein</span><b>${r1(p.p * f)} g</b></div><div><span class="muted">Carbs</span><b>${r1(p.c * f)} g</b></div><div><span class="muted">Fat</span><b>${r1(p.f * f)} g</b></div></div>`; };
+      <div class="macros"><div><span class="muted">Protein</span><b>${r1(p.p * f)} g</b></div><div><span class="muted">Carbs</span><b>${r1(p.c * f)} g</b></div><div><span class="muted">Fat</span><b>${r1(p.f * f)} g</b></div></div>`;
+    const facts = itemFacts(food, lastG), unit = { sodium: 'mg', cholesterol: 'mg' }, label = { fiber: 'Fiber', sugars: 'Sugars', satFat: 'Saturated fat', sodium: 'Sodium', cholesterol: 'Cholesterol' };
+    const body = facts.some(x => x.total !== null)
+      ? facts.map(x => `<div class="row" style="justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line)"><span>${label[x.key]}</span><span>${x.total === null ? '<span class="muted">Not recorded</span>' : '<b>' + esc(formatNut(x.total, unit[x.key] || 'g')) + '</b>'}</span></div>`).join('')
+      : '<p class="muted" style="margin:4px 0">No extra nutrition facts recorded for this food.</p>';
+    $('#itemFacts').innerHTML = `<h2 style="margin:0 0 4px;font-size:16px">Nutrition facts</h2>${body}${food.barcode ? `<div class="muted" style="margin-top:6px">Barcode ${esc(food.barcode)}</div>` : ''}`; };
   fill(startKey); upd();
   $('#amt').oninput = () => { touched = true; upd(); };
   $('#unit').onchange = () => { touched = true; if (lastG > 0) $('#amt').value = r2(lastG / unitNow().g); upd(); };   // keep the same weight, restate in the new unit
@@ -66,7 +73,7 @@ export function showFood(food, existing) {
     if (existing) { updateEntry(state, view.day, existing.id, { name: newName, grams: g, meal, unitKey: un.key, amount, disp }, Date.now()); }
     else {
       const info = { name: food.name, brand: food.brand || '', source: food.source || '', per100: food.per100, servingG: food.servingG || 0,
-        servingLabel: food.servingLabel || '', fdcId: food.fdcId, portions: food.portions, ...(food.nut ? { nut: { ...food.nut } } : {}) };
+        servingLabel: food.servingLabel || '', fdcId: food.fdcId, portions: food.portions, ...(food.nut ? { nut: { ...food.nut } } : {}), ...(food.barcode ? { barcode: food.barcode } : {}) };
       addEntry(state, view.day, { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), meal, ...info, grams: g, unitKey: un.key, amount, disp }, Date.now());
       state.recent = [info, ...state.recent.filter(f => foodKey(f) !== foodKey(info))].slice(0, 30);
     }

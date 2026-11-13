@@ -25,3 +25,20 @@ export function dayDetails(entries, goals) {
   }
   return { items: list.length, macros, pct, nutrients };
 }
+
+/** One amount's extra nutrients: five { key, total } in NUT_KEYS order, scaled by grams/100; total null = not recorded (never 0), 0 = reported 0. */
+export function itemFacts(food, grams) {
+  const g = typeof grams === 'number' && Number.isFinite(grams) && grams > 0 ? grams : 0;
+  const nut = food && typeof food === 'object' && food.nut && typeof food.nut === 'object' && !Array.isArray(food.nut) ? food.nut : null;
+  return NUT_KEYS.map(key => {
+    const v = nut && Object.prototype.hasOwnProperty.call(nut, key) ? nut[key] : undefined;
+    return { key, total: isNum(v) ? v * g / 100 : null };
+  });
+}
+
+/** "3.5 g", "500 mg", "<0.1 g" for a tiny amount, "Not recorded" for anything that is not a usable number. */
+export function formatNut(total, unit) {
+  if (!isNum(total)) return 'Not recorded';
+  return (total > 0 && total < 0.1 ? '<0.1' : String(Math.round(total * 10) / 10)) + ' ' + unit;
+}
+
