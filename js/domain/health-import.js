@@ -177,8 +177,8 @@ export function chooseDaily(totals) {
 // ---- sleep ----------------------------------------------------------------------------------------------------------------------------------
 /**
  * { day: { sleepMinutes, sleepStart, sleepEnd } } from UserSleeps rows. Google often records the SAME sleep twice (two producers, nearly the same times), so records
- * whose time ranges overlap by at least half of the shorter one are ONE sleep (grouped transitively) and only the record with the most sleep in it counts
- * (tie: the longer period, the later sleep_last_updated, the larger sleep_id, the later end). A sleep belongs to the local day it ENDS; a day adds its separate sleeps
+ * whose time ranges overlap by at least half of the shorter one are ONE sleep (grouped transitively) and only the record with the latest sleep_last_updated counts
+ * (Google reprocesses a sleep; tie or no update time: the most minutes, the longer period, the larger sleep_id, the later end). A sleep belongs to the local day it ENDS; a day adds its separate sleeps
  * (a night plus a nap) and the main sleep (most minutes, tie: ends later) gives the times. Touching ranges are not the same sleep.
  */
 export function sleepByDay(rows, tz) {
