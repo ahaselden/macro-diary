@@ -119,6 +119,6 @@ test('U11 the three new shipped files are in the service worker precache list an
 });
 
 test('U12 STORAGE_KEY is unchanged (page-nutrition: SCHEMA_VERSION is now 7, was 5)', () => {
-  assert.match(read('js/core/schema.js'), /export const SCHEMA_VERSION = 9;/);
+  assert.match(read('js/core/schema.js'), /export const SCHEMA_VERSION = 10;/);
   assert.match(read('js/core/constants.js') + read('js/core/store.js'), /macrodiary\.v1/);
 });

@@ -19,8 +19,8 @@ const HOSTILE = ['true', 'false', 'yes', 1, 0, 2, -1, NaN, Infinity, null, undef
 
 // ---------- schema ----------
 test('F1 SCHEMA_VERSION is 7 (was 6; sync-usda-key), defaults() carries it, STORAGE_KEY is unchanged', () => {
-  assert.equal(SCHEMA_VERSION, 9);
-  assert.equal(defaults().schemaVersion, 9);
+  assert.equal(SCHEMA_VERSION, 10);
+  assert.equal(defaults().schemaVersion, 10);
   assert.equal(STORAGE_KEY, 'macrodiary.v1');
 });
 
@@ -28,7 +28,7 @@ test('F2 migrate v4 -> v5: recipes without `favorite` survive intact and get fav
   const old = { schemaVersion: 4, recipes: { r1: { name: 'Chili', description: 'd', source: 's', servings: 6, totalTime: 30, tags: ['a'], steps: ['x'], ingredients: [{ id: 'i1', raw: '1 cup beans', name: 'beans', qty: 1, unit: 'cup', prep: '', food: null, grams: null }], updatedAt: 777 } },
     plan: {}, shopping: { checks: {}, extras: {} }, tombstones: { gone: 5 }, days: { '2025-01-01': [] } };
   const d = migrate(clone(old));
-  assert.equal(d.schemaVersion, 9);
+  assert.equal(d.schemaVersion, 10);
   const r = d.recipes.r1;
   assert.equal(r.favorite, false);
   assert.equal(r.id, 'r1'); assert.equal(r.name, 'Chili'); assert.equal(r.servings, 6); assert.equal(r.totalTime, 30); assert.equal(r.updatedAt, 777);

@@ -87,7 +87,7 @@ export default async ({ page, url, check, screenshot }) => {
     }, IDS);
     check(order, 'C3: document order');
     const heads = await page.evaluate(() => [...document.querySelectorAll('#v-settings h2, #v-settings #themeToggle')].map(e => e.id === 'themeToggle' ? 'Appearance' : e.textContent.trim()));
-    check(JSON.stringify(heads) === JSON.stringify(['Units', 'Daily goals', 'Appearance', 'Food databases', 'Sync between devices', 'Export your data', 'Backup']), 'C3: heads ' + JSON.stringify(heads));
+    check(JSON.stringify(heads) === JSON.stringify(['Units', 'Daily goals', 'Appearance', 'Food databases', 'Import from Google Health', 'Sync between devices', 'Export your data', 'Backup']), 'C3: heads ' + JSON.stringify(heads));
   });
 
   await item('C4', async () => {

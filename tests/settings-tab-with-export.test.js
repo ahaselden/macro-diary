@@ -116,7 +116,7 @@ test('9. one registerTab(settings) that also calls renderExport; export-view no 
 test('10. sw.js CACHE is at least v55; schema version and storage key unchanged (the schema checks already pass before the change)', () => {
   const m = read('sw.js').match(/const CACHE = 'macro-diary-v(\d+)'/);
   assert.ok(m && Number(m[1]) >= 55, 'CACHE is ' + (m && m[0]));
-  assert.match(read('js/core/schema.js'), /export const SCHEMA_VERSION = 9;/);
+  assert.match(read('js/core/schema.js'), /export const SCHEMA_VERSION = 10;/);
   assert.match(read('js/core/constants.js'), /STORAGE_KEY = 'macrodiary\.v1'/);
 });
 

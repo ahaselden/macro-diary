@@ -22,19 +22,19 @@ const fakeStorage = raw => ({ getItem: () => raw, setItem() {} });
 
 // ---------- schema ----------
 test('B1 schema is v7 and defaults have syncApiKey false', () => {
-  assert.equal(SCHEMA_VERSION, 9);
+  assert.equal(SCHEMA_VERSION, 10);
   assert.equal(defaults().syncApiKey, false);
-  assert.equal(defaults().schemaVersion, 9);
+  assert.equal(defaults().schemaVersion, 10);
 });
 
 test('B2 v6 and older data migrate to v7 with syncApiKey false, nothing lost', () => {
   const v6 = { schemaVersion: 6, apiKey: 'mykey', goals: { k: 1800, p: 100, c: 100, f: 50 }, weightUnit: 'oz', days: { '2024-05-01': [entry('a')] }, settingsUpdatedAt: 77 };
   const m = migrate(clone(v6));
-  assert.equal(m.schemaVersion, 9); assert.equal(m.syncApiKey, false);
+  assert.equal(m.schemaVersion, 10); assert.equal(m.syncApiKey, false);
   assert.equal(m.apiKey, 'mykey'); assert.deepEqual(m.days, v6.days); assert.equal(m.weightUnit, 'oz'); assert.equal(m.settingsUpdatedAt, 77);
   for (const f of ['state', 'backup']) {
     const old = fixture(f), mm = migrate(clone(old));
-    assert.equal(mm.schemaVersion, 9, f); assert.equal(mm.syncApiKey, false, f);
+    assert.equal(mm.schemaVersion, 10, f); assert.equal(mm.syncApiKey, false, f);
     assert.deepEqual(Object.keys(mm.days).sort(), Object.keys(old.days).sort(), f);
     for (const d of Object.keys(old.days)) {
       // some fixtures hold deliberately hostile days (e.g. a string); only compare ids when the day is an array
@@ -43,9 +43,9 @@ test('B2 v6 and older data migrate to v7 with syncApiKey false, nothing lost', (
     }
   }
   const v1 = migrate({ days: { a: [] } });
-  assert.equal(v1.schemaVersion, 9); assert.equal(v1.syncApiKey, false);
+  assert.equal(v1.schemaVersion, 10); assert.equal(v1.syncApiKey, false);
   const s = createStore(fakeStorage(JSON.stringify(v6)));
-  assert.equal(s.state.schemaVersion, 9); assert.equal(s.state.syncApiKey, false); assert.equal(s.state.apiKey, 'mykey');
+  assert.equal(s.state.schemaVersion, 10); assert.equal(s.state.syncApiKey, false); assert.equal(s.state.apiKey, 'mykey');
 });
 
 test('B3 sanitize forces syncApiKey to a strict boolean', () => {
@@ -183,7 +183,7 @@ test('B14 hostile remote values never throw, never pollute, never make apiKey a 
     const r = applyRecords(st({ apiKey: 'LOCAL', settingsUpdatedAt: 1 }), [rec(remoteVal({ syncApiKey: true, apiKey: j }))]);
     assert.equal(typeof r.apiKey, 'string');
     assert.ok(!/object|\[|NaN|^7$|^true$|^false$|^null$/.test(r.apiKey) || r.apiKey === 'LOCAL', 'junk adopted: ' + r.apiKey);
-    assert.equal(r.schemaVersion, 9); assert.ok(typeof r.syncApiKey === 'boolean');
+    assert.equal(r.schemaVersion, 10); assert.ok(typeof r.syncApiKey === 'boolean');
   }
   const proto = JSON.parse('{"__proto__":{"polluted":1},"constructor":{"prototype":{"polluted":2}},"prototype":{"polluted":3},"syncApiKey":true,"apiKey":"K","goals":{"__proto__":{"polluted":4}},"weightUnit":"g","useUSDA":true,"useOFF":true,"settingsUpdatedAt":500}');
   const r = applyRecords(st({ settingsUpdatedAt: 1 }), [{ key: 'settings', value: proto, updatedAt: 500 }]);

@@ -58,7 +58,7 @@ export default async ({ page, url, check: hardCheck, screenshot }) => {
   // The store migrates in memory and writes only on the first save, so force one harmless save (log Test Oats from Recent) and read again.
   await page.click('[data-add="Dinner"]'); await page.locator('#results .res').filter({ hasText: 'Test Oats' }).first().locator('.nm').click(); await page.click('#addGo');
   st = await stored();
-  check(st.schemaVersion === 9, 'C1 (after a save): schemaVersion 9, got ' + st.schemaVersion);
+  check(st.schemaVersion === 10, 'C1 (after a save): schemaVersion 10, got ' + st.schemaVersion);
   check(names(st) === '["Cheez-it Duo","Homemade chili","Twin bar","Twin bar"]' && JSON.stringify(st.custom.map(f => f.id)) === JSON.stringify([ID_CHEEZ, ID_CHILI, ID_TWIN_C, ID_TWIN_D]), 'C1: custom names/ids ' + JSON.stringify(st.custom.map(f => [f.name, f.id])));
   check(!('Cheez-it Duo||Custom' in st.measures) && !('Twin bar||Custom' in st.measures), 'C1: old measure keys gone: ' + JSON.stringify(Object.keys(st.measures)));
   const lm = k => JSON.stringify((st.measures[k] || []).map(m => [m.label, m.g, m.updatedAt]));

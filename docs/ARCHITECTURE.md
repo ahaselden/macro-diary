@@ -48,6 +48,11 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 | `js/domain/autoplan.js` | Auto-fill: `proposePlan` (pure, seeded) and `applyProposal` (empty slots only), see D27. |
 | `js/domain/recipe-import.js` | Recipe import: schema.org JSON-LD and pasted text to a result, then `toRecipe` (pure, bounded, never throws), see D29. |
 | `js/domain/shopping.js` | Shopping list derived from plan + recipes; aisles; ticks/extras; text/CSV. |
+| `js/domain/health-import.js` | Google Health import rules, pure: CSV reading, times, steps per day (`chooseStepTotal`: the larger source), sleep, workouts, `cutoffDay`, `combineActivity`, the result text (see [D54](DECISIONS.md)). |
+| `js/domain/activity.js` | `applyActivityImport` (replace a day as a whole, no `updatedAt` bump when unchanged), `activityForDay`, `activityLine` (the Diary line). |
+| `js/services/zip.js` | Random-access zip reader over a picked file (`listEntries`, `readEntryText`, `ZipError`): reads only the end of the file and one entry at a time; inflates with the browser's `DecompressionStream`. |
+| `js/services/google-health.js` | `readTakeout`: finds the steps, sleep and workout files in a Takeout zip and reduces them one at a time to per-day records. |
+| `js/ui/health-import-view.js` | Settings card "Import from Google Health" (`initHealthImport`): file, period, progress, cancel, result text. |
 | `js/domain/sync-records.js` | State ⇄ sync records (`day:…`, `recipe:…`, `plan:…`, `settings`, …) and record hashing ([SYNC.md](SYNC.md)). |
 | `js/domain/food.js` | `foodKey` (identity of a food across sources), `makeFoodId`, `foodIdOf`, `measuresKey` (where a food's saved measures live), `addCustomFood`, `updateCustomFood` (by id), D53. |
 | `js/services/http.js` | `getJSON` with timeout and friendly errors. |
@@ -80,12 +85,13 @@ state = {
   measures: { savedFoodId | foodKey: [ { label, g, updatedAt } ] },       // by id for saved foods, by foodKey for database foods
   recipes: { id: recipe },                                           // see recipe / ingredient below
   plan: { 'YYYY-MM-DD': { updatedAt, slots: { Breakfast|Lunch|Dinner|Snacks: [ item ] } } },
-  shopping: { checks: { itemKey: { on, updatedAt } }, extras: { id: { id, text, on, updatedAt } } }
+  shopping: { checks: { itemKey: { on, updatedAt } }, extras: { id: { id, text, on, updatedAt } } },
+  activity: { 'YYYY-MM-DD': { updatedAt, source: 'google-health', steps?, sleepMinutes?, sleepStart?, sleepEnd?, workouts?: [ { id, name, start, minutes, kcal?, steps?, distanceM?, avgHr?, peakHr? } ] } }   // imported, read-only in the UI, D54
 }
 entry = { id, updatedAt, meal, name, brand, source, per100: {k,p,c,f}, servingG, servingLabel, fdcId, portions,
           grams, unitKey, amount, disp, foodId? }
 ```
-History: v1 = original app, v2 = added `schemaVersion`, v3 = tombstones/`settingsUpdatedAt` and `updatedAt` on edited records, v4 = recipes/plan/shopping ([D13](DECISIONS.md)), v5 = `recipe.favorite` boolean, v6 = `recipe.stated` per-serving nutrition or null ([D31](DECISIONS.md)), v7 = `syncApiKey` ([D42](DECISIONS.md)), v8 = optional `nut` extra nutrients on foods and entries ([D43](DECISIONS.md)), v9 = ids for saved foods, `foodId` on copies, measures keyed by id ([D53](DECISIONS.md)) ([D26](DECISIONS.md)). Planner shapes: `recipe = {id, name, description, source, servings, totalTime, tags[], steps[], ingredients[], favorite, updatedAt}`; `ingredient = {id, raw, name, qty, unit, prep, food|null, grams|null}`; plan `item = {id, type: "recipe"|"food", recipeId, servings, name, food, grams}`. Missing `updatedAt` means 0 ("older than any real edit"), so upgrading rewrites nothing. Changes to entries must go through `domain/entries.js` so they are stamped and deletions leave tombstones.
+History: v1 = original app, v2 = added `schemaVersion`, v3 = tombstones/`settingsUpdatedAt` and `updatedAt` on edited records, v4 = recipes/plan/shopping ([D13](DECISIONS.md)), v5 = `recipe.favorite` boolean, v6 = `recipe.stated` per-serving nutrition or null ([D31](DECISIONS.md)), v7 = `syncApiKey` ([D42](DECISIONS.md)), v8 = optional `nut` extra nutrients on foods and entries ([D43](DECISIONS.md)), v9 = ids for saved foods, `foodId` on copies, measures keyed by id ([D53](DECISIONS.md)), v10 = `activity` imported from Google Health ([D54](DECISIONS.md)) ([D26](DECISIONS.md)). Planner shapes: `recipe = {id, name, description, source, servings, totalTime, tags[], steps[], ingredients[], favorite, updatedAt}`; `ingredient = {id, raw, name, qty, unit, prep, food|null, grams|null}`; plan `item = {id, type: "recipe"|"food", recipeId, servings, name, food, grams}`. Missing `updatedAt` means 0 ("older than any real edit"), so upgrading rewrites nothing. Changes to entries must go through `domain/entries.js` so they are stamped and deletions leave tombstones.
 
 Nutrition is stored **per 100 g** and an entry stores the grams eaten, so changing units never changes the calories. `disp` ("1.5 cup") remembers how the user entered it.
 

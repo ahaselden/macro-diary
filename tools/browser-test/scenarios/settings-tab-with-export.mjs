@@ -77,7 +77,7 @@ export default async ({ page, url, check, screenshot }) => {
   await item('C3', async () => {
     await start(seed()); await openSettings();
     const heads = await page.evaluate(() => [...document.querySelectorAll('#v-settings h2, #v-settings #themeToggle')].map(e => e.id === 'themeToggle' ? 'Appearance' : e.textContent.trim()));
-    check(JSON.stringify(heads) === JSON.stringify(['Units', 'Daily goals', 'Appearance', 'Food databases', 'Sync between devices', 'Export your data', 'Backup']), 'C3: ' + JSON.stringify(heads));
+    check(JSON.stringify(heads) === JSON.stringify(['Units', 'Daily goals', 'Appearance', 'Food databases', 'Import from Google Health', 'Sync between devices', 'Export your data', 'Backup']), 'C3: ' + JSON.stringify(heads));
     const after = await page.evaluate(() => { const h = [...document.querySelectorAll('#v-settings h2')].pop(); let n = 0, c = h.closest('.card'); while ((c = c.nextElementSibling)) n++; return n; });
     check(after === 0, 'C3: ' + after + ' elements after the Backup card');
   });
