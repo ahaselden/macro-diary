@@ -222,7 +222,8 @@ test('10. hostile sleep rows are ignored; minutes are rounded and capped; a zero
   assert.equal(out['2026-11-17'].sleepMinutes, 91);
   assert.deepEqual(out['2026-11-18'], { sleepMinutes: 1440, sleepStart: '2026-11-17T16:00:00Z', sleepEnd: '2026-11-18T12:00:00Z' });
   assert.deepEqual(out['2026-11-19'], { sleepMinutes: 60, sleepStart: '2026-11-19T11:00:00Z', sleepEnd: '2026-11-19T12:00:00Z' });
-  const many = await rowsOf(['sleep_id,minutes_asleep,sleep_start,sleep_end', ...Array.from({ length: 5 }, (_, i) => `m${i},400,2026-11-21T0${i}:00:00Z,2026-11-21T1${i}:00:00Z`)].join('\n'));
+  // (edited for sleep-overlap: the five records used to overlap each other, which now makes them ONE sleep; they are 30 minutes long and apart so they stay five)
+  const many = await rowsOf(['sleep_id,minutes_asleep,sleep_start,sleep_end', ...Array.from({ length: 5 }, (_, i) => `m${i},400,2026-11-21T0${i}:00:00Z,2026-11-21T0${i}:30:00Z`)].join('\n'));
   assert.equal(sleepByDay(many, fixed(0))['2026-11-21'].sleepMinutes, 1440, '5 x 400 = 2000 is capped at 1440');
 });
 
