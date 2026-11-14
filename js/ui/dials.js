@@ -14,7 +14,7 @@ function ringSvg(ring, cx, cy, r, stroke) {
   const x = isObj(ring) ? ring : {}, a = ringArc(x.fraction, r), color = x.over === true ? 'var(--over)' : txt(x.color) || 'var(--accent)';
   return `<g role="img" aria-label="${esc(txt(x.label))}">`
     + `<circle class="ring-track" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke-width="${stroke}"/>`
-    + `<circle class="ring-arc" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${esc(color)}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${a.dasharray}" transform="rotate(-90 ${cx} ${cy})"/></g>`;
+    + (a.filled > 0 ? `<circle class="ring-arc" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${esc(color)}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${a.dasharray}" transform="rotate(-90 ${cx} ${cy})"/>` : '') + `</g>`;
 }
 
 const dot = ring => `<i class="dot" style="background:${esc(isObj(ring) && ring.over === true ? 'var(--over)' : isObj(ring) && txt(ring.color) ? txt(ring.color) : 'var(--accent)')}"></i>`;
@@ -22,15 +22,15 @@ const dot = ring => `<i class="dot" style="background:${esc(isObj(ring) && ring.
 /** The dial's SVG and text for a model from dialModel(). Never throws, whatever it is given. */
 export function dialsHtml(model) {
   const m = isObj(model) ? model : {}, nut = isObj(m.nutrition) ? m.nutrition : {}, rings = Array.isArray(nut.rings) ? nut.rings.slice(0, 4) : [];
-  const radii = ringRadii(128, 9, 3, Math.max(1, rings.length)), centre = isObj(nut.centre) ? nut.centre : {};
-  const big = radii.length ? rings.map((r, i) => ringSvg(r, 64, 64, radii[i], 9)).join('') : '';
-  const small = (ring) => `<svg class="dial-small" viewBox="0 0 64 64" aria-hidden="false">${ringSvg(ring, 32, 32, 28.5, 7)}</svg>`;
+  const radii = ringRadii(128, 8, 2, Math.max(1, rings.length)), centre = isObj(nut.centre) ? nut.centre : {};
+  const big = radii.length ? rings.map((r, i) => ringSvg(r, 64, 64, radii[i], 8)).join('') : '';
+  const small = (ring) => `<svg class="dial-small" viewBox="0 0 64 64" aria-hidden="true" focusable="false">${ringSvg(ring, 32, 32, 28.5, 7)}</svg>`;
   const side = ring => { const x = isObj(ring) ? ring : {}; return `<div class="dial-side">${small(ring)}<div><div class="muted">${esc(txt(x.name))}</div><b class="${x.hasData === false ? 'muted' : ''}">${esc(txt(x.text))}</b></div></div>`; };
   const legend = rings.map(r => { const x = isObj(r) ? r : {}; return `<div>${dot(r)}<span class="muted">${esc(txt(x.name))}</span> <b>${esc(txt(x.text))}</b></div>`; }).join('');
   return `<div class="dials-top">`
-    + `<svg class="dial-big" viewBox="0 0 128 128" aria-label="${esc(txt(nut.label))}">${big}`
-    + `<text class="dial-num" x="64" y="64" text-anchor="middle" dominant-baseline="central">${esc(txt(centre.text))}</text>`
-    + `<text class="dial-cap" x="64" y="79" text-anchor="middle">${esc(txt(centre.caption))}</text></svg>`
+    + `<svg class="dial-big" viewBox="0 0 128 128" focusable="false">${big}`
+    + `<text class="dial-num" x="64" y="57" text-anchor="middle" dominant-baseline="central">${esc(txt(centre.text))}</text>`
+    + `<text class="dial-cap" x="64" y="78" text-anchor="middle">${esc(txt(centre.caption))}</text></svg>`
     + `<div class="dials-side">${side(m.steps)}${side(m.sleep)}</div></div>`
     + `<div class="dials-legend">${legend}</div>`;
 }

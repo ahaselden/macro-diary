@@ -32,7 +32,7 @@ export function initSettings() {
   ['#gK', '#gP', '#gC', '#gF', '#gSteps', '#gSleep', '#wUnit', '#srcUSDA', '#srcOFF'].forEach(s => $(s).addEventListener('change', () => {
     const synced = () => JSON.stringify([state.goals, state.weightUnit, state.useUSDA, state.useOFF, state.syncApiKey, state.syncApiKey ? state.apiKey : '']), before = synced();
     state.goals = { k: num('#gK', state.goals.k), p: num('#gP', state.goals.p), c: num('#gC', state.goals.c), f: num('#gF', state.goals.f),
-      steps: Math.round(num('#gSteps', state.goals.steps)), sleepH: numMax('#gSleep', state.goals.sleepH, 24) };   // a sleep goal above 24 h is not saved
+      steps: Math.round(numMax('#gSteps', state.goals.steps, 1000000)), sleepH: numMax('#gSleep', state.goals.sleepH, 24) };   // a sleep goal above 24 h is not saved
     state.weightUnit = $('#wUnit').value; state.useUSDA = $('#srcUSDA').checked; state.useOFF = $('#srcOFF').checked;
     if (synced() !== before) touchSettings(state, Date.now());   // only synced settings bump the sync timestamp (the key only counts while its sync switch is on; theme is per-device)
     save(); emit('diary:changed'); toast('Saved');
