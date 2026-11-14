@@ -208,9 +208,9 @@ export function sleepByDay(rows, tz) {
     }
   }
   const better = (p, q) => {                                                       // is p the record to keep over q?
+    if (p.upd !== q.upd) return p.upd > q.upd;                                     // the newest version wins (Google reprocesses a sleep; a record with no update time is -Infinity)
     if (p.mins !== q.mins) return p.mins > q.mins;
     const lp = p.b - p.a, lq = q.b - q.a; if (lp !== lq) return lp > lq;
-    if (p.upd !== q.upd) return p.upd > q.upd;
     if (p.id !== q.id) return p.id > q.id;
     return p.b > q.b;
   };
