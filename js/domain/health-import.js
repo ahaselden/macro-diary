@@ -184,7 +184,7 @@ export function chooseDaily(totals) {
 export function sleepByDay(rows, tz) {
   const out = {};
   if (!Array.isArray(rows)) return out;
-  const off = offsetOf(tz), seen = new Set(), recs = [];
+  const off = offsetOf(tz), seen = new Set(), exact = new Set(), recs = [];
   for (const r of rows) {
     if (!isPlain(r)) continue;
     const a = parseInstant(r.sleep_start), b = parseInstant(r.sleep_end), m = plainNum(r.minutes_asleep);
@@ -192,6 +192,9 @@ export function sleepByDay(rows, tz) {
     const id = typeof r.sleep_id === 'string' ? r.sleep_id.trim() : '';
     if (id) { if (seen.has(id)) continue; seen.add(id); }
     const upd = parseInstant(r.sleep_last_updated);
+    const same = a + '|' + b + '|' + Math.round(m) + '|' + id + '|' + upd;
+    if (exact.has(same)) continue;                                                 // an exact repeat adds nothing (and keeps a corrupt file with thousands of copies fast)
+    exact.add(same);
     recs.push({ a, b, mins: Math.min(Math.round(m), 1440), id, upd: Number.isFinite(upd) ? upd : -Infinity });
   }
   recs.sort((x, y) => x.a - y.a || x.b - y.b);
