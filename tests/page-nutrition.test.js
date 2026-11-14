@@ -47,7 +47,7 @@ test('N2 migrate v5 -> v6: recipes without `stated` load with stated null and NO
   assert.equal(d.recipes.r1.updatedAt, 777, 'migration must not re-stamp the recipe');
   assert.deepEqual(d.plan['2025-01-06'], day);
   assert.deepEqual(d.tombstones, { gone: 5 });
-  assert.deepEqual(d.goals, old.goals);
+  assert.deepEqual(d.goals, { ...old.goals, steps: 10000, sleepH: 8 });
   assert.deepEqual(d.days, old.days);
   for (const v of [undefined, 1, 2, 3, 4]) assert.equal(migrate({ ...(v ? { schemaVersion: v } : {}), recipes: { a: { name: 'x' } } }).schemaVersion, 11, `from ${v}`);
   assert.equal(migrate({ schemaVersion: 4, recipes: { a: { name: 'x' } } }).recipes.a.stated, null);

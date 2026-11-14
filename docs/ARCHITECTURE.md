@@ -50,6 +50,7 @@ Run it locally with `npm start` (http://localhost:8080) and test it with `npm te
 | `js/domain/shopping.js` | Shopping list derived from plan + recipes; aisles; ticks/extras; text/CSV. |
 | `js/domain/health-import.js` | Google Health import rules, pure: CSV reading, times, steps per day (`chooseStepTotal`: the larger source), sleep, workouts, `cutoffDay`, `combineActivity`, the result text (see [D54](DECISIONS.md)). |
 | `js/domain/activity.js` | `applyActivityImport` (replace a day as a whole, no `updatedAt` bump when unchanged), `activityForDay`, `activityLine` (the Diary line). |
+| `js/domain/dials.js` | Ring dial maths, pure: `ringFraction`, `isOver`, `ringArc`, `ringRadii`, `formatSleep`, `formatSteps`, `dialModel(state, day)` (see [D56](DECISIONS.md)). `js/ui/dials.js` draws it as SVG into `#dials`. |
 | `js/services/zip.js` | Random-access zip reader over a picked file (`listEntries`, `readEntryText`, `ZipError`): reads only the end of the file and one entry at a time; inflates with the browser's `DecompressionStream`. |
 | `js/services/google-health.js` | `readTakeout`: finds the steps, sleep and workout files in a Takeout zip and reduces them one at a time to per-day records. |
 | `js/ui/health-import-view.js` | Settings card "Import from Google Health" (`initHealthImport`): file, period, progress, cancel, result text. |

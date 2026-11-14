@@ -217,7 +217,7 @@ test('11. the fixtures survive: state.json and backup.json migrate with everythi
     old.custom.forEach((f, i) => { const { id, ...rest } = m.custom.find(x => x.name === f.name); assert.deepEqual(rest, f, name + ' ' + f.name); assert.equal(isFoodId(id), true); assert.equal(id, legacyFoodId(f)); });
     assert.deepEqual(Object.keys(m.days).sort(), Object.keys(old.days).sort(), name);
     for (const d of Object.keys(old.days)) if (Array.isArray(old.days[d])) assert.deepEqual(m.days[d].map(e => e && e.id), old.days[d].map(e => e && e.id), name + d);
-    assert.deepEqual(m.goals, old.goals);
+    assert.deepEqual(m.goals, { ...old.goals, steps: 10000, sleepH: 8 });
     assert.deepEqual(m.measures['Oats|Quaker|OFF'].slice(0, 1), old.measures['Oats|Quaker|OFF'].slice(0, 1));
   }
   assert.equal(migrate(clone(fixture('state'))).custom[0].id, 'f-ec77da65057a9fea');

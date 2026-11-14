@@ -29,7 +29,7 @@ test('a v1 save (no schemaVersion) loads intact and is stamped to the current ve
   const { state } = createStore(fakeStorage(JSON.stringify(v1)));
   assert.equal(state.schemaVersion, SCHEMA_VERSION);
   assert.deepEqual(noFoodId(state.days), v1.days);   // saved-food-ids: migration may stamp foodId on copies of saved foods
-  assert.deepEqual(state.goals, v1.goals);
+  assert.deepEqual(state.goals, { ...v1.goals, steps: 10000, sleepH: 8 });
   assert.deepEqual(state.measures, v1.measures);
 });
 
@@ -78,7 +78,7 @@ test('a hostile backup cannot smuggle markup through goals, units or theme', () 
 
 test('sane goals (numbers or numeric strings) are kept as numbers', () => {
   const s = createStore(fakeStorage()); s.replace({ goals: { k: '1800', p: 120, c: 0, f: 55.5 } });
-  assert.deepEqual(s.state.goals, { k: 1800, p: 120, c: 0, f: 55.5 });
+  assert.deepEqual(s.state.goals, { k: 1800, p: 120, c: 0, f: 55.5, steps: 10000, sleepH: 8 });
 });
 
 test('sanitising leaves valid diary data untouched', () => {

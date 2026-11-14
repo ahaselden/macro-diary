@@ -113,7 +113,7 @@ test('20. migrate from 9 (and older) keeps everything and adds only an empty act
   const raw = fixture('state');                                   // a v1 save from the original app
   const m1 = migrate({ ...defaults(), ...clone(raw), schemaVersion: 1 });
   const noFoodId = o => JSON.parse(JSON.stringify(o, (k, v) => (k === 'foodId' ? undefined : v)));   // the v8 to v9 step (D53) stamps foodId on copies of saved foods; that is not this change
-  assert.equal(m1.schemaVersion, 11); assert.deepEqual(noFoodId(m1.days), raw.days); assert.deepEqual(m1.goals, raw.goals); assert.deepEqual(m1.activity, {});
+  assert.equal(m1.schemaVersion, 11); assert.deepEqual(noFoodId(m1.days), raw.days); assert.deepEqual(m1.goals, { ...raw.goals, steps: 10000, sleepH: 8 }); assert.deepEqual(m1.activity, {});
   const bk = fixture('backup');
   const m2 = migrate({ ...defaults(), ...clone(bk), schemaVersion: 1 });
   assert.deepEqual(m2.days, bk.days); assert.deepEqual(m2.activity, {});
@@ -131,7 +131,7 @@ test('20. migrate from 9 (and older) keeps everything and adds only an empty act
 test('20b. a store loads a stored v9 save as v10 with the diary intact; junk or valid activity in a save is handled; saving writes activity', () => {
   const v9 = { ...clone(defaults()), schemaVersion: 9, days: { '2025-04-01': [entry('a')] }, goals: { k: 1800, p: 100, c: 100, f: 50 } }; delete v9.activity;
   const st = fakeStorage(JSON.stringify(v9)), s = createStore(st);
-  assert.equal(s.state.schemaVersion, 11); assert.deepEqual(s.state.days, v9.days); assert.deepEqual(s.state.goals, v9.goals); assert.deepEqual(s.state.activity, {});
+  assert.equal(s.state.schemaVersion, 11); assert.deepEqual(s.state.days, v9.days); assert.deepEqual(s.state.goals, { ...v9.goals, steps: 10000, sleepH: 8 }); assert.deepEqual(s.state.activity, {});
   s.save(); const saved = JSON.parse(st.dump()); assert.equal(saved.schemaVersion, 11); assert.deepEqual(saved.activity, {}); assert.deepEqual(saved.days, v9.days);
   for (const junk of ['x', 5, [], null, true]) assert.deepEqual(createStore(fakeStorage(JSON.stringify({ ...v9, schemaVersion: 10, activity: junk }))).state.activity, {}, JSON.stringify(junk));
   const good = { [D1]: REC() };

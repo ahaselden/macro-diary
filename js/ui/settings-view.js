@@ -13,6 +13,7 @@ import { restoreFlow } from './restore-dialog.js';
 
 export function loadSettings() {
   $('#gK').value = state.goals.k; $('#gP').value = state.goals.p; $('#gC').value = state.goals.c; $('#gF').value = state.goals.f;
+  $('#gSteps').value = state.goals.steps; $('#gSleep').value = state.goals.sleepH;
   $('#wUnit').value = state.weightUnit; $('#srcUSDA').checked = state.useUSDA; $('#srcOFF').checked = state.useOFF;
   $('#keyLine').textContent = apiKeySummary(state.apiKey);
   if ($('#keyEditor').hidden) resetKeyEditor();               // a sync refresh must not overwrite text being typed in an open editor
@@ -25,11 +26,13 @@ function setKeyEditor(open) {
 }
 
 const num = (s, d) => { const v = parseFloat($(s).value); return v >= 0 ? v : d; };
+const numMax = (s, d, max) => { const v = num(s, d); return v <= max ? v : d; };
 
 export function initSettings() {
-  ['#gK', '#gP', '#gC', '#gF', '#wUnit', '#srcUSDA', '#srcOFF'].forEach(s => $(s).addEventListener('change', () => {
+  ['#gK', '#gP', '#gC', '#gF', '#gSteps', '#gSleep', '#wUnit', '#srcUSDA', '#srcOFF'].forEach(s => $(s).addEventListener('change', () => {
     const synced = () => JSON.stringify([state.goals, state.weightUnit, state.useUSDA, state.useOFF, state.syncApiKey, state.syncApiKey ? state.apiKey : '']), before = synced();
-    state.goals = { k: num('#gK', state.goals.k), p: num('#gP', state.goals.p), c: num('#gC', state.goals.c), f: num('#gF', state.goals.f) };
+    state.goals = { k: num('#gK', state.goals.k), p: num('#gP', state.goals.p), c: num('#gC', state.goals.c), f: num('#gF', state.goals.f),
+      steps: Math.round(num('#gSteps', state.goals.steps)), sleepH: numMax('#gSleep', state.goals.sleepH, 24) };   // a sleep goal above 24 h is not saved
     state.weightUnit = $('#wUnit').value; state.useUSDA = $('#srcUSDA').checked; state.useOFF = $('#srcOFF').checked;
     if (synced() !== before) touchSettings(state, Date.now());   // only synced settings bump the sync timestamp (the key only counts while its sync switch is on; theme is per-device)
     save(); emit('diary:changed'); toast('Saved');

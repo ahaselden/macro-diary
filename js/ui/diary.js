@@ -15,6 +15,7 @@ import { view } from './ctx.js';
 import { openAdd } from './add-food.js';
 import { shareResult } from './share-result.js';
 import { cssVar } from './theme.js';
+import { renderDials } from './dials.js';
 
 function bar(val, goal, color) {
   const pct = goal ? Math.min(100, val / goal * 100) : 0;
@@ -26,6 +27,7 @@ export function renderDiary() {
   $('#dateLbl').textContent = cur === fmt(new Date()) ? 'Today' : pretty(cur);
   const list = state.days[cur] || [], t = totals(list), g = state.goals, left = g.k - t.k;
   const mac = (n, k, col) => `<div><span class="muted">${n}</span><b>${rd(t[k])} / ${Number(g[k]) || 0}g</b>${bar(t[k], g[k], col)}</div>`;
+  renderDials();
   $('#summary').setAttribute('aria-label', `Nutrition details for this day: ${rd(t.k)} of ${Number(g.k) || 0} kcal eaten. Press to open.`);
   $('#summary').innerHTML =
     `<div class="row" style="align-items:flex-end"><div><div class="big">${rd(t.k)}</div><div class="muted">of ${Number(g.k) || 0} kcal eaten</div></div>
@@ -92,6 +94,9 @@ export function initDiary() {
   const sm = $('#summary');
   sm.onclick = openDetails;
   sm.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openDetails(); } };
+  const dl = $('#dials');   // the dials open the same details as the summary card
+  dl.onclick = openDetails;
+  dl.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openDetails(); } };
   $('#meals').onclick = ev => {
     const cp = ev.target.closest('[data-copy]'), cpm = ev.target.closest('[data-copy-meal]'), del = ev.target.closest('[data-del]'), addBtn = ev.target.closest('[data-add]'), ed = ev.target.closest('[data-edit]');
     const cur = view.day;
