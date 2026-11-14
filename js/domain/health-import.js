@@ -175,23 +175,49 @@ export function chooseDaily(totals) {
 }
 
 // ---- sleep ----------------------------------------------------------------------------------------------------------------------------------
-/** { day: { sleepMinutes, sleepStart, sleepEnd } } from UserSleeps rows. A sleep belongs to the local day it ENDS; the main sleep (most minutes, tie: ends later) gives the times. */
+/**
+ * { day: { sleepMinutes, sleepStart, sleepEnd } } from UserSleeps rows. Google often records the SAME sleep twice (two producers, nearly the same times), so records
+ * whose time ranges overlap by at least half of the shorter one are ONE sleep (grouped transitively) and only the record with the most sleep in it counts
+ * (tie: the longer period, the later sleep_last_updated, the larger sleep_id, the later end). A sleep belongs to the local day it ENDS; a day adds its separate sleeps
+ * (a night plus a nap) and the main sleep (most minutes, tie: ends later) gives the times. Touching ranges are not the same sleep.
+ */
 export function sleepByDay(rows, tz) {
   const out = {};
   if (!Array.isArray(rows)) return out;
-  const off = offsetOf(tz), seen = new Set(), acc = new Map();
+  const off = offsetOf(tz), seen = new Set(), recs = [];
   for (const r of rows) {
     if (!isPlain(r)) continue;
     const a = parseInstant(r.sleep_start), b = parseInstant(r.sleep_end), m = plainNum(r.minutes_asleep);
     if (!Number.isFinite(a) || !Number.isFinite(b) || !(b > a) || b - a > 86400000 || !Number.isFinite(m)) continue;
     const id = typeof r.sleep_id === 'string' ? r.sleep_id.trim() : '';
     if (id) { if (seen.has(id)) continue; seen.add(id); }
-    const mins = Math.min(Math.round(m), 1440), day = localDay(b, off), cur = acc.get(day);
-    if (!cur) acc.set(day, { total: mins, main: { mins, a, b } });
-    else {
-      cur.total += mins;
-      if (mins > cur.main.mins || (mins === cur.main.mins && b > cur.main.b)) cur.main = { mins, a, b };
+    const upd = parseInstant(r.sleep_last_updated);
+    recs.push({ a, b, mins: Math.min(Math.round(m), 1440), id, upd: Number.isFinite(upd) ? upd : -Infinity });
+  }
+  recs.sort((x, y) => x.a - y.a || x.b - y.b);
+  const parent = recs.map((_, k) => k);
+  const find = k => { while (parent[k] !== k) { parent[k] = parent[parent[k]]; k = parent[k]; } return k; };
+  for (let x = 0; x < recs.length; x++) {
+    for (let y = x + 1; y < recs.length && recs[y].a < recs[x].b; y++) {
+      const ov = Math.min(recs[x].b, recs[y].b) - recs[y].a;                      // sorted by start: the overlap begins at y's start
+      const shorter = Math.min(recs[x].b - recs[x].a, recs[y].b - recs[y].a);
+      if (ov > 0 && ov * 2 >= shorter) { const px = find(x), py = find(y); if (px !== py) parent[Math.max(px, py)] = Math.min(px, py); }
     }
+  }
+  const better = (p, q) => {                                                       // is p the record to keep over q?
+    if (p.mins !== q.mins) return p.mins > q.mins;
+    const lp = p.b - p.a, lq = q.b - q.a; if (lp !== lq) return lp > lq;
+    if (p.upd !== q.upd) return p.upd > q.upd;
+    if (p.id !== q.id) return p.id > q.id;
+    return p.b > q.b;
+  };
+  const kept = new Map();
+  recs.forEach((r, k) => { const root = find(k), cur = kept.get(root); if (!cur || better(r, cur)) kept.set(root, r); });
+  const acc = new Map();
+  for (const r of kept.values()) {
+    const day = localDay(r.b, off), cur = acc.get(day);
+    if (!cur) acc.set(day, { total: r.mins, main: r });
+    else { cur.total += r.mins; if (r.mins > cur.main.mins || (r.mins === cur.main.mins && r.b > cur.main.b)) cur.main = r; }
   }
   for (const [day, v] of acc) {
     const total = Math.min(v.total, 1440);
