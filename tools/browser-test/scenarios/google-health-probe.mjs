@@ -144,6 +144,28 @@ export default async function ({ page, url, check, screenshot }) {
   soft(seen.length === 3, 'H8: all three checks were attempted, got ' + seen.length);
   await shot('probe-H8-network-failure');
 
+  // Extra 1: token response without access_token is a failed sign-in
+  await open(); okHealth();
+  await signInAndCall(`window.__cfg.callback({expires_in:3599, scope:'s1', token_type:'Bearer'})`);
+  const l9 = (await text('#summary')).split('\n');
+  soft(l9[1] === 'Sign-in: failed' && /^GIS error: /.test(await text('#gisError')), 'X1: no access_token shows failed sign-in + GIS error, got ' + JSON.stringify([l9.slice(0, 4), await text('#gisError')]));
+  soft(seen.length === 0, 'X1: no health request without a token');
+  soft(await page.$eval('#signIn', e => !e.disabled), 'X1: #signIn re-enabled after failure');
+
+  // Extra 2: a second click while a run is in progress does not mix results
+  await open(); okHealth();
+  await page.fill('#clientId', ID);
+  await page.evaluate(() => { const b = document.getElementById('signIn'); b.click(); b.click(); });
+  const dis = await page.$eval('#signIn', e => e.disabled);
+  await page.evaluate(TOKEN_CB_SRC => { eval(TOKEN_CB_SRC); document.getElementById('signIn').click(); }, TOKEN_CB);
+  await page.waitForTimeout(600);
+  soft(dis === true, 'X2: #signIn disabled right after click');
+  const reqs = await page.evaluate(() => window.__requests);
+  soft(reqs === 1, 'X2: two quick clicks requested one token, got ' + reqs);
+  soft(seen.length === 3, 'X2: exactly one run of 3 health requests, got ' + seen.length);
+  soft((await text('#summary')).split('\n').filter(l => l.startsWith('identity:')).length === 1, 'X2: one identity line in summary');
+  soft(await page.$eval('#signIn', e => !e.disabled), 'X2: #signIn re-enabled after run');
+
   soft(pageErrors.length === 0, 'uncaught page errors: ' + pageErrors.join(','));
   for (const f of failures) console.log('FINDING: ' + f);
   if (failures.length) throw new Error('Check failed: ' + failures.join(' | '));
