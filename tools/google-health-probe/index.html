@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Google Health probe</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  body{font:16px/1.45 system-ui,sans-serif;max-width:720px;margin:0 auto;padding:16px;color:#1a1f1c;background:#f5f6f4}
+  h1{font-size:22px;margin:0 0 4px}
+  .muted{color:#667069}
+  label{display:block;margin:12px 0 4px;font-weight:600}
+  input[type=text]{width:100%;box-sizing:border-box;padding:10px;font:inherit;border:1px solid #c9cfc9;border-radius:8px}
+  button{font:inherit;padding:10px 14px;margin:8px 8px 0 0;border:0;border-radius:8px;background:#166534;color:#fff;cursor:pointer}
+  button.plain{background:#e3e7e2;color:#1a1f1c}
+  .box{background:#fff;border:1px solid #e3e7e2;border-radius:10px;padding:12px;margin-top:12px}
+  .check{margin:6px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+  pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+</style>
+</head>
+<body>
+<h1>Google Health probe</h1>
+<p class="muted">A developer test page, not part of the app. It asks whether Google lets a browser sign in to the Google Health API with no backend and no client secret. Nothing is saved: the sign-in token stays in this page's memory only and is dropped after the checks. Follow docs/GOOGLE-HEALTH-SETUP.md first.</p>
+
+<div class="box">
+  <label for="clientId">OAuth Client ID (the public one that ends in .apps.googleusercontent.com; never a secret)</label>
+  <input id="clientId" type="text" autocomplete="off" spellcheck="false" placeholder="paste your Client ID here">
+  <button id="signIn" type="button">Sign in with Google</button>
+  <label style="font-weight:400"><input id="showNumbers" type="checkbox"> show the numbers (steps and sleep) in the results and in the copied summary</label>
+  <div id="status" class="muted" role="status" aria-live="polite"></div>
+</div>
+
+<div class="box">
+  <strong>Sign-in</strong>
+  <div id="tokenInfo" class="check muted">Not signed in yet.</div>
+  <div id="gisError" class="check"></div>
+</div>
+
+<div class="box">
+  <strong>Checks</strong>
+  <div id="check-identity" class="check muted">Account link: not run yet.</div>
+  <div id="check-steps" class="check muted">Steps, last 3 days: not run yet.</div>
+  <div id="check-sleep" class="check muted">Sleep, last 3 days: not run yet.</div>
+</div>
+
+<div class="box">
+  <strong>Result summary</strong>
+  <pre id="summary"></pre>
+  <button id="copySummary" class="plain" type="button">Copy result summary</button>
+</div>
+
+<script type="module">
+import { buildDailyRollUpBody, buildSleepUrl, summariseDailyRollUp, summariseSleep, resultSummary, describeError } from './probe.js';
+
+const BASE = 'https://health.googleapis.com/v4';
+const SCOPES = 'https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly https://www.googleapis.com/auth/googlehealth.sleep.readonly';
+const DAYS = 3;
+const $ = id => document.getElementById(id);
+const results = { token: { ok: false }, gisError: null, checks: [] };
+const LABELS = { identity: 'Account link', steps: 'Steps, last 3 days', sleep: 'Sleep, last 3 days' };
+
+function show() {
+  const numbers = $('showNumbers').checked, text = resultSummary(results, numbers), lines = text.split('\n');
+  const start = prefix => lines.filter(l => l.startsWith(prefix));
+  // every element shows the same lines as the copied summary
+  $('tokenInfo').textContent = results.token.ok ? lines.filter(l => /^(Sign-in|expires_in|refresh_token present|scope granted):/.test(l)).join('\n') : 'Sign-in: not done yet or failed';
+  $('gisError').textContent = start('GIS error:').join('\n');
+  for (const name of ['identity', 'steps', 'sleep']) {
+    const mine = lines.filter(l => l.startsWith(name + ': ') || l.startsWith(name + ' numbers: '));
+    $('check-' + name).textContent = mine.length ? mine.join('\n') : name + ': not run yet';
+  }
+  $('summary').textContent = text;
+}
+
+async function call(name, method, url, body, token) {
+  try {
+    const res = await fetch(url, { method, headers: { Authorization: 'Bearer ' + token, Accept: 'application/json', ...(body ? { 'Content-Type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    let json = null; try { json = await res.json(); } catch { json = null; }
+    return { name, status: res.status, ok: res.ok, json, message: res.ok ? '' : describeError(json || ('HTTP ' + res.status)) };
+  } catch (e) { return { name, status: null, ok: false, json: null, message: describeError(e) }; }
+}
+
+async function runChecks(token) {
+  const now = new Date();
+  results.checks = [];
+  const id = await call('identity', 'GET', BASE + '/users/me/identity', null, token); results.checks.push({ ...id, numbers: '' }); show();
+  const st = await call('steps', 'POST', BASE + '/users/me/dataTypes/steps/dataPoints:dailyRollUp', buildDailyRollUpBody(now, DAYS), token);
+  results.checks.push({ ...st, numbers: st.ok ? summariseDailyRollUp(st.json).text : '' }); show();
+  const sl = await call('sleep', 'GET', buildSleepUrl(now, DAYS), null, token);
+  results.checks.push({ ...sl, numbers: sl.ok ? summariseSleep(sl.json).text : '' }); show();
+  for (const c of results.checks) delete c.json;      // the answers are not kept; only the short text above
+}
+
+function onToken(resp) {
+  if (!resp || resp.error || typeof resp.access_token !== 'string' || !resp.access_token) { results.token = { ok: false }; results.gisError = resp && resp.error ? resp : { error: 'no_access_token', error_description: 'the response had no access token' }; $('signIn').disabled = false; $('status').textContent = 'Sign-in failed. The error is shown below; copy the result summary.'; show(); return; }
+  results.gisError = null;
+  results.token = { ok: true, expiresIn: Number(resp.expires_in), hasRefreshToken: Object.prototype.hasOwnProperty.call(resp, 'refresh_token'), scope: resp.scope };
+  $('status').textContent = 'Signed in. Running the checks...';
+  show();
+  let token = resp.access_token;
+  runChecks(token).catch(e => { results.gisError = { error: 'probe_error', error_description: describeError(e) }; }).then(() => { token = null; $('signIn').disabled = false; $('status').textContent = 'Done. The token is dropped. Copy the result summary below.'; show(); });
+}
+
+function onError(err) { $('signIn').disabled = false; results.token = { ok: false }; results.gisError = err || { type: 'unknown' }; $('status').textContent = 'The sign-in window did not finish. The error is shown below.'; show(); }
+
+$('signIn').addEventListener('click', () => {
+  const clientId = $('clientId').value.trim();
+  if (!clientId) { $('status').textContent = 'Enter a Client ID first.'; return; }
+  if (!(window.google && window.google.accounts && window.google.accounts.oauth2)) { $('status').textContent = 'The Google sign-in script did not load. Check the network and try again.'; return; }
+  results.token = { ok: false }; results.gisError = null; results.checks = []; $('signIn').disabled = true; show();
+  const client = window.google.accounts.oauth2.initTokenClient({ client_id: clientId, scope: SCOPES, callback: onToken, error_callback: onError });
+  client.requestAccessToken();
+  setTimeout(() => { if (!results.token.ok && results.gisError === null) $('signIn').disabled = false; }, 60000);   // never leave the button stuck if the popup is abandoned
+});
+$('showNumbers').addEventListener('change', show);
+$('copySummary').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText($('summary').textContent); $('status').textContent = 'Copied.'; }
+  catch { $('status').textContent = 'Could not copy; select the summary text and copy it by hand.'; }
+});
+show();
+</script>
+</body>
+</html>
