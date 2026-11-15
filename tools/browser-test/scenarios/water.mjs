@@ -138,7 +138,7 @@ export default async ({ page, url, check, screenshot }) => {
     check((await cupN()).length === 8, 'C5b: count ' + (await cupN()).length);
     check(await text() === '8 of 8 cups, 64 oz', 'C5b: text ' + await text());
     const f = await page.evaluate(() => document.activeElement && document.activeElement.dataset.cup);
-    check(f === '8', 'C5b: focus on cup ' + f);
+    check(f === '8', 'C5b: focus on cup ' + f + ' active=' + await page.evaluate(() => document.activeElement && document.activeElement.outerHTML.slice(0, 80)));
   });
 
   await item('C6', async () => {
@@ -190,7 +190,7 @@ export default async ({ page, url, check, screenshot }) => {
     check(await text() === '1 of 10 cups, 8 oz', 'C9: whole tap ' + await text());
     for (const bad of ['0', '99', 'abc']) {
       await toSettings();
-      await page.fill('#gWater', bad); await page.locator('#gWater').blur();
+      await page.click('#gWater', { clickCount: 3 }); await page.keyboard.type(bad); await page.locator('#gWater').blur();   // a number input ignores letters, so 'abc' leaves it empty
       const g = (await saved()).goals.waterCups;
       check(g !== 0 && g !== 99 && Number.isInteger(g) && g >= 1 && g <= 40, `C9: input "${bad}" saved ${g}`);
       console.log(`  info: typing "${bad}" saved goal ${g}`);
