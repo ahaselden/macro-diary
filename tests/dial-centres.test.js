@@ -171,7 +171,8 @@ test('C12. dialsHtml: hostile centre strings are escaped, junk or missing centre
   const spans = [...html.matchAll(/<text\b[^>]*>([^<]*)<\/text>/g)]; assert.ok(spans.length >= 12, 'twelve centre texts, all still well-formed');
   for (const junk of [undefined, null, 5, 'x', [], [1], { text: ['a'], caption: {} }, { text: NaN, caption: Infinity }, { text: null, caption: undefined }, { text: { toString: () => '<b>' }, caption: [] }]) {
     const j = dialModel(mk(), D); for (const k of ALL) j.rings[k].centre = junk; j.nutrition.centre = junk; j.nutrition.rings.forEach(r => { r.centre = junk; });
-    let out; assert.doesNotThrow(() => { out = dialsHtml(j); }, String(junk)); assert.doesNotMatch(out, /NaN|Infinity|undefined|\[object|<b>/, String(junk) + ' ' + JSON.stringify(junk));
+    let out; assert.doesNotThrow(() => { out = dialsHtml(j); }, String(junk)); assert.doesNotMatch(out, /NaN|Infinity|undefined|\[object/, String(junk));
+    for (const t of out.matchAll(/<text\b[^>]*>([^<]*)<\/text>/g)) assert.doesNotMatch(t[1], /NaN|Infinity|undefined|\[object|[<>]/, 'centre text for ' + String(junk));   // contents of the <text> elements only: rows legitimately use <b>
     assert.equal(out.split('data-dial="').length - 1, 6, 'all six dials still drawn');
   }
   const bare = dialModel(mk(), D); for (const k of ALL) delete bare.rings[k].centre; bare.nutrition.rings.forEach(r => { delete r.centre; }); assert.doesNotThrow(() => dialsHtml(bare)); assert.doesNotMatch(dialsHtml(bare), /NaN|Infinity|undefined|\[object/);
@@ -202,9 +203,9 @@ test('C15. domain/dials.js exports the pure helpers and stays pure (no browser g
   for (const m of src.matchAll(/from '([^']+)'/g)) assert.match(m[1], /^\.\.\/core\/(constants|format|dates|schema)\.js$|^\.\/[a-z-]+\.js$/, 'import ' + m[1]);
 });
 
-test('C16. shipping: sw.js CACHE bumped above 64 (the value on this branch when written; never an exact number), decision D59 recorded, spec exists', () => {
+test('C16. shipping: sw.js CACHE bumped above 64 (the value on this branch when written; never an exact number), a decision about the centres recorded, spec exists', () => {
   const sw = read('sw.js'), cache = Number(sw.match(/const CACHE = 'macro-diary-v(\d+)'/)[1]); assert.ok(cache > 64, 'CACHE must be bumped above 64, is ' + cache);
-  const dec = read('docs/DECISIONS.md'), at = dec.search(/^## D59\./m); assert.ok(at > -1, '## D59. section'); const sec = dec.slice(at, at + 3000);
-  assert.match(sec, /centre/i); assert.match(sec, /steps/i); assert.match(sec, /sleep/i); assert.match(sec, /shortSteps|shortHours/);
+  const secs = read('docs/DECISIONS.md').split(/^(?=## D\d+\.)/m).filter(x => /^## D\d+\./.test(x)); assert.ok(secs.some(x => /centre/i.test(x) && /steps/i.test(x) && /sleep/i.test(x) && /shortSteps|shortHours/.test(x)), 'a ## D<number>. section about the centres naming shortSteps or shortHours');
+
   assert.ok(read('docs/specs/dial-centres.md').includes('## Contract'));
 });
