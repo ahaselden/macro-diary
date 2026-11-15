@@ -298,31 +298,33 @@ test('20. sync: the settings record carries steps and sleepH; round trip and con
   const older = applyRecords(clone(b), [settingsRec(a.goals, 100)]); assert.deepEqual(older.goals, b.goals, 'an older record does not win');
 });
 
-test('21. sync: an old-device settings record still applies and gets the defaults; hostile records give valid numbers', () => {
+test('21. sync: an old-device settings record still applies and leaves the receiver steps and sleep goals; hostile records leave them too (rule changed by docs/specs/goals-sync-rule.md)', () => {
   const oldGoals = { k: 1800, p: 100, c: 100, f: 50 };
   const local = { ...defaults(), settingsUpdatedAt: 50 };
   const out = applyRecords(clone(local), [settingsRec(oldGoals, 100)]);
   assert.deepEqual(out.goals, { k: 1800, p: 100, c: 100, f: 50, steps: 10000, sleepH: 8, waterCups: 8 }); assert.equal(out.settingsUpdatedAt, 100);
   const custom = { ...defaults(), settingsUpdatedAt: 50, goals: { ...defaults().goals, steps: 7000, sleepH: 7.5 } };
-  const o2 = applyRecords(clone(custom), [settingsRec(oldGoals, 100)]);   // spec open question 1: defaults or the receiver's own value are both accepted here
-  assert.equal(o2.goals.k, 1800); assert.ok(Number.isFinite(o2.goals.steps) && o2.goals.steps >= 0); assert.ok(Number.isFinite(o2.goals.sleepH) && o2.goals.sleepH >= 0 && o2.goals.sleepH <= 24);
+  const o2 = applyRecords(clone(custom), [settingsRec(oldGoals, 100)]);   // new rule (goals-sync-rule, was open question 1): a missing field keeps the receiver's own value
+  assert.equal(o2.goals.k, 1800); assert.equal(o2.goals.steps, 7000); assert.equal(o2.goals.sleepH, 7.5);
   for (const g of [{ k: 1800, p: 1, c: 1, f: 1, steps: 'x', sleepH: 99 }, { k: 1800, p: 1, c: 1, f: 1, steps: -5, sleepH: null }, { k: 1800, p: 1, c: 1, f: 1, steps: '<img>', sleepH: '<b>' }, { k: 1800, p: 1, c: 1, f: 1, steps: 1e12, sleepH: -3 }]) {
-    const r = applyRecords(clone(local), [settingsRec(g, 100)]);
+    const r = applyRecords(clone(local), [settingsRec(g, 100)]);   // the receiver is on the defaults, so "kept" and "default" are the same numbers here; tests/goals-sync-rule.test.js uses custom goals
     assert.equal(r.goals.steps, 10000, JSON.stringify(g)); assert.equal(r.goals.sleepH, 8, JSON.stringify(g)); assert.equal(r.goals.k, 1800);
+    const keep = applyRecords(clone(custom), [settingsRec(g, 100)]);
+    assert.equal(keep.goals.steps, 7000, 'unusable steps keep the receiver: ' + JSON.stringify(g)); assert.equal(keep.goals.sleepH, 7.5, 'unusable sleepH keep the receiver: ' + JSON.stringify(g));
   }
   const pr = applyRecords(clone(local), [{ key: 'settings', value: JSON.parse('{"goals":{"k":1,"p":1,"c":1,"f":1,"__proto__":{"steps":5},"zzz":1},"settingsUpdatedAt":100}'), updatedAt: 100 }]);
   assert.deepEqual(Object.keys(pr.goals).sort(), ['c', 'f', 'k', 'p', 'sleepH', 'steps', 'waterCups']); assert.equal(({}).steps, undefined);
   for (const bad of [null, 'x', 5, [], { goals: 'x' }]) assert.doesNotThrow(() => applyRecords(clone(local), [settingsRec(bad, 100)]));
 });
 
-test('22. backup and export: restore brings the goals of a newer backup, keeps ours against an older one, defaults for old backups; the export JSON carries them', () => {
+test('22. backup and export: restore brings the goals of a newer backup, keeps ours against an older one, keeps our steps and sleep goals for old backups; the export JSON carries them', () => {
   const local = { ...defaults(), settingsUpdatedAt: 100, goals: { k: 1800, p: 120, c: 150, f: 50, steps: 7000, sleepH: 7.5 } };
   const bk = (goals, stamp) => ({ ...clone(defaults()), goals, settingsUpdatedAt: stamp });
   const newer = mergeRestore(clone(local), bk({ k: 1500, p: 100, c: 100, f: 40, steps: 5000, sleepH: 7 }, 500));
   assert.deepEqual(newer.goals, { k: 1500, p: 100, c: 100, f: 40, steps: 5000, sleepH: 7 });
   for (const stamp of [50, 0]) assert.deepEqual(mergeRestore(clone(local), bk({ k: 1500, p: 100, c: 100, f: 40, steps: 5000, sleepH: 7 }, stamp)).goals, local.goals, 'stamp ' + stamp);
   const legacy = { ...clone(defaults()), goals: { k: 1500, p: 100, c: 100, f: 40 }, settingsUpdatedAt: 500 }; delete legacy.schemaVersion;
-  assert.deepEqual(mergeRestore(clone(local), legacy).goals, { k: 1500, p: 100, c: 100, f: 40, steps: 10000, sleepH: 8 });
+  assert.deepEqual(mergeRestore(clone(local), legacy).goals, { k: 1500, p: 100, c: 100, f: 40, steps: 7000, sleepH: 7.5 });   // new rule: was steps 10000, sleepH 8
   const s = mk({ goals: { steps: 7000, sleepH: 7.5 } });
   const files = exportFiles(s, xData(s, 'day', D), '2026-11-14T10:00:00Z'), json = files.find(f => /\.json$/.test(f.name));
   assert.ok(json, 'a data file is exported'); const goals = JSON.parse(json.text).goals;
