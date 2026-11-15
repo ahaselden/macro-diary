@@ -9,12 +9,12 @@
 //            5 = recipes gain `favorite` (boolean; missing = false)
 //            6 = recipes gain `stated` (null, or the page's per-serving { k, p, c, f, per }; missing = null)
 //            7 = syncApiKey (the opt-in to carry the USDA key in the sync account)
-//            12 = `dials`: which dials the Diary card shows (array of keys, default ['k'], D57)
 //            8 = foods and diary entries may carry `nut` (optional extra nutrients per 100 g; absent = not recorded)
 //            9 = saved foods (`custom`) carry a stable `id`; copies of a saved food (entries, recents, recipe and plan foods) may carry `foodId`;
 //                saved measures of a saved food are keyed by that id instead of its name|brand|source (D53)
 //           10 = `activity`: { 'YYYY-MM-DD': { updatedAt, source, steps?, sleepMinutes?, sleepStart?, sleepEnd?, workouts? } } imported from Google Health (D54); nothing else changes
 //           11 = goals gain `steps` (whole steps a day, default 10000) and `sleepH` (hours a night, default 8) (D56)
+//            12 = `dials`: which dials the Diary card shows (array of keys, default ['k'], D57)
 import { MEALS } from './constants.js';
 
 export const SCHEMA_VERSION = 12;

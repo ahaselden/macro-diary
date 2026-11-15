@@ -56,7 +56,8 @@ export function dialsHtml(model, editing = false) {
   const selected = Array.isArray(m.selected) ? DIAL_KEYS.filter(k => m.selected.includes(k)) : [];
   const shown = selected.filter(k => isObj(rowOf(k)));
   const k = rowOf('k'), kText = isObj(k) ? txt(k.text).replace(' / ', ' of ') : '';
-  const label = `Nutrition details for this day: ${kText ? kText + ' eaten' : 'no calories yet'}. Press to open.`;
+  const more = [...ROW_KEYS.slice(1), ...selected.filter(k => k === 'steps' || k === 'sleep')].map(rowOf).filter(isObj).map(r => txt(r.label)).filter(Boolean);   // the button hides its children from a screen reader, so its name carries them
+  const label = `Nutrition details for this day: ${kText ? kText + ' eaten' : 'no calories yet'}.${more.length ? ' ' + more.join('. ') + '.' : ''} Press to open.`;
   return `<button type="button" id="dialsEdit" class="dials-edit" aria-label="Choose dials" aria-expanded="${editing === true ? 'true' : 'false'}">${PENCIL}</button>`
     + `<div id="dialsOpen" role="button" tabindex="0" aria-label="${esc(label)}">`
     + (shown.length ? `<div class="dial-area">${shown.map(key => dialHtml(key, rowOf(key), nut.centre)).join('')}</div>` : '')
@@ -90,6 +91,7 @@ export function initDials(openDetails) {
     renderDials(t.id);
   });
   el.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape' && editing) { editing = false; renderDials('dialsEdit'); return; }
     if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.id === 'dialsOpen') { ev.preventDefault(); openDetails(); }
   });
 }

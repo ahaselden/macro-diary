@@ -179,6 +179,7 @@ button.pl-nm.link{background:none;border:none;padding:0;min-height:44px;text-ali
 .dial-num{fill:var(--text);font-size:22px;font-weight:700}
 .dial-cap{fill:var(--muted);font-size:10px}
 .mrows{display:grid;gap:12px}
+.mrows>.mrow:first-child .mrow-top{padding-right:44px}
 .mrow-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .mrow-top b{margin-left:auto;font-size:15px}
 .over-word{color:var(--over);font-size:12px;font-weight:600}
