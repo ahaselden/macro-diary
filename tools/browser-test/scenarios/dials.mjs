@@ -260,8 +260,8 @@ export default async ({ page, url, check, screenshot }) => {
 
   await item('H11', async () => {
     await start(seed({ dials: ['steps', 'sleep'], activity: {} }));
-    const t = await dialsText();
-    check((t.match(/no data/g) || []).length === 2, 'H11: no data count in "' + t + '"');
+    const t = await dialsText(), valueNoData = await page.$$eval('#dials .dial b', els => els.filter(e => e.textContent.trim() === 'no data').length);   // the centre caption also says no data now, so count the value texts under the rings
+    check(valueNoData === 2 && (t.match(/no data/g) || []).length === 4, 'H11: no data count in "' + t + '"');
     const l = await page.evaluate(() => [...document.querySelectorAll('#dials [data-dial] [aria-label]')].map(e => e.getAttribute('aria-label')));
     check(l.includes('Steps: no data') && l.includes('Sleep: no data'), 'H11: labels ' + JSON.stringify(l));
     const dt = norm(await page.locator('#dials .dial-area').innerText()); check(!/0 \//.test(dt), 'H11: "0 /" in dials: ' + dt);
