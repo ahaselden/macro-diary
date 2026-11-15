@@ -29,7 +29,7 @@ function ringSvg(ring) {
 /** One selected dial: a ring, its name and its text; the calories dial also shows kcal left or over in the middle. */
 function dialHtml(key, ring, centre) {
   const x = isObj(ring) ? ring : {}, c = isObj(centre) ? centre : {};
-  const mid = key === 'k' ? `<text class="dial-num" x="50" y="48" text-anchor="middle" dominant-baseline="central">${esc(txt(c.text))}</text><text class="dial-cap" x="50" y="66" text-anchor="middle">${esc(txt(c.caption))}</text>` : '';
+  const mid = key === 'k' ? `<text class="dial-num" x="50" y="43" text-anchor="middle" dominant-baseline="central">${esc(txt(c.text))}</text><text class="dial-cap" x="50" y="68" text-anchor="middle">${esc(txt(c.caption))}</text>` : '';
   return `<div class="dial" data-dial="${key}"><svg viewBox="0 0 100 100" focusable="false">${ringSvg(x)}${mid}</svg>`
     + `<div class="dial-name muted">${esc(NAMES[key])}</div><b class="${x.hasData === false ? 'muted' : ''}">${esc(txt(x.text))}</b></div>`;
 }
@@ -59,10 +59,10 @@ export function dialsHtml(model, editing = false) {
   const more = [...ROW_KEYS.slice(1), ...selected.filter(k => k === 'steps' || k === 'sleep')].map(rowOf).filter(isObj).map(r => txt(r.label)).filter(Boolean);   // the button hides its children from a screen reader, so its name carries them
   const label = `Nutrition details for this day: ${kText ? kText + ' eaten' : 'no calories yet'}.${more.length ? ' ' + more.join('. ') + '.' : ''} Press to open.`;
   return `<button type="button" id="dialsEdit" class="dials-edit" aria-label="Choose dials" aria-expanded="${editing === true ? 'true' : 'false'}">${PENCIL}</button>`
+    + (editing === true ? panelHtml(selected) : '')   // right after the pencil, so Tab goes from the pencil to the checkboxes
     + `<div id="dialsOpen" role="button" tabindex="0" aria-label="${esc(label)}">`
     + (shown.length ? `<div class="dial-area">${shown.map(key => dialHtml(key, rowOf(key), nut.centre)).join('')}</div>` : '')
-    + `<div class="mrows">${ROW_KEYS.map(key => rowHtml(key, rowOf(key))).join('')}</div></div>`
-    + (editing === true ? panelHtml(selected) : '');
+    + `<div class="mrows">${ROW_KEYS.map(key => rowHtml(key, rowOf(key))).join('')}</div></div>`;
 }
 
 let editing = false;

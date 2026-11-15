@@ -169,17 +169,17 @@ button.pl-nm.link{background:none;border:none;padding:0;min-height:44px;text-ali
 #ghStatus{overflow-wrap:anywhere}
 #dials{position:relative}
 #dialsOpen{cursor:pointer;border-radius:12px}
-.dials-edit{position:absolute;top:6px;right:6px;width:44px;height:44px;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border:0;color:var(--muted);border-radius:50%}
-.dial-area{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 18px;margin:4px 40px 14px}
-.dial{flex:0 1 112px;min-width:96px;text-align:center}
-.dial svg{display:block;width:100%;max-width:112px;height:auto;margin:0 auto}
+.dials-edit{position:absolute;top:2px;right:2px;width:44px;height:44px;padding:0;display:flex;align-items:center;justify-content:center;background:transparent;border:0;color:var(--muted);border-radius:50%}
+.dial-area{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin:4px 0 14px}
+.dial{flex:0 0 96px;text-align:center}
+.dial svg{display:block;width:100%;max-width:96px;height:auto;margin:0 auto}
 .dial b{display:block;font-size:14px;overflow-wrap:anywhere}
 .dial-name{font-size:13px;margin-top:4px}
 .ring-track{stroke:var(--line)}
 .dial-num{fill:var(--text);font-size:22px;font-weight:700}
 .dial-cap{fill:var(--muted);font-size:10px}
 .mrows{display:grid;gap:12px}
-.mrows>.mrow:first-child .mrow-top{padding-right:44px}
+#dialsOpen>.mrows:first-child>.mrow:first-child .mrow-top{padding-right:44px}
 .mrow-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .mrow-top b{margin-left:auto;font-size:15px}
 .over-word{color:var(--over);font-size:12px;font-weight:600}
