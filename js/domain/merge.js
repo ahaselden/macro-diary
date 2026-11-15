@@ -20,7 +20,7 @@
 // records, which is arbitrary but identical on every device. Pass { preferLocal: true } to break ties
 // in favour of the first argument instead (used for restoring an old backup that has no timestamps);
 // that mode is NOT commutative and must not be used for sync.
-import { isLegitKey, isPlaceholderKey, withFoodIds, unionMeasures, isSafeKey, isDateKey } from '../core/schema.js';
+import { isLegitKey, isPlaceholderKey, withFoodIds, unionMeasures, isSafeKey, isDateKey, NEWER_GOALS } from '../core/schema.js';
 import { foodKey } from './food.js';
 import { validEntry } from './entries.js';
 
@@ -105,7 +105,10 @@ export function mergeStates(local, remote, opts = {}) {
   };
   const winner = pick();
   const settings = Object.fromEntries(SETTINGS_KEYS.map(k => [k, winner[k] !== undefined ? winner[k] : local[k]]));
-  if (settings.goals && typeof settings.goals === 'object' && settings.goals.waterCups === undefined && local.goals && local.goals.waterCups !== undefined) settings.goals = { ...settings.goals, waterCups: local.goals.waterCups };   // a record from before the water goal keeps this device's goal
+  if (settings.goals && typeof settings.goals === 'object' && local.goals && typeof local.goals === 'object') {   // a record from an older device lacks the newer goals: this device's stay (D59)
+    const fill = {}; for (const g of NEWER_GOALS) if (settings.goals[g] === undefined && local.goals[g] !== undefined) fill[g] = local.goals[g];
+    if (Object.keys(fill).length) settings.goals = { ...settings.goals, ...fill };
+  }
   // USDA key (D42, D46): a legitimate key always beats an empty or demo one, whichever settings record is newer. Otherwise it is adopted only
   // from a winning record whose sync switch is on; a switch turned off elsewhere never wipes this device's key.
   const offered = remote.syncApiKey === true && typeof remote.apiKey === 'string' ? remote.apiKey : undefined;

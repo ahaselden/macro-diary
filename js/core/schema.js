@@ -20,6 +20,17 @@ import { MEALS } from './constants.js';
 
 export const SCHEMA_VERSION = 13;
 
+/** The newer goals (D59): a settings record or backup that has no usable value for one of these leaves this device's value alone. */
+export const NEWER_GOALS = ['steps', 'sleepH', 'waterCups'];
+const numOrText = v => typeof v === 'number' || typeof v === 'string';   // arrays and objects are never a goal, even when they coerce to a number
+/** Is `raw` a usable value for the newer goal `key`? steps: number or numeric text 0..1,000,000; sleepH: 0..24; waterCups: whole number 1..40. */
+export function usableGoal(key, raw) {
+  if (key === 'waterCups') return sanitizeWaterCups(raw) === raw;
+  if (!numOrText(raw)) return false;
+  const n = goalNum(raw, NaN);
+  return Number.isFinite(n) && n <= (key === 'steps' ? 1000000 : 24);
+}
+
 /** The dials the Diary card can show, in the fixed order they are drawn and saved (D57). */
 export const DIAL_KEYS = ['k', 'p', 'c', 'f', 'steps', 'sleep'];
 export const DEFAULT_DIALS = ['k'];
