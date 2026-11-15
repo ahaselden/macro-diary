@@ -28,7 +28,7 @@ You create a free Google Cloud project that only you can use, then run a small t
 ## 5. Create the OAuth client
 1. Go to **Credentials**, then **Create credentials**, then **OAuth client ID**.
 2. Application type: **Web application**. Name: `probe`.
-3. **Authorized JavaScript origins**: add both `http://localhost:8080` and `https://ahaselden.github.io`. Leave redirect URIs empty.
+3. **Authorized JavaScript origins**: add `http://localhost:8080` and `https://ahaselden.github.io`. If the page later says `origin_mismatch`, also add `http://localhost`. Leave redirect URIs empty.
 4. Create it. Copy only the **Client ID** (it ends in `.apps.googleusercontent.com`). Google may show a client secret: ignore it, never copy it, and never paste it anywhere.
 
 ## 6. Link your account in the Google Health app

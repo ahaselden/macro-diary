@@ -60,18 +60,16 @@ const results = { token: { ok: false }, gisError: null, checks: [] };
 const LABELS = { identity: 'Account link', steps: 'Steps, last 3 days', sleep: 'Sleep, last 3 days' };
 
 function show() {
-  const numbers = $('showNumbers').checked;
-  const t = results.token;
-  $('tokenInfo').textContent = t.ok
-    ? `Signed in. Token lasts ${Number.isFinite(t.expiresIn) ? Math.round(t.expiresIn / 60) + ' minutes' : 'an unknown time'}; refresh token present: ${t.hasRefreshToken ? 'yes' : 'no'}; scope granted: ${String(t.scope || 'none').slice(0, 200)}`
-    : 'Not signed in yet.';
-  $('gisError').textContent = results.gisError === null ? '' : 'Google Identity Services error: ' + describeError(results.gisError);
+  const numbers = $('showNumbers').checked, text = resultSummary(results, numbers), lines = text.split('\n');
+  const start = prefix => lines.filter(l => l.startsWith(prefix));
+  // every element shows the same lines as the copied summary
+  $('tokenInfo').textContent = results.token.ok ? lines.filter(l => /^(Sign-in|expires_in|refresh_token present|scope granted):/.test(l)).join('\n') : 'Sign-in: not done yet or failed';
+  $('gisError').textContent = start('GIS error:').join('\n');
   for (const name of ['identity', 'steps', 'sleep']) {
-    const c = results.checks.find(x => x.name === name), el = $('check-' + name);
-    if (!c) { el.textContent = LABELS[name] + ': not run yet.'; continue; }
-    el.textContent = `${LABELS[name]}: ` + (c.status === null ? 'no response' : 'HTTP ' + c.status) + ' - ' + (c.ok ? 'ok' : 'failed' + (c.message ? ': ' + c.message : '')) + (numbers && c.numbers ? '\n' + c.numbers : '');
+    const mine = lines.filter(l => l.startsWith(name + ': ') || l.startsWith(name + ' numbers: '));
+    $('check-' + name).textContent = mine.length ? mine.join('\n') : name + ': not run yet';
   }
-  $('summary').textContent = resultSummary(results, numbers);
+  $('summary').textContent = text;
 }
 
 async function call(name, method, url, body, token) {
@@ -94,24 +92,25 @@ async function runChecks(token) {
 }
 
 function onToken(resp) {
-  if (!resp || resp.error) { results.token = { ok: false }; results.gisError = resp || { error: 'no response' }; $('status').textContent = 'Sign-in failed. The error is shown below; copy the result summary.'; show(); return; }
+  if (!resp || resp.error || typeof resp.access_token !== 'string' || !resp.access_token) { results.token = { ok: false }; results.gisError = resp && resp.error ? resp : { error: 'no_access_token', error_description: 'the response had no access token' }; $('signIn').disabled = false; $('status').textContent = 'Sign-in failed. The error is shown below; copy the result summary.'; show(); return; }
   results.gisError = null;
   results.token = { ok: true, expiresIn: Number(resp.expires_in), hasRefreshToken: Object.prototype.hasOwnProperty.call(resp, 'refresh_token'), scope: resp.scope };
   $('status').textContent = 'Signed in. Running the checks...';
   show();
   let token = resp.access_token;
-  runChecks(token).then(() => { token = null; $('status').textContent = 'Done. The token is dropped. Copy the result summary below.'; show(); });
+  runChecks(token).catch(e => { results.gisError = { error: 'probe_error', error_description: describeError(e) }; }).then(() => { token = null; $('signIn').disabled = false; $('status').textContent = 'Done. The token is dropped. Copy the result summary below.'; show(); });
 }
 
-function onError(err) { results.token = { ok: false }; results.gisError = err || { type: 'unknown' }; $('status').textContent = 'The sign-in window did not finish. The error is shown below.'; show(); }
+function onError(err) { $('signIn').disabled = false; results.token = { ok: false }; results.gisError = err || { type: 'unknown' }; $('status').textContent = 'The sign-in window did not finish. The error is shown below.'; show(); }
 
 $('signIn').addEventListener('click', () => {
   const clientId = $('clientId').value.trim();
   if (!clientId) { $('status').textContent = 'Enter a Client ID first.'; return; }
   if (!(window.google && window.google.accounts && window.google.accounts.oauth2)) { $('status').textContent = 'The Google sign-in script did not load. Check the network and try again.'; return; }
-  results.token = { ok: false }; results.gisError = null; results.checks = []; show();
+  results.token = { ok: false }; results.gisError = null; results.checks = []; $('signIn').disabled = true; show();
   const client = window.google.accounts.oauth2.initTokenClient({ client_id: clientId, scope: SCOPES, callback: onToken, error_callback: onError });
   client.requestAccessToken();
+  setTimeout(() => { if (!results.token.ok && results.gisError === null) $('signIn').disabled = false; }, 60000);   // never leave the button stuck if the popup is abandoned
 });
 $('showNumbers').addEventListener('change', show);
 $('copySummary').addEventListener('click', async () => {

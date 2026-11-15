@@ -60,7 +60,7 @@ const utcMs = s => {
   const m = typeof s === 'string' ? UTC_TIME.exec(s) : null; if (!m) return null;
   const [y, mo, d, h, mi, se] = m.slice(1, 7).map(Number);
   if (!isRealDate(y, mo, d) || h > 23 || mi > 59 || se > 59) return null;
-  return Date.UTC(y, mo - 1, d, h, mi, se) + (m[7] ? Math.round(Number(m[7]) * 1000) : 0);
+  return Date.UTC(y, mo - 1, d, h, mi, se) ; // the fraction of a second is dropped, never rounded
 };
 const offsetSec = s => { const m = typeof s === 'string' ? /^(-?\d{1,5})s$/.exec(s) : null; const n = m ? Number(m[1]) : NaN; return Number.isInteger(n) && Math.abs(n) <= 86400 ? n : null; };
 const localOf = (t, off) => { const ms = utcMs(t), o = offsetSec(off); return ms === null || o === null ? '?' : new Date(ms + o * 1000).toISOString().slice(0, 19); };
