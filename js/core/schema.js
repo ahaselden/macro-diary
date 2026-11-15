@@ -13,17 +13,20 @@
 //            9 = saved foods (`custom`) carry a stable `id`; copies of a saved food (entries, recents, recipe and plan foods) may carry `foodId`;
 //                saved measures of a saved food are keyed by that id instead of its name|brand|source (D53)
 //           10 = `activity`: { 'YYYY-MM-DD': { updatedAt, source, steps?, sleepMinutes?, sleepStart?, sleepEnd?, workouts? } } imported from Google Health (D54); nothing else changes
+//           11 = goals gain `steps` (whole steps a day, default 10000) and `sleepH` (hours a night, default 8) (D56)
 import { MEALS } from './constants.js';
 
-export const SCHEMA_VERSION = 10;
+export const SCHEMA_VERSION = 11;
 
 export const defaults = () => ({
-  schemaVersion: SCHEMA_VERSION, theme: 'auto', weightUnit: 'g', measures: {}, goals: { k: 2000, p: 150, c: 200, f: 65 },
+  schemaVersion: SCHEMA_VERSION, theme: 'auto', weightUnit: 'g', measures: {}, goals: { k: 2000, p: 150, c: 200, f: 65, steps: 10000, sleepH: 8 },
   apiKey: '', syncApiKey: false, useUSDA: true, useOFF: true, days: {}, recent: [], custom: [],
   tombstones: {}, settingsUpdatedAt: 0,
   recipes: {}, plan: {}, shopping: { checks: {}, extras: {} }, activity: {},
 });
 
+// steps goal: a whole number 0..1,000,000; sleep goal: hours 0..24 (fractions allowed). Anything unusable falls back to the default (never clamped).
+const goalInRange = (v, max, fallback, whole) => { const n = goalNum(v, NaN); return Number.isFinite(n) && n <= max ? (whole ? Math.round(n) : n) : fallback; };
 const goalNum = (v, fallback) => (v !== null && v !== '' && v !== true && v !== false && Number.isFinite(+v) && +v >= 0 ? +v : fallback);
 const plainObject = v => !!v && typeof v === 'object' && !Array.isArray(v);
 const str = (v, max = 500) => (typeof v === 'string' ? v.slice(0, max) : '');
@@ -258,7 +261,8 @@ export function sanitizeActivityDay(d) {
  */
 export function sanitize(d) {
   const def = defaults(), g = plainObject(d.goals) ? d.goals : {};
-  d.goals = { k: goalNum(g.k, def.goals.k), p: goalNum(g.p, def.goals.p), c: goalNum(g.c, def.goals.c), f: goalNum(g.f, def.goals.f) };
+  d.goals = { k: goalNum(g.k, def.goals.k), p: goalNum(g.p, def.goals.p), c: goalNum(g.c, def.goals.c), f: goalNum(g.f, def.goals.f),
+    steps: goalInRange(g.steps, 1000000, def.goals.steps, true), sleepH: goalInRange(g.sleepH, 24, def.goals.sleepH, false) };
   if (d.weightUnit !== 'g' && d.weightUnit !== 'oz') d.weightUnit = 'g';
   if (typeof d.theme !== 'string') d.theme = 'auto';
   if (typeof d.apiKey !== 'string') d.apiKey = '';
@@ -308,6 +312,7 @@ export function migrate(d) {
     d.schemaVersion = 9;
   }
   if (v < 10) d.schemaVersion = 10;      // v9 -> v10: `activity` (added by sanitize, empty)
+  if (v < 11) d.schemaVersion = 11;      // v10 -> v11: goals gain `steps` and `sleepH` (added by sanitize with the defaults, D56)
   return sanitize(d);
 }
 

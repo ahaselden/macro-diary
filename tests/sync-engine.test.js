@@ -74,8 +74,8 @@ test('delete then edit afterwards: edit wins', async () => {
 
 test('settings: newest wins', async () => {
   const srv = createMemoryAdapter(), a = new Device(srv), b = new Device(srv);
-  a.state.goals = { k: 1000, p: 1, c: 1, f: 1 }; touchSettings(a.state, tick());
-  b.state.goals = { k: 3000, p: 2, c: 2, f: 2 }; b.state.weightUnit = 'oz'; touchSettings(b.state, tick());
+  a.state.goals = { k: 1000, p: 1, c: 1, f: 1, steps: 10000, sleepH: 8 }; touchSettings(a.state, tick());
+  b.state.goals = { k: 3000, p: 2, c: 2, f: 2, steps: 10000, sleepH: 8 }; b.state.weightUnit = 'oz'; touchSettings(b.state, tick());
   await a.sync(); await b.sync(); await a.sync();
   assert.equal(a.state.goals.k, 3000); assert.equal(a.state.weightUnit, 'oz'); assert.deepEqual(a.state.goals, b.state.goals);
 });
