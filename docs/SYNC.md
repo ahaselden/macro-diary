@@ -31,6 +31,7 @@ The unit that travels is a **record**: `{ key, value, updatedAt }`.
 | `custom`, `measures` | your saved (custom) foods, each with a stable `id`; saved measures like "1 cup = 125 g", keyed by the saved food's id (D53) |
 | `tombstones` | ids of deleted things, with deletion times |
 | `activity:2026-03-04` | one imported Google Health day: steps, sleep, workouts (D54); last writer wins per day by the record's own `updatedAt`; tombstones do not apply (there is no delete action) |
+| `water:2026-11-14` | one day of water in half cups (D58); last writer wins per day by the record's own `updatedAt`; a day at 0 stays as a record so an undo wins. The `settings` record also carries `waterTap` and `goals.waterCups`; a record without them leaves this device's values alone. |
 
 **Saved foods match by `id` (D53).** Two devices agree on which saved food is which by its `id`, so a rename on one device updates the same food on the other instead of leaving the old name behind. The newest edit of a food wins as a whole record, and a tombstone for a food id hides a food last edited before it. A food from a device still on the old app has no `id`: merge derives one from its name, brand, source and barcode (the same id the migration gives it), so it meets the same food. That device also keeps writing measures under the food's name; merge folds those into the id bucket. Copies of a saved food (diary entries, recipe and plan foods) carry its id as `foodId`; one that arrives from an old-app device has none.
 

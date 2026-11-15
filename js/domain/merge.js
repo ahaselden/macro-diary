@@ -35,7 +35,7 @@ function newer(a, b, preferA) {
   return canon(a) >= canon(b) ? a : b;
 }
 
-const SETTINGS_KEYS = ['goals', 'dials', 'weightUnit', 'useUSDA', 'useOFF', 'syncApiKey'];
+const SETTINGS_KEYS = ['goals', 'dials', 'waterTap', 'weightUnit', 'useUSDA', 'useOFF', 'syncApiKey'];
 
 export function mergeStates(local, remote, opts = {}) {
   const pref = !!opts.preferLocal;
@@ -105,6 +105,7 @@ export function mergeStates(local, remote, opts = {}) {
   };
   const winner = pick();
   const settings = Object.fromEntries(SETTINGS_KEYS.map(k => [k, winner[k] !== undefined ? winner[k] : local[k]]));
+  if (settings.goals && typeof settings.goals === 'object' && settings.goals.waterCups === undefined && local.goals && local.goals.waterCups !== undefined) settings.goals = { ...settings.goals, waterCups: local.goals.waterCups };   // a record from before the water goal keeps this device's goal
   // USDA key (D42, D46): a legitimate key always beats an empty or demo one, whichever settings record is newer. Otherwise it is adopted only
   // from a winning record whose sync switch is on; a switch turned off elsewhere never wipes this device's key.
   const offered = remote.syncApiKey === true && typeof remote.apiKey === 'string' ? remote.apiKey : undefined;
@@ -142,6 +143,15 @@ export function mergeStates(local, remote, opts = {}) {
     if (cands.length) activity[day] = cands.length === 2 ? newer(cands[0], cands[1], pref) : cands[0];
   }
 
+  // water: one record per day, newest wins as a whole (D58; same rules and the same guard on keys as activity)
+  const water = {};
+  const watOf = (src, day) => { const a = src && src.water; return a && typeof a === 'object' && !Array.isArray(a) && Object.prototype.hasOwnProperty.call(a, day) ? a[day] : undefined; };
+  const watKeys = src => (src && src.water && typeof src.water === 'object' && !Array.isArray(src.water) ? Object.keys(src.water) : []);
+  for (const day of [...new Set([...watKeys(local), ...watKeys(remote)])].filter(isDateKey).sort()) {
+    const cands = [watOf(local, day), watOf(remote, day)].filter(isAct);
+    if (cands.length) water[day] = cands.length === 2 ? newer(cands[0], cands[1], pref) : cands[0];
+  }
+
   // shopping: ticks per item key, extras per id
   const checks = {};
   for (const k of [...new Set([...Object.keys(local.shopping?.checks || {}), ...Object.keys(remote.shopping?.checks || {})])].sort()) {
@@ -163,7 +173,7 @@ export function mergeStates(local, remote, opts = {}) {
     ...(apiKey !== undefined || 'apiKey' in local ? { apiKey } : {}),
     settingsUpdatedAt: Math.max(Number(local.settingsUpdatedAt) || 0, Number(remote.settingsUpdatedAt) || 0),
     schemaVersion: Math.max(Number(local.schemaVersion) || 0, Number(remote.schemaVersion) || 0),
-    days, custom, measures, tombstones, recipes, plan, shopping: { checks, extras }, activity,
+    days, custom, measures, tombstones, recipes, plan, shopping: { checks, extras }, activity, water,
   };
 }
 

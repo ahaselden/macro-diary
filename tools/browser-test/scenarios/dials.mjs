@@ -12,7 +12,7 @@ const RICE = grams => ({ id: 'e1', meal: 'Lunch', name: 'Rice', brand: '', sourc
 const ACT = { updatedAt: 1, source: 'google-health', steps: 6120, sleepMinutes: 473 };
 const ALL = ['k', 'p', 'c', 'f', 'steps', 'sleep'];
 const seed = (o = {}) => ({
-  schemaVersion: 12, theme: 'light', weightUnit: 'g', measures: {}, dials: ['k'],
+  schemaVersion: 13, theme: 'light', weightUnit: 'g', measures: {}, dials: ['k'],
   goals: { k: 2000, p: 150, c: 200, f: 65, steps: 10000, sleepH: 8 }, apiKey: '', syncApiKey: false, useUSDA: false, useOFF: false,
   recent: [], custom: [], tombstones: {}, settingsUpdatedAt: 5, recipes: {}, plan: {}, shopping: { checks: {}, extras: {} },
   days: { [TODAY]: [RICE(800)] }, activity: { [TODAY]: ACT }, ...o,
@@ -329,7 +329,7 @@ export default async ({ page, url, check, screenshot }) => {
     await page.waitForFunction(() => window.__dl !== null, null, { timeout: 5000 });
     const d = await page.evaluate(() => window.__dl);
     const j = JSON.parse(d.text.replace(/^﻿/, ''));
-    check(j.schemaVersion === 12 && JSON.stringify(j.dials) === '["k","steps"]', `H15: ${d.name} schemaVersion ${j.schemaVersion} dials ${JSON.stringify(j.dials)}`);
+    check(j.schemaVersion === 13 && JSON.stringify(j.dials) === '["k","steps"]', `H15: ${d.name} schemaVersion ${j.schemaVersion} dials ${JSON.stringify(j.dials)}`);
   });
 
   // Extra screenshots for the look: default and edit panel at both widths.

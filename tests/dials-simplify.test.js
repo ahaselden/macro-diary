@@ -44,13 +44,13 @@ const tagOf = (src, id) => { const m = src.match(new RegExp('<[^>]*\\bid="' + id
 const withDials = (dials, opts) => dialModel(mk({ ...opts, dials }), D);
 
 // ================================================================ saved shape
-test('S1. SCHEMA_VERSION 12; defaults carry dials ["k"] (a fresh array each time); DIAL_KEYS fixed; STORAGE_KEY unchanged', () => {
-  assert.equal(SCHEMA_VERSION, 12); assert.equal(defaults().schemaVersion, 12);
+test('S1. SCHEMA_VERSION 13; defaults carry dials ["k"] (a fresh array each time); DIAL_KEYS fixed; STORAGE_KEY unchanged', () => {
+  assert.equal(SCHEMA_VERSION, 13); assert.equal(defaults().schemaVersion, 13);
   assert.deepEqual(DIAL_KEYS, ALL); assert.deepEqual(DEFAULT_DIALS, ['k']);
   assert.deepEqual(defaults().dials, ['k']); assert.notStrictEqual(defaults().dials, defaults().dials);
   defaults().dials.push('p'); assert.deepEqual(defaults().dials, ['k'], 'mutating one default must not change the next');
-  assert.equal(STORAGE_KEY, 'macrodiary.v1'); assert.match(read('js/core/schema.js'), /export const SCHEMA_VERSION = 12;/);
-  assert.deepEqual(defaults().goals, { k: 2000, p: 150, c: 200, f: 65, steps: 10000, sleepH: 8 }, 'goals are untouched by this feature');
+  assert.equal(STORAGE_KEY, 'macrodiary.v1'); assert.match(read('js/core/schema.js'), /export const SCHEMA_VERSION = 13;/);
+  assert.deepEqual(defaults().goals, { k: 2000, p: 150, c: 200, f: 65, steps: 10000, sleepH: 8, waterCups: 8 }, 'goals are untouched by this feature');
 });
 
 test('S2. sanitizeDials: known keys, unique, in the fixed order k p c f steps sleep; unknown and duplicates dropped; [] is valid; not an array gives the default', () => {
@@ -70,24 +70,24 @@ test('S3. sanitize() applies it to d.dials: kept, [] kept (not reset), junk give
   for (const junk of [undefined, null, 'k', 5, {}, true]) assert.deepEqual(sanitize({ dials: junk }).dials, ['k'], String(junk));
   assert.deepEqual(sanitize({}).dials, ['k']); assert.deepEqual(sanitize({ dials: ['x', 'sleep', 'sleep'] }).dials, ['sleep']);
   const g = sanitize({ dials: ['p'], goals: { k: 1800, p: 120, c: 150, f: 50, steps: 7000, sleepH: 7.5 }, theme: 'dark' });
-  assert.deepEqual(g.goals, { k: 1800, p: 120, c: 150, f: 50, steps: 7000, sleepH: 7.5 }); assert.equal(g.theme, 'dark');
+  assert.deepEqual(g.goals, { k: 1800, p: 120, c: 150, f: 50, steps: 7000, sleepH: 7.5, waterCups: 8 }); assert.equal(g.theme, 'dark');
   const twice = sanitize(sanitize({ dials: ['steps', 'k', 'k'] })); assert.deepEqual(twice.dials, ['k', 'steps'], 'idempotent');
 });
 
 const oldSave = v => { const s = { ...clone(defaults()), schemaVersion: v, goals: { k: 1800, p: 120, c: 0, f: 55.5, steps: 5000, sleepH: 7 }, theme: 'dark', weightUnit: 'oz', settingsUpdatedAt: 77, tombstones: { x: 5 },
   days: { '2026-11-13': [entry(300)] }, activity: { '2026-11-13': { updatedAt: 1, source: 'google-health', steps: 5000, sleepMinutes: 400 } } }; delete s.dials; return s; };
-const kept = s => JSON.stringify([s.days, s.tombstones, s.settingsUpdatedAt, s.theme, s.weightUnit, s.activity, s.goals]);
+const kept = s => JSON.stringify([s.days, s.tombstones, s.settingsUpdatedAt, s.theme, s.weightUnit, s.activity, { ...s.goals, waterCups: undefined }]);
 
 test('S4. migration from every older version (1, 2, 5, 8, 9, 10, 11) keeps every value and sets dials ["k"]; version 12 data keeps its choice, including []; store load/save/reload agree', () => {
   for (const v of [1, 2, 5, 8, 9, 10, 11]) {
     const src = oldSave(v), m = migrate(clone(src));
-    assert.equal(m.schemaVersion, 12, 'from ' + v); assert.deepEqual(m.dials, ['k'], 'from ' + v); assert.equal(kept(m), kept(src), 'from ' + v);
+    assert.equal(m.schemaVersion, 13, 'from ' + v); assert.deepEqual(m.dials, ['k'], 'from ' + v); assert.equal(kept(m), kept(src), 'from ' + v);
   }
   for (const dials of [['p', 'steps'], [], ['k', 'p', 'c', 'f', 'steps', 'sleep']]) assert.deepEqual(migrate({ ...oldSave(12), schemaVersion: 12, dials: clone(dials) }).dials, dials, 'v12 keeps ' + JSON.stringify(dials));
   const st = fakeStorage(JSON.stringify(oldSave(11))), s = createStore(st);
-  assert.equal(s.state.schemaVersion, 12); assert.deepEqual(s.state.dials, ['k']); assert.equal(kept(s.state), kept(oldSave(11)));
+  assert.equal(s.state.schemaVersion, 13); assert.deepEqual(s.state.dials, ['k']); assert.equal(kept(s.state), kept(oldSave(11)));
   s.state.dials = toggleDial(s.state.dials, 'sleep'); assert.equal(s.save(), true);
-  const saved = JSON.parse(st.m.get(STORAGE_KEY)); assert.equal(saved.schemaVersion, 12); assert.deepEqual(saved.dials, ['k', 'sleep']);
+  const saved = JSON.parse(st.m.get(STORAGE_KEY)); assert.equal(saved.schemaVersion, 13); assert.deepEqual(saved.dials, ['k', 'sleep']);
   assert.deepEqual(createStore(fakeStorage(JSON.stringify(saved))).state.dials, ['k', 'sleep']);
   s.state.dials = []; s.save(); assert.deepEqual(createStore(fakeStorage(st.m.get(STORAGE_KEY))).state.dials, [], 'an empty choice survives a reload (is not reset to the default)');
   const rep = createStore(fakeStorage()); rep.replace({ goals: { k: 1800, p: 120, c: 150, f: 50 } }); assert.deepEqual(rep.state.dials, ['k']);
