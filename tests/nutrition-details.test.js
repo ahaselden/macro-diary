@@ -30,8 +30,8 @@ const FULL = { fiber: 3, sugars: 4, satFat: 5, sodium: 600, cholesterol: 70 };
 
 // ---------- schema ----------
 test('D1 schema is v8, defaults carry it, NUT_KEYS is the five keys in order', () => {
-  assert.equal(SCHEMA_VERSION, 12);
-  assert.equal(defaults().schemaVersion, 12);
+  assert.equal(SCHEMA_VERSION, 13);
+  assert.equal(defaults().schemaVersion, 13);
   assert.deepEqual(schemaNs.NUT_KEYS, ['fiber', 'sugars', 'satFat', 'sodium', 'cholesterol']);
 });
 
@@ -39,19 +39,19 @@ test('D2 v7 and older data migrate to v8 with nothing added or lost', () => {
   const v7 = { schemaVersion: 7, apiKey: 'k', syncApiKey: false, goals: { k: 1800, p: 100, c: 100, f: 50 }, days: { '2024-05-01': [entry('a'), entry('b', { updatedAt: 5 })] },
     custom: [{ name: 'Mine', brand: '', source: 'custom', per100: { ...per100 }, servingG: 0, servingLabel: '' }], recent: [] };
   const m = migrate(clone(v7));
-  assert.equal(m.schemaVersion, 12);
+  assert.equal(m.schemaVersion, 13);
   assert.deepEqual(m.days, v7.days);
   assert.ok(!('nut' in m.days['2024-05-01'][0]));
   assert.ok(!('nut' in m.custom[0]));
   assert.equal(m.apiKey, 'k');
   for (const f of ['state', 'backup']) {
     const old = fixture(f), mm = migrate(clone(old));
-    assert.equal(mm.schemaVersion, 12, f);
+    assert.equal(mm.schemaVersion, 13, f);
     for (const d of Object.keys(old.days)) if (Array.isArray(old.days[d])) assert.deepEqual(mm.days[d].map(e => e && e.id), old.days[d].map(e => e && e.id), f + d);
   }
-  assert.equal(migrate({ days: { a: [] } }).schemaVersion, 12);
+  assert.equal(migrate({ days: { a: [] } }).schemaVersion, 13);
   const s = createStore(fakeStorage(JSON.stringify(v7)));
-  assert.equal(s.state.schemaVersion, 12);
+  assert.equal(s.state.schemaVersion, 13);
   assert.deepEqual(s.state.days, v7.days);
 });
 
@@ -257,7 +257,7 @@ test('D16 backup: nut comes through mergeRestore sanitised; old v7 backups merge
   const old = JSON.parse(JSON.stringify({ ...defaults(), schemaVersion: 7, days: { '2025-04-03': [entry('o', { updatedAt: 3 })] } }));
   const m2 = mergeRestore(local, old);
   assert.ok(!('nut' in m2.days['2025-04-03'][0]));
-  assert.equal(m2.schemaVersion, 12);
+  assert.equal(m2.schemaVersion, 13);
   assert.deepEqual(JSON.parse(JSON.stringify(m)).days['2025-04-02'].find(e => e.id === 'n').nut, FULL);
 });
 

@@ -96,16 +96,16 @@ test('4. legacyFoodId depends only on name, brand, source and barcode; is pure; 
 
 // ---------------------------------------------------------------- schema and migration
 test('5. SCHEMA_VERSION is 11, defaults carry it, STORAGE_KEY is unchanged', () => {
-  assert.equal(SCHEMA_VERSION, 12);
-  assert.equal(defaults().schemaVersion, 12);
+  assert.equal(SCHEMA_VERSION, 13);
+  assert.equal(defaults().schemaVersion, 13);
   assert.equal(STORAGE_KEY, 'macrodiary.v1');
-  assert.match(read('js/core/schema.js'), /export const SCHEMA_VERSION = 12;/);
+  assert.match(read('js/core/schema.js'), /export const SCHEMA_VERSION = 13;/);
 });
 
 test('6. migrate v8 -> v9 gives every saved food its derived id, changes nothing else, is idempotent, and two devices agree', () => {
   const foods = [cf('Cheez-it Duo', { nut: { fiber: 1 } }), cf('Homemade chili', { servingG: 250, updatedAt: 900 }), cf('Rice bar', { barcode: '5012345678900', updatedAt: 800 })];
   const m = migrate(v8({ custom: clone(foods) }));
-  assert.equal(m.schemaVersion, 12);
+  assert.equal(m.schemaVersion, 13);
   assert.deepEqual(m.custom.map(f => f.name), foods.map(f => f.name));
   m.custom.forEach((f, i) => { const { id, ...rest } = f; assert.equal(id, legacyFoodId(foods[i])); assert.deepEqual(rest, foods[i]); });
   assert.equal(m.custom[0].id, DUO);
@@ -123,7 +123,7 @@ test('6b. a save with NO schemaVersion (v1) loaded through the store is migrated
   const v1 = fixture('state');
   assert.equal(v1.schemaVersion, undefined);
   const st = createStore({ getItem: () => JSON.stringify(v1), setItem() {} }).state;
-  assert.equal(st.schemaVersion, 12);
+  assert.equal(st.schemaVersion, 13);
   assert.equal(st.custom[0].id, 'f-ec77da65057a9fea');
   const bk = fixture('backup'), st2 = createStore({ getItem: () => JSON.stringify(bk), setItem() {} }).state;
   assert.equal(st2.custom.find(f => f.name === 'Chili').id, CHILI);
@@ -212,12 +212,12 @@ test('10. migrate stamps foodId on copies of saved foods (entries, recents, reci
 test('11. the fixtures survive: state.json and backup.json migrate with everything intact and the right ids', () => {
   for (const name of ['state', 'backup']) {
     const old = fixture(name), m = migrate(clone(old));
-    assert.equal(m.schemaVersion, 12, name);
+    assert.equal(m.schemaVersion, 13, name);
     assert.equal(m.custom.length, old.custom.length, name);
     old.custom.forEach((f, i) => { const { id, ...rest } = m.custom.find(x => x.name === f.name); assert.deepEqual(rest, f, name + ' ' + f.name); assert.equal(isFoodId(id), true); assert.equal(id, legacyFoodId(f)); });
     assert.deepEqual(Object.keys(m.days).sort(), Object.keys(old.days).sort(), name);
     for (const d of Object.keys(old.days)) if (Array.isArray(old.days[d])) assert.deepEqual(m.days[d].map(e => e && e.id), old.days[d].map(e => e && e.id), name + d);
-    assert.deepEqual(m.goals, { ...old.goals, steps: 10000, sleepH: 8 });
+    assert.deepEqual(m.goals, { ...old.goals, steps: 10000, sleepH: 8, waterCups: 8 });
     assert.deepEqual(m.measures['Oats|Quaker|OFF'].slice(0, 1), old.measures['Oats|Quaker|OFF'].slice(0, 1));
   }
   assert.equal(migrate(clone(fixture('state'))).custom[0].id, 'f-ec77da65057a9fea');

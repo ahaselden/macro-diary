@@ -241,10 +241,10 @@ test('16. dialsHtml escapes everything and never prints NaN', async () => {
 });
 
 // ================================================================ saved shape
-test('17. SCHEMA_VERSION 12, defaults carry the new goals, STORAGE_KEY unchanged', () => {
-  assert.equal(SCHEMA_VERSION, 12); assert.equal(defaults().schemaVersion, 12);
-  assert.deepEqual(defaults().goals, { k: 2000, p: 150, c: 200, f: 65, steps: 10000, sleepH: 8 });
-  assert.equal(STORAGE_KEY, 'macrodiary.v1'); assert.match(read('js/core/schema.js'), /export const SCHEMA_VERSION = 12;/);
+test('17. SCHEMA_VERSION 13, defaults carry the new goals, STORAGE_KEY unchanged', () => {
+  assert.equal(SCHEMA_VERSION, 13); assert.equal(defaults().schemaVersion, 13);
+  assert.deepEqual(defaults().goals, { k: 2000, p: 150, c: 200, f: 65, steps: 10000, sleepH: 8, waterCups: 8 });
+  assert.equal(STORAGE_KEY, 'macrodiary.v1'); assert.match(read('js/core/schema.js'), /export const SCHEMA_VERSION = 13;/);
 });
 
 const oldSave = v => ({ ...clone(defaults()), schemaVersion: v, goals: { k: 1800, p: 120, c: 0, f: 55.5 }, theme: 'dark', weightUnit: 'oz', settingsUpdatedAt: 77, tombstones: { x: 5 },
@@ -254,17 +254,17 @@ const kept = s => JSON.stringify([s.days, s.tombstones, s.settingsUpdatedAt, s.t
 test('18. migration from any older version keeps every value and adds steps 10000 / sleepH 8; store load, save and reload agree', () => {
   for (const v of [1, 2, 5, 8, 9, 10]) {
     const src = oldSave(v), m = migrate(clone(src));
-    assert.equal(m.schemaVersion, 12, 'from ' + v); assert.equal(kept(m), kept(src), 'from ' + v);
-    assert.deepEqual(m.goals, { k: 1800, p: 120, c: 0, f: 55.5, steps: 10000, sleepH: 8 }, 'from ' + v);
+    assert.equal(m.schemaVersion, 13, 'from ' + v); assert.equal(kept(m), kept(src), 'from ' + v);
+    assert.deepEqual(m.goals, { k: 1800, p: 120, c: 0, f: 55.5, steps: 10000, sleepH: 8, waterCups: 8 }, 'from ' + v);
   }
   const st = fakeStorage(JSON.stringify(oldSave(10))), s = createStore(st);
-  assert.equal(s.state.schemaVersion, 12); assert.deepEqual(s.state.goals, { k: 1800, p: 120, c: 0, f: 55.5, steps: 10000, sleepH: 8 });
+  assert.equal(s.state.schemaVersion, 13); assert.deepEqual(s.state.goals, { k: 1800, p: 120, c: 0, f: 55.5, steps: 10000, sleepH: 8, waterCups: 8 });
   s.state.goals.steps = 7000; s.state.goals.sleepH = 7.5; assert.equal(s.save(), true);
-  const saved = JSON.parse(st.m.get(STORAGE_KEY)); assert.equal(saved.schemaVersion, 12); assert.equal(saved.goals.steps, 7000); assert.equal(saved.goals.sleepH, 7.5);
+  const saved = JSON.parse(st.m.get(STORAGE_KEY)); assert.equal(saved.schemaVersion, 13); assert.equal(saved.goals.steps, 7000); assert.equal(saved.goals.sleepH, 7.5);
   const again = createStore(fakeStorage(JSON.stringify(saved)));
-  assert.deepEqual(again.state.goals, { k: 1800, p: 120, c: 0, f: 55.5, steps: 7000, sleepH: 7.5 }); assert.equal(kept(again.state), kept(oldSave(10)));
+  assert.deepEqual(again.state.goals, { k: 1800, p: 120, c: 0, f: 55.5, steps: 7000, sleepH: 7.5, waterCups: 8 }); assert.equal(kept(again.state), kept(oldSave(10)));
   const rep = createStore(fakeStorage()); rep.replace({ goals: { k: 1800, p: 120, c: 150, f: 50 } });
-  assert.deepEqual(rep.state.goals, { k: 1800, p: 120, c: 150, f: 50, steps: 10000, sleepH: 8 });
+  assert.deepEqual(rep.state.goals, { k: 1800, p: 120, c: 150, f: 50, steps: 10000, sleepH: 8, waterCups: 8 });
 });
 
 test('19. sanitising the new goals: valid kept, numeric text converted, anything else falls back to the default', () => {
@@ -274,12 +274,12 @@ test('19. sanitising the new goals: valid kept, numeric text converted, anything
   for (const [v, want] of steps) assert.equal(g({ k: 1, p: 2, c: 3, f: 4, steps: v }).steps, want, 'steps ' + String(v));
   const sleep = [[7.5, 7.5], [0, 0], [24, 24], ['7.5', 7.5], [8, 8], [24.5, 8], [25, 8], [1e9, 8], [-0.1, 8], [NaN, 8], [Infinity, 8], [null, 8], ['', 8], [true, 8], [false, 8], [{}, 8], ['abc', 8], [undefined, 8]];
   for (const [v, want] of sleep) assert.equal(g({ k: 1, p: 2, c: 3, f: 4, sleepH: v }).sleepH, want, 'sleepH ' + String(v));
-  assert.deepEqual(g({ k: 1800, p: 120, c: 0, f: 55.5 }), { k: 1800, p: 120, c: 0, f: 55.5, steps: 10000, sleepH: 8 });
-  assert.deepEqual(g({ k: 1800, p: 120, c: 0, f: 55.5, steps: 5000, sleepH: 6 }), { k: 1800, p: 120, c: 0, f: 55.5, steps: 5000, sleepH: 6 });
-  assert.deepEqual(g({ k: -1, p: 'x', steps: 5000 }), { k: 2000, p: 150, c: 200, f: 65, steps: 5000, sleepH: 8 }, 'bad calorie goals do not disturb the new ones');
+  assert.deepEqual(g({ k: 1800, p: 120, c: 0, f: 55.5 }), { k: 1800, p: 120, c: 0, f: 55.5, steps: 10000, sleepH: 8, waterCups: 8 });
+  assert.deepEqual(g({ k: 1800, p: 120, c: 0, f: 55.5, steps: 5000, sleepH: 6 }), { k: 1800, p: 120, c: 0, f: 55.5, steps: 5000, sleepH: 6, waterCups: 8 });
+  assert.deepEqual(g({ k: -1, p: 'x', steps: 5000 }), { k: 2000, p: 150, c: 200, f: 65, steps: 5000, sleepH: 8, waterCups: 8 }, 'bad calorie goals do not disturb the new ones');
   for (const junk of [null, undefined, 'x', 5, [], true]) assert.deepEqual(sanitize({ goals: junk }).goals, defaults().goals, String(junk));
   const evil = g(JSON.parse('{"k":1,"p":2,"c":3,"f":4,"steps":6000,"sleepH":7,"zzz":9,"__proto__":{"steps":1,"polluted":true}}'));
-  assert.deepEqual(Object.keys(evil).sort(), ['c', 'f', 'k', 'p', 'sleepH', 'steps']); assert.equal(evil.steps, 6000); assert.equal(({}).polluted, undefined); assert.equal(Object.getPrototypeOf(evil), Object.prototype);
+  assert.deepEqual(Object.keys(evil).sort(), ['c', 'f', 'k', 'p', 'sleepH', 'steps', 'waterCups']); assert.equal(evil.steps, 6000); assert.equal(({}).polluted, undefined); assert.equal(Object.getPrototypeOf(evil), Object.prototype);
   assert.equal(JSON.stringify(g({ k: '<img>', steps: '<b>', sleepH: '<i>' })).includes('<'), false);
 });
 
@@ -290,7 +290,7 @@ test('20. sync: the settings record carries steps and sleepH; round trip and con
   const s = defaults(); s.goals = { k: 1800, p: 120, c: 150, f: 50, steps: 7000, sleepH: 7.5 }; touchSettings(s, 170);
   const rec = toRecords(s).find(r => r.key === 'settings');
   assert.equal(rec.value.goals.steps, 7000); assert.equal(rec.value.goals.sleepH, 7.5); assert.equal(rec.updatedAt, 170);
-  assert.deepEqual(applyRecords(defaults(), clone(toRecords(s))).goals, s.goals);
+  assert.deepEqual(applyRecords(defaults(), clone(toRecords(s))).goals, { ...s.goals, waterCups: 8 });
   const a = { ...defaults(), settingsUpdatedAt: 100, goals: { ...defaults().goals, steps: 5000, sleepH: 6 } };
   const b = { ...defaults(), settingsUpdatedAt: 200, goals: { ...defaults().goals, steps: 6000, sleepH: 7 } };
   for (const [x, y] of [[a, b], [b, a]]) { const m = mergeStates(clone(x), clone(y)); assert.equal(m.goals.steps, 6000); assert.equal(m.goals.sleepH, 7); assert.equal(m.settingsUpdatedAt, 200); }
@@ -302,7 +302,7 @@ test('21. sync: an old-device settings record still applies and gets the default
   const oldGoals = { k: 1800, p: 100, c: 100, f: 50 };
   const local = { ...defaults(), settingsUpdatedAt: 50 };
   const out = applyRecords(clone(local), [settingsRec(oldGoals, 100)]);
-  assert.deepEqual(out.goals, { k: 1800, p: 100, c: 100, f: 50, steps: 10000, sleepH: 8 }); assert.equal(out.settingsUpdatedAt, 100);
+  assert.deepEqual(out.goals, { k: 1800, p: 100, c: 100, f: 50, steps: 10000, sleepH: 8, waterCups: 8 }); assert.equal(out.settingsUpdatedAt, 100);
   const custom = { ...defaults(), settingsUpdatedAt: 50, goals: { ...defaults().goals, steps: 7000, sleepH: 7.5 } };
   const o2 = applyRecords(clone(custom), [settingsRec(oldGoals, 100)]);   // spec open question 1: defaults or the receiver's own value are both accepted here
   assert.equal(o2.goals.k, 1800); assert.ok(Number.isFinite(o2.goals.steps) && o2.goals.steps >= 0); assert.ok(Number.isFinite(o2.goals.sleepH) && o2.goals.sleepH >= 0 && o2.goals.sleepH <= 24);
@@ -311,7 +311,7 @@ test('21. sync: an old-device settings record still applies and gets the default
     assert.equal(r.goals.steps, 10000, JSON.stringify(g)); assert.equal(r.goals.sleepH, 8, JSON.stringify(g)); assert.equal(r.goals.k, 1800);
   }
   const pr = applyRecords(clone(local), [{ key: 'settings', value: JSON.parse('{"goals":{"k":1,"p":1,"c":1,"f":1,"__proto__":{"steps":5},"zzz":1},"settingsUpdatedAt":100}'), updatedAt: 100 }]);
-  assert.deepEqual(Object.keys(pr.goals).sort(), ['c', 'f', 'k', 'p', 'sleepH', 'steps']); assert.equal(({}).steps, undefined);
+  assert.deepEqual(Object.keys(pr.goals).sort(), ['c', 'f', 'k', 'p', 'sleepH', 'steps', 'waterCups']); assert.equal(({}).steps, undefined);
   for (const bad of [null, 'x', 5, [], { goals: 'x' }]) assert.doesNotThrow(() => applyRecords(clone(local), [settingsRec(bad, 100)]));
 });
 

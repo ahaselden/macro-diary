@@ -17,7 +17,7 @@ function richState() {
   removeEntry(s, '2024-05-03', 'c1', 140);
   s.custom = [{ id: 'fmine0001', name: 'Mine', brand: '', source: 'custom', per100, updatedAt: 150 }];   // saved-food-ids: saved foods carry an id
   s.measures = { fmine0001: [{ label: 'cup', g: 240, updatedAt: 160 }] };               // ...and their measures are keyed by it
-  s.goals = { k: 1800, p: 120, c: 150, f: 50, steps: 10000, sleepH: 8 }; s.weightUnit = 'oz'; s.useOFF = false;
+  s.goals = { k: 1800, p: 120, c: 150, f: 50, steps: 10000, sleepH: 8, waterCups: 8 }; s.weightUnit = 'oz'; s.useOFF = false;
   touchSettings(s, 170);
   s.theme = 'dark'; s.apiKey = 'secret'; s.recent = ['x'];
   return s;

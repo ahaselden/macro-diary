@@ -16,12 +16,14 @@ import { openAdd } from './add-food.js';
 import { shareResult } from './share-result.js';
 import { cssVar } from './theme.js';
 import { renderDials, initDials } from './dials.js';
+import { renderWater, initWater } from './water.js';
 
 export function renderDiary() {
   const cur = view.day;
   $('#dateLbl').textContent = cur === fmt(new Date()) ? 'Today' : pretty(cur);
   const list = state.days[cur] || [];
   renderDials();
+  renderWater();
   const line = activityLine(activityForDay(state, cur)), al = $('#activityLine');   // read-only, imported from Google Health; never part of the numbers above
   al.textContent = line ? 'From Google Health: ' + line : '';
   al.hidden = !line;
@@ -79,6 +81,7 @@ export function initDiary() {
   $('#prev').onclick = () => { view.day = addDays(view.day, -1); renderDiary(); };
   $('#next').onclick = () => { view.day = addDays(view.day, 1); renderDiary(); };
   $('#todayBtn').onclick = () => { view.day = fmt(new Date()); renderDiary(); };
+  initWater();
   initDials(openDetails);   // the card: tap opens the details, the pencil chooses the dials
   $('#meals').onclick = ev => {
     const cp = ev.target.closest('[data-copy]'), cpm = ev.target.closest('[data-copy-meal]'), del = ev.target.closest('[data-del]'), addBtn = ev.target.closest('[data-add]'), ed = ev.target.closest('[data-edit]');

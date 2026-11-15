@@ -9,23 +9,25 @@
 //   recipe:<id>         value { recipe }
 //   plan:YYYY-MM-DD     value { plan: { updatedAt, slots } }
 //   shopping            value { shopping: { checks, extras } }
+//   water:YYYY-MM-DD    value { water: { updatedAt, halves } }   (half cups of water that day, D58; the settings record also carries waterTap and goals.waterCups)
 //   activity:YYYY-MM-DD value { activity: { updatedAt, source, steps?, sleepMinutes?, sleepStart?, sleepEnd?, workouts? } }   (imported from Google Health, D54; one record per day)
 // Remote data is untrusted: applyRecords ignores anything malformed and never throws.
 // theme / recent never become records; the USDA key only travels in the settings record while the owner's syncApiKey switch is on (D42, reverses part of D10).
 import { mergeStates } from './merge.js';
 import { validEntry } from './entries.js';
-import { sanitize, sanitizeDials, sanitizeRecipe, sanitizePlanDay, sanitizeActivityDay, isDateKey, sanitizeShopping, cleanApiKey, isPlaceholderKey, sanitizeNut, sanitizeBarcode, isFoodId, isSafeKey, withFoodIds } from '../core/schema.js';
+import { sanitize, sanitizeDials, sanitizeWaterTap, sanitizeWaterDay, sanitizeRecipe, sanitizePlanDay, sanitizeActivityDay, isDateKey, sanitizeShopping, cleanApiKey, isPlaceholderKey, sanitizeNut, sanitizeBarcode, isFoodId, isSafeKey, withFoodIds } from '../core/schema.js';
 
 const DAY_KEY = /^day:(\d{4}-\d{2}-\d{2})$/;
 const PLAN_KEY = /^plan:(\d{4}-\d{2}-\d{2})$/;
 const ACTIVITY_KEY = /^activity:(\d{4}-\d{2}-\d{2})$/;
+const WATER_KEY = /^water:(\d{4}-\d{2}-\d{2})$/;
 const RECIPE_KEY = /^recipe:(.{1,80})$/;
 const plain = v => !!v && typeof v === 'object' && !Array.isArray(v);
 const stamp = x => (x && Number.isFinite(x.updatedAt) ? x.updatedAt : 0);
 const maxStamp = list => list.reduce((m, x) => Math.max(m, stamp(x)), 0);
 
 /** Is `key` one of the keys sync understands? */
-export const isSyncKey = key => typeof key === 'string' && (key === 'settings' || key === 'custom' || key === 'measures' || key === 'tombstones' || key === 'shopping' || DAY_KEY.test(key) || PLAN_KEY.test(key) || ACTIVITY_KEY.test(key) || RECIPE_KEY.test(key));
+export const isSyncKey = key => typeof key === 'string' && (key === 'settings' || key === 'custom' || key === 'measures' || key === 'tombstones' || key === 'shopping' || DAY_KEY.test(key) || PLAN_KEY.test(key) || ACTIVITY_KEY.test(key) || WATER_KEY.test(key) || RECIPE_KEY.test(key));
 
 /** The records for the whole state. Settings always; the rest only when non-empty; empty days skipped. */
 export function toRecords(state) {
@@ -34,7 +36,7 @@ export function toRecords(state) {
   const su = Number(state.settingsUpdatedAt) || 0;
   out.push({
     key: 'settings',
-    value: { goals: { ...g }, ...(Array.isArray(state.dials) ? { dials: sanitizeDials(state.dials) } : {}), weightUnit: state.weightUnit, useUSDA: state.useUSDA, useOFF: state.useOFF, syncApiKey: state.syncApiKey === true,
+    value: { goals: { ...g }, waterTap: sanitizeWaterTap(state.waterTap), ...(Array.isArray(state.dials) ? { dials: sanitizeDials(state.dials) } : {}), weightUnit: state.weightUnit, useUSDA: state.useUSDA, useOFF: state.useOFF, syncApiKey: state.syncApiKey === true,
       ...(state.syncApiKey === true && !isPlaceholderKey(cleanApiKey(state.apiKey)) ? { apiKey: cleanApiKey(state.apiKey) } : {}), settingsUpdatedAt: su },
     updatedAt: su,
   });
@@ -58,6 +60,9 @@ export function toRecords(state) {
   if (plain(state.activity)) {
     for (const [day, r] of Object.entries(state.activity).sort(([a], [b]) => (a < b ? -1 : 1))) if (plain(r) && ACTIVITY_KEY.test('activity:' + day)) out.push({ key: 'activity:' + day, value: { activity: r }, updatedAt: stamp(r) });
   }
+  if (plain(state.water)) {
+    for (const [day, r] of Object.entries(state.water).sort(([a], [b]) => (a < b ? -1 : 1))) { const w = isDateKey(day) && sanitizeWaterDay(r); if (w) out.push({ key: 'water:' + day, value: { water: w }, updatedAt: w.updatedAt }); }
+  }
   const sh = state.shopping || {};
   if (Object.keys(sh.checks || {}).length || Object.keys(sh.extras || {}).length) {
     out.push({ key: 'shopping', value: { shopping: sh }, updatedAt: Math.max(maxStamp(Object.values(sh.checks || {})), maxStamp(Object.values(sh.extras || {}))) });
@@ -80,9 +85,11 @@ function toPartial(rec) {
   const v = clone(rec.value);
   const { key } = rec;
   if (key === 'settings') {
+    const hasCups = plain(v.goals) && Object.prototype.hasOwnProperty.call(v.goals, 'waterCups');   // an old device's record has no water goal: this device's stays
     const s = sanitize({ goals: v.goals, weightUnit: v.weightUnit, useUSDA: v.useUSDA, useOFF: v.useOFF, settingsUpdatedAt: v.settingsUpdatedAt });
     const on = v.syncApiKey === true;                       // only a literal true opts in; the key is cleaned and never trusted otherwise
-    return { goals: s.goals, ...(Array.isArray(v.dials) ? { dials: sanitizeDials(v.dials) } : {}), weightUnit: s.weightUnit, useUSDA: s.useUSDA, useOFF: s.useOFF, settingsUpdatedAt: s.settingsUpdatedAt,
+    if (!hasCups) delete s.goals.waterCups;
+    return { goals: s.goals, ...(v.waterTap === 'half' || v.waterTap === 'whole' ? { waterTap: v.waterTap } : {}), ...(Array.isArray(v.dials) ? { dials: sanitizeDials(v.dials) } : {}), weightUnit: s.weightUnit, useUSDA: s.useUSDA, useOFF: s.useOFF, settingsUpdatedAt: s.settingsUpdatedAt,
       syncApiKey: on, ...(on && typeof v.apiKey === 'string' ? { apiKey: cleanApiKey(v.apiKey) } : {}) };
   }
   if (key === 'custom') {
@@ -111,6 +118,10 @@ function toPartial(rec) {
   if (ACTIVITY_KEY.test(key)) {
     const day = key.slice(9), a = isDateKey(day) && sanitizeActivityDay(v.activity);
     return a ? { activity: { [day]: a } } : null;
+  }
+  if (WATER_KEY.test(key)) {
+    const day = key.slice(6), w = isDateKey(day) && sanitizeWaterDay(v.water);
+    return w ? { water: { [day]: w } } : null;
   }
   if (!Array.isArray(v.entries)) return null;
   return { days: { [key.slice(4)]: v.entries.filter(e => plain(e) && validEntry(e)).map(withCleanNut) } };

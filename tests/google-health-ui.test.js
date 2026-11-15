@@ -88,7 +88,7 @@ test('46. layer rules and privacy: domain files are pure, the new modules never 
   const ui = read('js/ui/health-import-view.js');
   assert.doesNotMatch(ui, /state\.\w+\s*=\s*[^;]*\b(file|blob|zip)\b/i, 'the picked file is never put into the state');
   const sch = read('js/core/schema.js');
-  assert.match(sch, /export (function|const) sanitizeActivityDay\b/); assert.match(sch, /activity/); assert.match(sch, /SCHEMA_VERSION = 12;/);
+  assert.match(sch, /export (function|const) sanitizeActivityDay\b/); assert.match(sch, /activity/); assert.match(sch, /SCHEMA_VERSION = 13;/);
   const rec = read('js/domain/sync-records.js'); assert.match(rec, /activity:/); assert.match(read('js/domain/merge.js'), /activity/);
 });
 

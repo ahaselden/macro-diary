@@ -2,6 +2,7 @@
 // and every deletion leaves a tombstone. These MUTATE the `state` they are given (callers then save()).
 // `now` is a parameter so tests are deterministic; callers pass Date.now().
 import { MEALS } from '../core/constants.js';
+import { isDateKey } from '../core/schema.js';
 
 /** Is this a usable diary entry? Loose truthiness (kept identical to the original app): string id, nutrition data, positive grams. */
 export const validEntry = e => e && typeof e.id === 'string' && e.per100 && isFinite(e.grams) && e.grams > 0;
@@ -27,6 +28,13 @@ export function removeEntry(state, day, id, now) {
   if (!state.days[day].length) delete state.days[day];
   (state.tombstones ||= {})[id] = now;
   return true;
+}
+
+/** Set one day's water in half cups (integer 0..80). Keeps a day at 0 (an undo must win a sync). Returns the record, or null (nothing changed) for a bad day, amount or time. */
+export function setWater(state, day, halves, now) {
+  if (!isDateKey(day) || typeof halves !== 'number' || !Number.isInteger(halves) || halves < 0 || halves > 80 || typeof now !== 'number' || !Number.isFinite(now) || now < 0) return null;
+  if (!state.water || typeof state.water !== 'object' || Array.isArray(state.water)) state.water = {};
+  return (state.water[day] = { updatedAt: now, halves });
 }
 
 /** Call after changing goals/units/source toggles so the change wins a sync. */
