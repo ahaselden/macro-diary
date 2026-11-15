@@ -48,6 +48,32 @@ export function formatSteps(n) {
   return Math.round(n).toLocaleString('en-US');
 }
 
+/** Steps in at most 4 characters: '850', '2.3k', '10k', '13k', '1.5M', '99M+'. '' for anything that is not a number of 0 or more. */
+export function shortSteps(n) {
+  if (typeof n !== 'number' || !Number.isFinite(n) || n < 0) return '';
+  if (n < 999.5) return String(Math.round(n));
+  if (n < 9950) return String(Math.floor(n / 100 + 0.5) / 10) + 'k';
+  if (n < 999500) return String(Math.floor(n / 1000 + 0.5)) + 'k';
+  if (n < 9950000) return String(Math.floor(n / 1e5 + 0.5) / 10) + 'M';
+  if (n < 99500000) return String(Math.floor(n / 1e6 + 0.5)) + 'M';
+  return '99M+';
+}
+
+/** Minutes as hours without a unit, in at most 4 characters: '7.9', '8', '11', '99+'. '' for anything that is not a number of 0 or more. */
+export function shortHours(minutes) {
+  if (typeof minutes !== 'number' || !Number.isFinite(minutes) || minutes < 0) return '';
+  const h = minutes / 60;
+  if (h >= 99.5) return '99+';
+  return h < 10 ? String(Math.floor(h * 10 + 0.5) / 10) : String(Math.floor(h + 0.5));
+}
+
+const capNum = n => (n > 99999 ? '99999+' : String(n));   // so the centre text always fits the ring
+/** Centre text of a nutrition ring: the amount left or over; with no goal, what was eaten. */
+function nutCentre(eaten, goal, unit) {
+  if (!goal) return { text: capNum(Math.round(eaten)), caption: unit + ' eaten' };
+  return { text: capNum(Math.abs(Math.round(goal - eaten))), caption: goal - eaten < 0 ? unit + ' over' : unit + ' left' };
+}
+
 const goalOf = v => (isNum(v) && v > 0 ? v : 0);   // text, null and the like are not goals (sanitize makes goals numbers)
 
 /** One ring: `value` null means no data. `fmt(v)` formats value and goal; `unit` follows the numbers. */
@@ -87,14 +113,18 @@ export function dialModel(state, day) {
     makeRing('f', 'Fat', 'var(--f)', t.f, g.f, v => plain(rd(v)), ' g', plain),
   ];
   // the calories ring prints the goal as a plain number (2000), not the rounded eaten value
-  const centreNum = kg ? Math.abs(kg - t.k) : t.k;
-  const centre = { text: String(Math.round(centreNum)), caption: !kg ? 'kcal eaten' : kg - t.k < 0 ? 'kcal over' : 'kcal left' };
+  const centre = nutCentre(t.k, kg, 'kcal');
+  rings[0].centre = centre;
+  rings[1].centre = nutCentre(t.p, goalOf(g.p), 'g'); rings[2].centre = nutCentre(t.c, goalOf(g.c), 'g'); rings[3].centre = nutCentre(t.f, goalOf(g.f), 'g');
   const act = activityForDay(st, day);
   const stepsV = act && isNum(act.steps) && act.steps >= 0 ? act.steps : null;
   const sleepV = act && isNum(act.sleepMinutes) && act.sleepMinutes > 0 ? act.sleepMinutes : null;
   const sleepGoal = isNum(g.sleepH) ? g.sleepH * 60 : 0;
   const steps = makeRing('steps', 'Steps', 'var(--ring-steps)', stepsV, g.steps, formatSteps, '');
   const sleep = makeRing('sleep', 'Sleep', 'var(--ring-sleep)', sleepV, sleepGoal, formatSleep, '');
+  const stepsGoal = goalOf(g.steps);
+  steps.centre = stepsV === null ? { text: '--', caption: 'no data' } : { text: stepsGoal ? shortSteps(stepsV) + '/' + shortSteps(stepsGoal) : shortSteps(stepsV), caption: 'steps' };
+  sleep.centre = sleepV === null ? { text: '--', caption: 'no data' } : { text: sleepGoal > 0 ? shortHours(sleepV) + '/' + shortHours(sleepGoal) + 'h' : shortHours(sleepV) + 'h', caption: 'sleep' };
   const label = `Nutrition: ${rings[0].text.replace(' / ', ' of ')} eaten, ${rings[1].label}, ${rings[2].label}, ${rings[3].label}`;
   return { nutrition: { label, centre, rings }, steps, sleep, selected: normalizeDials(st.dials), rings: { k: rings[0], p: rings[1], c: rings[2], f: rings[3], steps, sleep }, rows: rings };
 }
