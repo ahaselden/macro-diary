@@ -37,7 +37,7 @@ export default async ({ page, url, check, screenshot }) => {
   const start = async (days = {}) => {
     await page.goto(url + '/index.html');
     await page.evaluate(s => localStorage.setItem('macrodiary.v1', JSON.stringify(s)), seed(days));
-    await page.reload(); await page.waitForSelector('#summary');
+    await page.reload(); await page.waitForSelector('#dialsOpen');
   };
   const addFood = async (query, grams) => {
     await page.click('[data-add="Lunch"]');
@@ -85,7 +85,7 @@ export default async ({ page, url, check, screenshot }) => {
 
   // C2
   await page.click('[data-tab="diary"]').catch(() => {});
-  await page.goto(url + '/index.html'); await page.waitForSelector('#summary');
+  await page.goto(url + '/index.html'); await page.waitForSelector('#dialsOpen');
   await addFood('Plain thing', 100);
   await openExport();
   const e2 = await grab(() => page.click('#xEntries'));
@@ -114,7 +114,7 @@ export default async ({ page, url, check, screenshot }) => {
   check(jp && !('nutTotal' in jp) && !('nut' in jp), 'C4: Plain thing has no nutTotal and no nut, keys ' + (jp && Object.keys(jp)));
 
   // C6 (state of C2, still on the export screen)
-  await page.reload(); await page.waitForSelector('#summary');
+  await page.reload(); await page.waitForSelector('#dialsOpen');
   await openExport();
   const ths = await page.locator('#xTable th').allInnerTexts();
   const stats = await page.innerText('#xStats'), table = await page.innerText('#xTable');

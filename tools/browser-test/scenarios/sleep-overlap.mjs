@@ -34,7 +34,7 @@ export default async ({ page, url, check, screenshot }) => {
     await page.waitForFunction(() => { const t = document.getElementById('ghStatus').textContent.trim(); return t && !/^Reading/.test(t); }, null, { timeout: 30000 });
   };
   const diaryPrev = async () => {
-    await page.click('[data-tab="diary"]'); await page.waitForSelector('#summary', { state: 'visible' });
+    await page.click('[data-tab="diary"]'); await page.waitForSelector('#dialsOpen', { state: 'visible' });
     await page.click('#todayBtn');
     await page.evaluate(() => document.getElementById('prev').click());
   };

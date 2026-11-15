@@ -22,7 +22,7 @@ export default async ({ page, url, check, screenshot }) => {
     await page.goto(url + '/index.html');
     await page.evaluate(s => localStorage.setItem('macrodiary.v1', JSON.stringify(s)), seed(days));
     await page.reload();
-    await page.waitForSelector('#summary');
+    await page.waitForSelector('#dialsOpen');
   };
   const isOpen = () => page.evaluate(() => document.getElementById('dlg').open);
   const body = async () => (await page.innerText('#dBody')).replace(/[ \t]+/g, ' ');
@@ -37,8 +37,8 @@ export default async ({ page, url, check, screenshot }) => {
 
   // C1 + C2 + layout
   await start({ [TODAY]: [OATS, COLA] });
-  check(await page.getAttribute('#summary', 'role') === 'button' && await page.getAttribute('#summary', 'tabindex') === '0', 'C2: #summary has role=button and tabindex=0');
-  await page.click('#summary');
+  check(await page.getAttribute('#dialsOpen', 'role') === 'button' && await page.getAttribute('#dialsOpen', 'tabindex') === '0', 'C2: #dialsOpen has role=button and tabindex=0');
+  await page.click('#dialsOpen');
   check(await isOpen(), 'C1: click opens the dialog');
   let t = await body();
   check(t.includes('Nutrition facts') && t.includes('Today'), 'C1: has "Nutrition facts" and today, got ' + t.slice(0, 80));
@@ -63,20 +63,20 @@ export default async ({ page, url, check, screenshot }) => {
   // C2 keyboard: Tab reachability, Enter, Space
   await page.focus('body');
   let reached = false;
-  for (let i = 0; i < 30 && !reached; i++) { await page.keyboard.press('Tab'); reached = await page.evaluate(() => document.activeElement && document.activeElement.id === 'summary'); }
-  check(reached, 'C2: #summary reachable with Tab');
+  for (let i = 0; i < 30 && !reached; i++) { await page.keyboard.press('Tab'); reached = await page.evaluate(() => document.activeElement && document.activeElement.id === 'dialsOpen'); }
+  check(reached, 'C2: #dialsOpen reachable with Tab');
   await page.keyboard.press('Enter');
   check(await isOpen(), 'C2: Enter opens');
   await page.click('#dClose');
   check(!(await isOpen()), 'C2: close button closes');
-  await page.focus('#summary'); await page.keyboard.press('Space');
+  await page.focus('#dialsOpen'); await page.keyboard.press('Space');
   check(await isOpen(), 'C2: Space opens');
   await page.keyboard.press('Escape');
   check(!(await isOpen()) && await page.locator('#meals .entry').count() === 2, 'C2: closed again, diary unchanged');
 
   // C3
   await start({ [TODAY]: [COLA] });
-  await page.click('#summary');
+  await page.click('#dialsOpen');
   t = await body();
   const nr = t.match(/Not recorded/g) || [];
   check(nr.length === 5, 'C3: five "Not recorded", got ' + nr.length);
@@ -88,7 +88,7 @@ export default async ({ page, url, check, screenshot }) => {
 
   // C4
   await start({});
-  await page.click('#summary');
+  await page.click('#dialsOpen');
   t = await body();
   check(await isOpen(), 'C4: opens on an empty day');
   check(/^0\b/.test((await row('Calories')).replace(/^Calories\s*/, '')), 'C4: calories 0, got ' + await row('Calories'));
@@ -97,7 +97,7 @@ export default async ({ page, url, check, screenshot }) => {
 
   // C5
   await start({ [TODAY]: [ent('x', 'Thing', { k: 200, p: 20, c: 30, f: 10 }, 100)] });
-  await page.click('#summary');
+  await page.click('#dialsOpen');
   const r5 = { k: await row('Calories'), p: await row('Protein'), c: await row('Carbs'), f: await row('Fat') };
   console.log('C5 rows: ' + JSON.stringify(r5));
   check(/200 kcal of 2000 kcal \(10%\)/.test(r5.k), 'C5: Calories 200 of 2000 (10%), got ' + r5.k);
@@ -108,7 +108,7 @@ export default async ({ page, url, check, screenshot }) => {
   // C6
   const evil = '<img src=x onerror=alert(1)>';
   await start({ [TODAY]: [ent('h', evil, { k: 100, p: 1, c: 1, f: 1 }, 100, { fiber: '9', sodium: -5, sugars: 1e308 })] });
-  await page.click('#summary');
+  await page.click('#dialsOpen');
   t = await body();
   check(dialogs.length === 0, 'C6: no alert dialog fired');
   check(await page.locator('#dBody img, #meals img').count() === 0, 'C6: no img element injected');
@@ -119,7 +119,7 @@ export default async ({ page, url, check, screenshot }) => {
   // C7
   await start({ [TODAY]: [OATS], [YEST]: [ent('y', 'Rice', { k: 130, p: 2.7, c: 28, f: 0.3 }, 200, { fiber: 1, sodium: 1 }, 'Lunch')] });
   await page.click('#prev');
-  await page.click('#summary');
+  await page.click('#dialsOpen');
   t = await body();
   const yl = (await page.innerText('#dBody .muted')).trim();
   console.log('C7 header: ' + yl);
@@ -139,7 +139,7 @@ export default async ({ page, url, check, screenshot }) => {
   await page.fill('#amt', '100');
   await page.click('#addGo');
   await page.waitForSelector('#meals .entry');
-  await page.click('#summary');
+  await page.click('#dialsOpen');
   const r8 = {}; for (const l of labels) r8[l] = await row(l);
   console.log('C8 rows: ' + JSON.stringify(r8));
   const exp = { Fiber: '7 g', Sugars: '12 g', 'Saturated fat': '3 g', Sodium: '500 mg', Cholesterol: '20 mg' };

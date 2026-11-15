@@ -24,7 +24,7 @@ export default async ({ page, url, check, screenshot }) => {
   };
   const card = m => page.locator('#meals .card').filter({ has: page.locator('h2', { hasText: new RegExp('^' + m + '$') }) });
   const rows = (m, name) => card(m).locator('.entry').filter({ hasText: name });
-  const total = async () => (await page.locator('#summary .big').first().textContent()).trim();
+  const total = async () => (await page.locator('#dials [data-row=k] b').first().textContent()).trim().split(' / ')[0];
   const toastText = async () => (await page.locator('#toast').textContent()).trim();
   const dlgOpen = () => page.evaluate(() => document.getElementById('dlg').open);
   const nRows = () => page.locator('#meals .entry').count();
