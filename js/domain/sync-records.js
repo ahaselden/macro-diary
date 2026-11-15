@@ -15,7 +15,7 @@
 // theme / recent never become records; the USDA key only travels in the settings record while the owner's syncApiKey switch is on (D42, reverses part of D10).
 import { mergeStates } from './merge.js';
 import { validEntry } from './entries.js';
-import { sanitize, sanitizeDials, sanitizeWaterTap, sanitizeWaterDay, sanitizeRecipe, sanitizePlanDay, sanitizeActivityDay, isDateKey, sanitizeShopping, cleanApiKey, isPlaceholderKey, sanitizeNut, sanitizeBarcode, isFoodId, isSafeKey, withFoodIds } from '../core/schema.js';
+import { sanitize, sanitizeDials, sanitizeWaterCups, sanitizeWaterTap, sanitizeWaterDay, sanitizeRecipe, sanitizePlanDay, sanitizeActivityDay, isDateKey, sanitizeShopping, cleanApiKey, isPlaceholderKey, sanitizeNut, sanitizeBarcode, isFoodId, isSafeKey, withFoodIds } from '../core/schema.js';
 
 const DAY_KEY = /^day:(\d{4}-\d{2}-\d{2})$/;
 const PLAN_KEY = /^plan:(\d{4}-\d{2}-\d{2})$/;
@@ -85,7 +85,7 @@ function toPartial(rec) {
   const v = clone(rec.value);
   const { key } = rec;
   if (key === 'settings') {
-    const hasCups = plain(v.goals) && Object.prototype.hasOwnProperty.call(v.goals, 'waterCups');   // an old device's record has no water goal: this device's stays
+    const hasCups = plain(v.goals) && sanitizeWaterCups(v.goals.waterCups) === v.goals.waterCups;   // an old device's record has no water goal: this device's stays
     const s = sanitize({ goals: v.goals, weightUnit: v.weightUnit, useUSDA: v.useUSDA, useOFF: v.useOFF, settingsUpdatedAt: v.settingsUpdatedAt });
     const on = v.syncApiKey === true;                       // only a literal true opts in; the key is cleaned and never trusted otherwise
     if (!hasCups) delete s.goals.waterCups;

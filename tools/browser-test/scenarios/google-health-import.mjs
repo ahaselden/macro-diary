@@ -223,7 +223,7 @@ export default async ({ page, url, check, screenshot }) => {
     const seed = seed9({ days: { [D(3)]: [{ ...ent, id: 'a' }] } });
     await start(seed); await settings(); await run('takeout.zip', zip);
     const s = await stored();
-    check(s.schemaVersion === 12 && JSON.stringify(s.days[D(3)]) === JSON.stringify(seed.days[D(3)]), 'C11b: version ' + s.schemaVersion);
+    check(s.schemaVersion === 13 && JSON.stringify(s.days[D(3)]) === JSON.stringify(seed.days[D(3)]), 'C11b: version ' + s.schemaVersion);
   });
 
   // X1: progress text and cancel on a larger zip (made-up minute rows, 40 monthly files, scope all)

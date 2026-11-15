@@ -34,7 +34,7 @@ export function waterHtml(model) {
 export function renderWater(focusCup) {
   const el = $('#water'); if (!el) return;
   el.innerHTML = waterHtml(waterModel(state, view.day));
-  if (focusCup) el.querySelector(`[data-cup="${Number(focusCup)}"]`)?.focus();
+  if (focusCup) { const last = el.querySelectorAll('[data-cup]').length; el.querySelector(`[data-cup="${Math.min(Number(focusCup), last)}"]`)?.focus(); }   // an emptied over-goal cup is gone: focus moves to the last cup
 }
 
 /** Wire the card once: a tap on a cup changes that day's total through setWater. */

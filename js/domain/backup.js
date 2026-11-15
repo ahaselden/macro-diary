@@ -1,7 +1,7 @@
 // Pure backup-restore logic. No DOM, storage or globals.
 import { foodKey } from './food.js';
 import { mergeStates } from './merge.js';
-import { migrate } from '../core/schema.js';
+import { migrate, sanitizeWaterCups } from '../core/schema.js';
 
 import { validEntry } from './entries.js';
 export { validEntry };   // the rule lives in entries.js; re-exported for the restore dialog
@@ -29,7 +29,7 @@ export function mergeRestore(state, backup) {
   const incoming = migrate(structuredClone(backup));
   if (!hadDials) delete incoming.dials;
   const raw = backup && typeof backup === 'object' && !Array.isArray(backup) ? backup : {};   // a backup from before water (or with junk) keeps this device's water goal and tap mode
-  if (!(raw.goals && typeof raw.goals === 'object' && Number.isInteger(raw.goals.waterCups))) delete incoming.goals.waterCups;
+  if (!(raw.goals && typeof raw.goals === 'object' && sanitizeWaterCups(raw.goals.waterCups) === raw.goals.waterCups)) delete incoming.goals.waterCups;
   if (raw.waterTap !== 'half' && raw.waterTap !== 'whole') delete incoming.waterTap;
   const merged = mergeStates(state, incoming, { preferLocal: true });
   const seen = new Set((merged.recent || []).map(foodKey));
