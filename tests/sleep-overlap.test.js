@@ -59,7 +59,7 @@ test('4. overlap is transitive: A-B and B-C overlap (A-C only touch), so all thr
     { '2026-11-24': { sleepMinutes: 220, sleepStart: '2026-11-24T04:00:00Z', sleepEnd: '2026-11-24T08:00:00Z' } });
 });
 
-test('5. the kept record of a cluster: most minutes, then the longer period, then the later sleep_last_updated, then the larger sleep_id (string compare), then the later end; never the row order', async () => {
+test('5. the kept record of a cluster WHEN sleep_last_updated does not decide (see sleep-latest-update.test.js): most minutes, then the longer period, then the larger sleep_id (string compare), then the later end; never the row order', async () => {
   const day = '2026-11-25';
   const exp = (mins, s, e) => ({ [day]: { sleepMinutes: mins, sleepStart: `${day}T${s}:00Z`, sleepEnd: `${day}T${e}:00Z` } });
   const t = (h, m) => `${day}T${h}:${m}:00Z`;
@@ -67,7 +67,7 @@ test('5. the kept record of a cluster: most minutes, then the longer period, the
   await same([R('z', 380, t('01', '00'), t('08', '30')), R('a', 400, t('01', '00'), t('08', '00'))], fixed(0), exp(400, '01:00', '08:00'));
   // same minutes: the longer period (B 450 > A 420) wins even though its id is smaller
   await same([R('z', 400, t('01', '00'), t('08', '00')), R('a', 400, t('01', '00'), t('08', '30'))], fixed(0), exp(400, '01:00', '08:30'));
-  // same minutes, same period (420), different position: the later sleep_last_updated wins
+  // same minutes, same period (420), different position: the later sleep_last_updated wins (now the first rule; still true)
   const lu = (id, s, e, u) => R(id, 400, t(s, '00'), t(e, '00'), { sleep_last_updated: u });
   await same([lu('b', '01', '08', '2026-11-26T01:00:00Z'), lu('a', '02', '09', '2026-11-26T02:00:00Z')], fixed(0), exp(400, '02:00', '09:00'));
   await same([lu('b', '01', '08', '2026-11-26T03:00:00Z'), lu('a', '02', '09', '2026-11-26T02:00:00Z')], fixed(0), exp(400, '01:00', '08:00'));
