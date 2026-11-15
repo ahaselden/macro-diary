@@ -32,12 +32,12 @@ test('44. index.html: the Import from Google Health card sits between Food datab
   assert.match(tag(card, 'ghStatus'), /aria-live="polite"/);
 });
 
-test('44b. index.html: #activityLine is a hidden muted line in the Diary between #summary and #meals; the existing Settings cards and ids are still there once', () => {
+test('44b. index.html: #activityLine is a hidden muted line in the Diary between #dials and #meals; the existing Settings cards and ids are still there once', () => {
   const diary = html.slice(html.indexOf('id="v-diary"'), html.indexOf('</section>', html.indexOf('id="v-diary"')));
-  const a = diary.indexOf('id="summary"'), b = diary.indexOf('id="activityLine"'), c = diary.indexOf('id="meals"');
-  assert.ok(a > -1 && b > a && c > b, 'order summary, activityLine, meals');
+  const a = diary.indexOf('id="dials"'), b = diary.indexOf('id="activityLine"'), c = diary.indexOf('id="meals"');
+  assert.ok(a > -1 && b > a && c > b, 'order dials, activityLine, meals');
   const t = tag(diary, 'activityLine'); assert.match(t, /\bhidden\b/); assert.match(t, /class="[^"]*\bmuted\b/);
-  assert.match(tag(diary, 'summary'), /role="button"/, '#summary is still the keyboard button for the details');
+  assert.match(read('js/ui/dials.js'), /id="dialsOpen" role="button"/, 'the details button is drawn by dials.js (was #summary)');
   for (const id of ['wUnit', 'gK', 'srcUSDA', 'keyEdit', 'syncCard', 'syncBox', 'xKind', 'bkExport', 'bkImport', 'bkFile', 'wipe', 'themeToggle']) assert.equal(count(html, `id="${id}"`), 1, '#' + id);
   assert.ok(settings.lastIndexOf('<div class="card') > settings.indexOf('<h2>Backup</h2>') - 60, 'Backup is still the last card');
 });
@@ -50,7 +50,7 @@ test('45. diary.js shows the line (textContent, "From Google Health: ") and list
   assert.match(src, /activityLine['"]\)[\s\S]{0,400}textContent|textContent[\s\S]{0,200}From Google Health/, 'the line is set with textContent');
   assert.match(src, /Workouts/); assert.match(src, /Workouts[\s\S]{0,900}esc\(/, 'workout names go through esc()');
   assert.match(src, /\bmin\b/); assert.match(src, /\bkcal\b/);
-  assert.match(src, /id="summary"|#summary/, 'the summary code is still there');
+  assert.match(src, /renderDials\(\)/, 'the card is drawn by dials.js (was #summary)');
 });
 
 test('45b. the Settings view module: exports initHealthImport, uses the services and the domain, writes text safely, never keeps the file, saves and refreshes the Diary', () => {
@@ -88,7 +88,7 @@ test('46. layer rules and privacy: domain files are pure, the new modules never 
   const ui = read('js/ui/health-import-view.js');
   assert.doesNotMatch(ui, /state\.\w+\s*=\s*[^;]*\b(file|blob|zip)\b/i, 'the picked file is never put into the state');
   const sch = read('js/core/schema.js');
-  assert.match(sch, /export (function|const) sanitizeActivityDay\b/); assert.match(sch, /activity/); assert.match(sch, /SCHEMA_VERSION = 11;/);
+  assert.match(sch, /export (function|const) sanitizeActivityDay\b/); assert.match(sch, /activity/); assert.match(sch, /SCHEMA_VERSION = 12;/);
   const rec = read('js/domain/sync-records.js'); assert.match(rec, /activity:/); assert.match(read('js/domain/merge.js'), /activity/);
 });
 

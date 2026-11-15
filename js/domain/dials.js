@@ -4,6 +4,7 @@
 import { rd } from '../core/format.js';
 import { totals } from './nutrition.js';
 import { activityForDay } from './activity.js';
+import { DIAL_KEYS, sanitizeDials } from '../core/schema.js';
 
 const isNum = v => typeof v === 'number' && Number.isFinite(v);
 const isPlain = v => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -61,6 +62,17 @@ function makeRing(key, name, color, value, goal, fmt, unit, fmtGoal = fmt) {
 
 const plain = n => String(Number(n));
 
+/** The chosen dials as a clean list (known keys, once each, fixed order; [] allowed; not a list gives ['k']). Always a new array. */
+export const normalizeDials = list => sanitizeDials(list);
+
+/** Add (`on` true), remove (`on` false) or flip (anything else) one dial. A new array in the fixed order; an unknown key changes nothing. */
+export function toggleDial(list, key, on) {
+  const base = normalizeDials(list);
+  if (typeof key !== 'string' || !DIAL_KEYS.includes(key)) return base;
+  const has = base.includes(key), want = on === true ? true : on === false ? false : !has;
+  return DIAL_KEYS.filter(k => (k === key ? want : base.includes(k)));
+}
+
 /** The whole dial for a day as plain data (see docs/specs/dials.md). Never throws, never changes `state`. */
 export function dialModel(state, day) {
   const st = isPlain(state) ? state : {}, g = isPlain(st.goals) ? st.goals : {};
@@ -84,5 +96,5 @@ export function dialModel(state, day) {
   const steps = makeRing('steps', 'Steps', 'var(--ring-steps)', stepsV, g.steps, formatSteps, '');
   const sleep = makeRing('sleep', 'Sleep', 'var(--ring-sleep)', sleepV, sleepGoal, formatSleep, '');
   const label = `Nutrition: ${rings[0].text.replace(' / ', ' of ')} eaten, ${rings[1].label}, ${rings[2].label}, ${rings[3].label}`;
-  return { nutrition: { label, centre, rings }, steps, sleep };
+  return { nutrition: { label, centre, rings }, steps, sleep, selected: normalizeDials(st.dials), rings: { k: rings[0], p: rings[1], c: rings[2], f: rings[3], steps, sleep }, rows: rings };
 }
