@@ -1,7 +1,7 @@
 // Conversion between the whole app state and the per-key RECORDS that device sync moves around. Pure.
 //
 // A record is { key, value, updatedAt }. Keys:
-//   settings            value { goals, weightUnit, useUSDA, useOFF, settingsUpdatedAt }
+//   settings            value { goals, dials?, weightUnit, useUSDA, useOFF, settingsUpdatedAt }
 //   custom              value { custom: [foods] }            (each saved food carries its `id`; an old-app device sends none and merge derives it, D53)
 //   measures            value { measures: { savedFoodId | foodKey: [{label,g,updatedAt}] } }
 //   tombstones          value { tombstones: { id: deletedAtMs } }
@@ -14,7 +14,7 @@
 // theme / recent never become records; the USDA key only travels in the settings record while the owner's syncApiKey switch is on (D42, reverses part of D10).
 import { mergeStates } from './merge.js';
 import { validEntry } from './entries.js';
-import { sanitize, sanitizeRecipe, sanitizePlanDay, sanitizeActivityDay, isDateKey, sanitizeShopping, cleanApiKey, isPlaceholderKey, sanitizeNut, sanitizeBarcode, isFoodId, isSafeKey, withFoodIds } from '../core/schema.js';
+import { sanitize, sanitizeDials, sanitizeRecipe, sanitizePlanDay, sanitizeActivityDay, isDateKey, sanitizeShopping, cleanApiKey, isPlaceholderKey, sanitizeNut, sanitizeBarcode, isFoodId, isSafeKey, withFoodIds } from '../core/schema.js';
 
 const DAY_KEY = /^day:(\d{4}-\d{2}-\d{2})$/;
 const PLAN_KEY = /^plan:(\d{4}-\d{2}-\d{2})$/;
@@ -34,7 +34,7 @@ export function toRecords(state) {
   const su = Number(state.settingsUpdatedAt) || 0;
   out.push({
     key: 'settings',
-    value: { goals: { ...g }, weightUnit: state.weightUnit, useUSDA: state.useUSDA, useOFF: state.useOFF, syncApiKey: state.syncApiKey === true,
+    value: { goals: { ...g }, ...(Array.isArray(state.dials) ? { dials: sanitizeDials(state.dials) } : {}), weightUnit: state.weightUnit, useUSDA: state.useUSDA, useOFF: state.useOFF, syncApiKey: state.syncApiKey === true,
       ...(state.syncApiKey === true && !isPlaceholderKey(cleanApiKey(state.apiKey)) ? { apiKey: cleanApiKey(state.apiKey) } : {}), settingsUpdatedAt: su },
     updatedAt: su,
   });
@@ -82,7 +82,7 @@ function toPartial(rec) {
   if (key === 'settings') {
     const s = sanitize({ goals: v.goals, weightUnit: v.weightUnit, useUSDA: v.useUSDA, useOFF: v.useOFF, settingsUpdatedAt: v.settingsUpdatedAt });
     const on = v.syncApiKey === true;                       // only a literal true opts in; the key is cleaned and never trusted otherwise
-    return { goals: s.goals, weightUnit: s.weightUnit, useUSDA: s.useUSDA, useOFF: s.useOFF, settingsUpdatedAt: s.settingsUpdatedAt,
+    return { goals: s.goals, ...(Array.isArray(v.dials) ? { dials: sanitizeDials(v.dials) } : {}), weightUnit: s.weightUnit, useUSDA: s.useUSDA, useOFF: s.useOFF, settingsUpdatedAt: s.settingsUpdatedAt,
       syncApiKey: on, ...(on && typeof v.apiKey === 'string' ? { apiKey: cleanApiKey(v.apiKey) } : {}) };
   }
   if (key === 'custom') {

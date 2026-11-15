@@ -57,7 +57,7 @@ export default async ({ page, url, check, screenshot }) => {
     await page.reload(); await page.waitForSelector('.tabs');
   };
   const settings = async () => { await page.click('[data-tab="settings"]'); await page.waitForSelector('#ghFile', { state: 'visible' }); };
-  const diary = async () => { await page.click('[data-tab="diary"]'); await page.waitForSelector('#summary', { state: 'visible' }); };
+  const diary = async () => { await page.click('[data-tab="diary"]'); await page.waitForSelector('#dialsOpen', { state: 'visible' }); };
   const stored = () => page.evaluate(() => JSON.parse(localStorage.getItem('macrodiary.v1')));
   const status = async () => (await page.locator('#ghStatus').textContent()).trim();
   const run = async (name, buf, scope) => {
@@ -68,7 +68,7 @@ export default async ({ page, url, check, screenshot }) => {
   };
   const line = async () => { const l = page.locator('#activityLine'); return (await l.isVisible()) ? (await l.textContent()).trim() : ''; };
   const back = async n => { await page.evaluate(k => { for (let i = 0; i < k; i++) document.getElementById('prev').click(); }, n); };
-  const summaryText = async () => (await page.locator('#summary').innerText()).replace(/\s+/g, ' ').trim();
+  const summaryText = async () => (await page.locator('#dials').innerText()).replace(/\s+/g, ' ').trim();
   const zip = testZip();
   const SUM1 = 'Imported 2 days of steps, 1 day of sleep, 2 workouts. 1 day older than a year was left out.';
   const LINE1 = 'From Google Health: Steps 5,200 · Sleep 7 h 45 min · 2 workouts';
@@ -140,7 +140,7 @@ export default async ({ page, url, check, screenshot }) => {
   await item('C6', async () => {
     await start(); await settings(); await run('takeout.zip', zip);
     await diary(); await back(1);
-    await page.click('#summary'); await page.waitForSelector('#dlg[open]');
+    await page.click('#dialsOpen'); await page.waitForSelector('#dlg[open]');
     const txt = await page.locator('#dBody').innerText();
     check(await page.locator('#dBody h2', { hasText: /^Workouts$/ }).count() === 1, 'C6: Workouts heading');
     check(txt.includes('Walk · 45 min · 210 kcal'), 'C6: Walk row; dialog text ' + JSON.stringify(txt));
@@ -223,7 +223,7 @@ export default async ({ page, url, check, screenshot }) => {
     const seed = seed9({ days: { [D(3)]: [{ ...ent, id: 'a' }] } });
     await start(seed); await settings(); await run('takeout.zip', zip);
     const s = await stored();
-    check(s.schemaVersion === 11 && JSON.stringify(s.days[D(3)]) === JSON.stringify(seed.days[D(3)]), 'C11b: version ' + s.schemaVersion);
+    check(s.schemaVersion === 12 && JSON.stringify(s.days[D(3)]) === JSON.stringify(seed.days[D(3)]), 'C11b: version ' + s.schemaVersion);
   });
 
   // X1: progress text and cancel on a larger zip (made-up minute rows, 40 monthly files, scope all)

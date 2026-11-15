@@ -23,7 +23,7 @@ export default async ({ page, url, check, screenshot }) => {
   const start = async (days = {}, custom = []) => {
     await page.goto(url + '/index.html');
     await page.evaluate(s => localStorage.setItem('macrodiary.v1', JSON.stringify(s)), seed(days, custom));
-    await page.reload(); await page.waitForSelector('#summary');
+    await page.reload(); await page.waitForSelector('#dialsOpen');
   };
   const dlgText = async () => (await page.innerText('#dBody')).replace(/[ \t]+/g, ' ');
   const facts = async () => (await page.innerText('#itemFacts')).replace(/\s+/g, ' ');
@@ -133,7 +133,7 @@ export default async ({ page, url, check, screenshot }) => {
   // C8
   await start(); await openAmount('Test bar', 'Test bar');
   await page.selectOption('#unit', 'w:g'); await setAmt(100); await page.click('#addGo'); await page.waitForSelector('#meals .entry');
-  await page.click('#summary');
+  await page.click('#dialsOpen');
   const dd = {};
   for (const l of LABELS) dd[l] = (await page.locator('#dBody .row').filter({ has: page.locator('span', { hasText: new RegExp('^' + l + '$') }) }).first().innerText()).replace(/\s+/g, ' ');
   console.log('C8 day rows: ' + JSON.stringify(dd));
@@ -171,7 +171,7 @@ export default async ({ page, url, check, screenshot }) => {
   // C12: hostile code
   const evil = '<img src=x onerror=alert(1)>';
   await start({ [TODAY]: [{ id: 'e', meal: 'Lunch', name: 'Odd', brand: '', source: '', per100: { k: 100, p: 1, c: 1, f: 1 }, grams: 100, unitKey: 'w:g', amount: 100, barcode: evil }] });
-  await page.reload(); await page.waitForSelector('#summary');
+  await page.reload(); await page.waitForSelector('#dialsOpen');
   await page.locator('#meals .entry', { hasText: 'Odd' }).click(); await page.waitForSelector('#amt');
   t = await dlgText();
   check(!/Barcode/.test(t), 'C12: no Barcode line');

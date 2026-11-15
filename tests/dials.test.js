@@ -225,25 +225,6 @@ test('14. dialModel survives hostile state: no throw, no mutation, only fixed wo
 });
 
 // ================================================================ ui: dialsHtml
-test('15. dialsHtml: svg with viewBox, a label and visible text for each ring, red only when over, "no data" text', async () => {
-  const { dialModel } = await DIALS(); const { dialsHtml } = await UI();
-  const model = dialModel(mk(), D), html = dialsHtml(model);
-  assert.equal(typeof html, 'string');
-  assert.match(html, /<svg\b[^>]*\bviewBox="/);
-  for (const r of rings(model)) { assert.ok(html.includes(`aria-label="${r.label}"`), 'aria-label ' + r.label); assert.ok(html.includes(r.text), 'text ' + r.text); }
-  for (const t of ['800 / 2000 kcal', '80 / 150 g', '160 / 200 g', '40 / 65 g', '6,120 / 10,000', '7 h 53 min / 8 h', 'kcal left']) assert.ok(html.includes(t), t);
-  assert.ok(html.includes('1200'));
-  for (const v of ['var(--kcal)', 'var(--p)', 'var(--c)', 'var(--f)', 'var(--ring-steps)', 'var(--ring-sleep)']) assert.ok(html.includes(v), v);
-  assert.equal(html.includes('var(--over)'), false, 'nothing is over');
-  assert.ok(html.includes('stroke-dasharray'));
-  assert.doesNotMatch(html, /NaN|Infinity|undefined/);
-  const over = dialsHtml(dialModel(mk({ activity: { [D]: { updatedAt: 1, source: 'google-health', steps: 12000, sleepMinutes: 473 } } }), D));
-  assert.ok(over.includes('var(--over)'), 'an over-goal ring is drawn in --over');
-  assert.ok(over.includes('Steps: 12,000 of 10,000, over goal'));
-  const none = dialsHtml(dialModel(mk({ activity: {} }), D));
-  assert.ok(none.includes('no data')); assert.ok(none.includes('aria-label="Steps: no data"')); assert.ok(none.includes('aria-label="Sleep: no data"')); assert.doesNotMatch(none, /NaN|Infinity/);
-});
-
 test('16. dialsHtml escapes everything and never prints NaN', async () => {
   const { dialModel } = await DIALS(); const { dialsHtml } = await UI();
   const bad = '<img src=x onerror=alert(1)>', q = '"onmouseover="x';
@@ -260,10 +241,10 @@ test('16. dialsHtml escapes everything and never prints NaN', async () => {
 });
 
 // ================================================================ saved shape
-test('17. SCHEMA_VERSION 11, defaults carry the new goals, STORAGE_KEY unchanged', () => {
-  assert.equal(SCHEMA_VERSION, 11); assert.equal(defaults().schemaVersion, 11);
+test('17. SCHEMA_VERSION 12, defaults carry the new goals, STORAGE_KEY unchanged', () => {
+  assert.equal(SCHEMA_VERSION, 12); assert.equal(defaults().schemaVersion, 12);
   assert.deepEqual(defaults().goals, { k: 2000, p: 150, c: 200, f: 65, steps: 10000, sleepH: 8 });
-  assert.equal(STORAGE_KEY, 'macrodiary.v1'); assert.match(read('js/core/schema.js'), /export const SCHEMA_VERSION = 11;/);
+  assert.equal(STORAGE_KEY, 'macrodiary.v1'); assert.match(read('js/core/schema.js'), /export const SCHEMA_VERSION = 12;/);
 });
 
 const oldSave = v => ({ ...clone(defaults()), schemaVersion: v, goals: { k: 1800, p: 120, c: 0, f: 55.5 }, theme: 'dark', weightUnit: 'oz', settingsUpdatedAt: 77, tombstones: { x: 5 },
@@ -273,13 +254,13 @@ const kept = s => JSON.stringify([s.days, s.tombstones, s.settingsUpdatedAt, s.t
 test('18. migration from any older version keeps every value and adds steps 10000 / sleepH 8; store load, save and reload agree', () => {
   for (const v of [1, 2, 5, 8, 9, 10]) {
     const src = oldSave(v), m = migrate(clone(src));
-    assert.equal(m.schemaVersion, 11, 'from ' + v); assert.equal(kept(m), kept(src), 'from ' + v);
+    assert.equal(m.schemaVersion, 12, 'from ' + v); assert.equal(kept(m), kept(src), 'from ' + v);
     assert.deepEqual(m.goals, { k: 1800, p: 120, c: 0, f: 55.5, steps: 10000, sleepH: 8 }, 'from ' + v);
   }
   const st = fakeStorage(JSON.stringify(oldSave(10))), s = createStore(st);
-  assert.equal(s.state.schemaVersion, 11); assert.deepEqual(s.state.goals, { k: 1800, p: 120, c: 0, f: 55.5, steps: 10000, sleepH: 8 });
+  assert.equal(s.state.schemaVersion, 12); assert.deepEqual(s.state.goals, { k: 1800, p: 120, c: 0, f: 55.5, steps: 10000, sleepH: 8 });
   s.state.goals.steps = 7000; s.state.goals.sleepH = 7.5; assert.equal(s.save(), true);
-  const saved = JSON.parse(st.m.get(STORAGE_KEY)); assert.equal(saved.schemaVersion, 11); assert.equal(saved.goals.steps, 7000); assert.equal(saved.goals.sleepH, 7.5);
+  const saved = JSON.parse(st.m.get(STORAGE_KEY)); assert.equal(saved.schemaVersion, 12); assert.equal(saved.goals.steps, 7000); assert.equal(saved.goals.sleepH, 7.5);
   const again = createStore(fakeStorage(JSON.stringify(saved)));
   assert.deepEqual(again.state.goals, { k: 1800, p: 120, c: 0, f: 55.5, steps: 7000, sleepH: 7.5 }); assert.equal(kept(again.state), kept(oldSave(10)));
   const rep = createStore(fakeStorage()); rep.replace({ goals: { k: 1800, p: 120, c: 150, f: 50 } });
@@ -352,13 +333,9 @@ test('22. backup and export: restore brings the goals of a newer backup, keeps o
 const count = (s, n) => s.split(n).length - 1;
 const tagOf = (src, id) => { const m = src.match(new RegExp('<[^>]*\\bid="' + id + '"[^>]*>')); assert.ok(m, 'missing #' + id); return m[0]; };
 
-test('23. index.html: #dials before an unchanged #summary inside the Diary; #gSteps and #gSleep in the goals card', () => {
+test('23. index.html: #gSteps and #gSleep in the goals card (the #dials/#summary half was superseded by dials-simplify S17)', () => {
   const html = read('index.html');
-  assert.equal(count(html, 'id="dials"'), 1); assert.equal(count(html, 'id="gSteps"'), 1); assert.equal(count(html, 'id="gSleep"'), 1);
-  const dials = tagOf(html, 'dials'); assert.match(dials, /role="button"/); assert.match(dials, /tabindex="0"/);
-  const iv = html.indexOf('id="v-diary"'), id = html.indexOf('id="dials"'), is = html.indexOf('id="summary"');
-  assert.ok(iv > -1 && iv < id && id < is, '#dials must sit inside #v-diary and above #summary');
-  assert.ok(html.includes('<div class="card" id="summary" role="button" tabindex="0"></div>'), '#summary must stay unchanged');
+  assert.equal(count(html, 'id="gSteps"'), 1); assert.equal(count(html, 'id="gSleep"'), 1);
   for (const [i, mode] of [['gSteps', 'numeric'], ['gSleep', 'decimal']]) {
     const t = tagOf(html, i); assert.match(t, /^<input\b/); assert.match(t, /type="number"/); assert.match(t, /inputmode="/); assert.match(t, /min="0"/);
     assert.match(html, new RegExp('<label[^>]*for="' + i + '"'), 'label for ' + i);
@@ -374,13 +351,6 @@ test('24. settings-view.js: loads, listens to and saves both goals; refuses more
   const arr = src.match(/\[\s*'#gK'[^\]]*\]/); assert.ok(arr, 'the change-listener list'); assert.ok(arr[0].includes('#gSteps') && arr[0].includes('#gSleep'), 'both inputs are in the listener list');
   assert.match(src, /\bsteps\s*:/); assert.match(src, /\bsleepH\s*:/); assert.match(src, /\b24\b/, 'the 24 h limit is applied');
   assert.match(src, /touchSettings/);
-});
-
-test('25. diary.js: imports dials, renders it, and #dials opens the same details dialog (click and Enter/Space)', () => {
-  const src = read('js/ui/diary.js');
-  assert.match(src, /from '\.\/dials\.js'/); assert.match(src, /renderDials\(\)/);
-  assert.match(src, /\$\('#dials'\)[\s\S]{0,400}openDetails/); assert.match(src, /\$\('#dials'\)[\s\S]{0,600}Enter/);
-  assert.match(src, /\$\('#summary'\)|sm\.onclick = openDetails/, '#summary keeps its handler');
 });
 
 const luminance = hex => {

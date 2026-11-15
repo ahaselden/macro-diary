@@ -5,7 +5,7 @@ import { on, emit } from '../core/bus.js';
 import { MEALS } from '../core/constants.js';
 import { esc, rd, amtLabel } from '../core/format.js';
 import { fmt, addDays, pretty } from '../core/dates.js';
-import { entryMacros, totals } from '../domain/nutrition.js';
+import { entryMacros } from '../domain/nutrition.js';
 import { dayDetails, formatNut } from '../domain/details.js';
 import { removeEntry, copyEntries } from '../domain/entries.js';
 import { dayText } from '../domain/summary.js';
@@ -15,25 +15,13 @@ import { view } from './ctx.js';
 import { openAdd } from './add-food.js';
 import { shareResult } from './share-result.js';
 import { cssVar } from './theme.js';
-import { renderDials } from './dials.js';
-
-function bar(val, goal, color) {
-  const pct = goal ? Math.min(100, val / goal * 100) : 0;
-  return `<div class="bar ${goal && val > goal ? 'over' : ''}"><i style="width:${pct}%;${color && !(goal && val > goal) ? `background:${color}` : ''}"></i></div>`;
-}
+import { renderDials, initDials } from './dials.js';
 
 export function renderDiary() {
   const cur = view.day;
   $('#dateLbl').textContent = cur === fmt(new Date()) ? 'Today' : pretty(cur);
-  const list = state.days[cur] || [], t = totals(list), g = state.goals, left = g.k - t.k;
-  const mac = (n, k, col) => `<div><span class="muted">${n}</span><b>${rd(t[k])} / ${Number(g[k]) || 0}g</b>${bar(t[k], g[k], col)}</div>`;
+  const list = state.days[cur] || [];
   renderDials();
-  $('#summary').setAttribute('aria-label', `Nutrition details for this day: ${rd(t.k)} of ${Number(g.k) || 0} kcal eaten. Press to open.`);
-  $('#summary').innerHTML =
-    `<div class="row" style="align-items:flex-end"><div><div class="big">${rd(t.k)}</div><div class="muted">of ${Number(g.k) || 0} kcal eaten</div></div>
-     <div style="text-align:right"><div class="big" style="font-size:24px;${left < 0 ? 'color:var(--over)' : ''}">${rd(Math.abs(left))}</div><div class="muted">${left < 0 ? 'over' : 'remaining'}</div></div></div>
-     ${bar(t.k, g.k)}
-     <div class="macros">${mac('Protein', 'p', 'var(--p)')}${mac('Carbs', 'c', 'var(--c)')}${mac('Fat', 'f', 'var(--f)')}</div>`;
   const line = activityLine(activityForDay(state, cur)), al = $('#activityLine');   // read-only, imported from Google Health; never part of the numbers above
   al.textContent = line ? 'From Google Health: ' + line : '';
   al.hidden = !line;
@@ -91,12 +79,7 @@ export function initDiary() {
   $('#prev').onclick = () => { view.day = addDays(view.day, -1); renderDiary(); };
   $('#next').onclick = () => { view.day = addDays(view.day, 1); renderDiary(); };
   $('#todayBtn').onclick = () => { view.day = fmt(new Date()); renderDiary(); };
-  const sm = $('#summary');
-  sm.onclick = openDetails;
-  sm.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openDetails(); } };
-  const dl = $('#dials');   // the dials open the same details as the summary card
-  dl.onclick = openDetails;
-  dl.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openDetails(); } };
+  initDials(openDetails);   // the card: tap opens the details, the pencil chooses the dials
   $('#meals').onclick = ev => {
     const cp = ev.target.closest('[data-copy]'), cpm = ev.target.closest('[data-copy-meal]'), del = ev.target.closest('[data-del]'), addBtn = ev.target.closest('[data-add]'), ed = ev.target.closest('[data-edit]');
     const cur = view.day;

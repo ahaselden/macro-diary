@@ -25,7 +25,9 @@ export function newEntries(state, backup) {
  * Recent foods are a per-device convenience that sync ignores, but a restore may bring useful ones, so they are unioned.
  */
 export function mergeRestore(state, backup) {
+  const hadDials = !!backup && Array.isArray(backup.dials);   // migrate() fills the default, so look at the raw backup: no usable choice in it means keep ours
   const incoming = migrate(structuredClone(backup));
+  if (!hadDials) delete incoming.dials;
   const merged = mergeStates(state, incoming, { preferLocal: true });
   const seen = new Set((merged.recent || []).map(foodKey));
   merged.recent = [...(merged.recent || []), ...incoming.recent.filter(f => f && f.name && f.per100 && !seen.has(foodKey(f)))].slice(0, 30);

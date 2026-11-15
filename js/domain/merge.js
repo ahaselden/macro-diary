@@ -35,7 +35,7 @@ function newer(a, b, preferA) {
   return canon(a) >= canon(b) ? a : b;
 }
 
-const SETTINGS_KEYS = ['goals', 'weightUnit', 'useUSDA', 'useOFF', 'syncApiKey'];
+const SETTINGS_KEYS = ['goals', 'dials', 'weightUnit', 'useUSDA', 'useOFF', 'syncApiKey'];
 
 export function mergeStates(local, remote, opts = {}) {
   const pref = !!opts.preferLocal;

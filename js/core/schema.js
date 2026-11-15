@@ -14,15 +14,22 @@
 //                saved measures of a saved food are keyed by that id instead of its name|brand|source (D53)
 //           10 = `activity`: { 'YYYY-MM-DD': { updatedAt, source, steps?, sleepMinutes?, sleepStart?, sleepEnd?, workouts? } } imported from Google Health (D54); nothing else changes
 //           11 = goals gain `steps` (whole steps a day, default 10000) and `sleepH` (hours a night, default 8) (D56)
+//            12 = `dials`: which dials the Diary card shows (array of keys, default ['k'], D57)
 import { MEALS } from './constants.js';
 
-export const SCHEMA_VERSION = 11;
+export const SCHEMA_VERSION = 12;
+
+/** The dials the Diary card can show, in the fixed order they are drawn and saved (D57). */
+export const DIAL_KEYS = ['k', 'p', 'c', 'f', 'steps', 'sleep'];
+export const DEFAULT_DIALS = ['k'];
+/** A chosen set of dials: known keys only, each once, in the fixed order; [] is a real choice; anything that is not an array gives the default. Always a new array. */
+export const sanitizeDials = v => (Array.isArray(v) ? DIAL_KEYS.filter(k => v.includes(k)) : [...DEFAULT_DIALS]);
 
 export const defaults = () => ({
   schemaVersion: SCHEMA_VERSION, theme: 'auto', weightUnit: 'g', measures: {}, goals: { k: 2000, p: 150, c: 200, f: 65, steps: 10000, sleepH: 8 },
   apiKey: '', syncApiKey: false, useUSDA: true, useOFF: true, days: {}, recent: [], custom: [],
   tombstones: {}, settingsUpdatedAt: 0,
-  recipes: {}, plan: {}, shopping: { checks: {}, extras: {} }, activity: {},
+  recipes: {}, plan: {}, shopping: { checks: {}, extras: {} }, activity: {}, dials: [...DEFAULT_DIALS],
 });
 
 // steps goal: a whole number 0..1,000,000; sleep goal: hours 0..24 (fractions allowed). Anything unusable falls back to the default (never clamped).
@@ -263,6 +270,7 @@ export function sanitize(d) {
   const def = defaults(), g = plainObject(d.goals) ? d.goals : {};
   d.goals = { k: goalNum(g.k, def.goals.k), p: goalNum(g.p, def.goals.p), c: goalNum(g.c, def.goals.c), f: goalNum(g.f, def.goals.f),
     steps: goalInRange(g.steps, 1000000, def.goals.steps, true), sleepH: goalInRange(g.sleepH, 24, def.goals.sleepH, false) };
+  d.dials = sanitizeDials(d.dials);
   if (d.weightUnit !== 'g' && d.weightUnit !== 'oz') d.weightUnit = 'g';
   if (typeof d.theme !== 'string') d.theme = 'auto';
   if (typeof d.apiKey !== 'string') d.apiKey = '';
@@ -313,6 +321,7 @@ export function migrate(d) {
   }
   if (v < 10) d.schemaVersion = 10;      // v9 -> v10: `activity` (added by sanitize, empty)
   if (v < 11) d.schemaVersion = 11;      // v10 -> v11: goals gain `steps` and `sleepH` (added by sanitize with the defaults, D56)
+  if (v < 12) d.schemaVersion = 12;      // v11 -> v12: `dials`, the Diary dials the user chose (added by sanitize, ['k'], D57)
   return sanitize(d);
 }
 
