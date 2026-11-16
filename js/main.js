@@ -15,6 +15,7 @@ import { initRecipeImport } from './ui/recipe-import.js';
 import { initPlan } from './ui/plan-view.js';
 import { initShop } from './ui/shop-view.js';
 import { initHealthImport } from './ui/health-import-view.js';
+import { initHealthSync } from './ui/health-sync-view.js';
 
 store.onSaveError = () => toast('Could not save – storage full or blocked');
 
@@ -30,6 +31,7 @@ initRecipeImport();
 initPlan();
 initShop();
 initHealthImport();
+initHealthSync();
 
 // A setup link (#sync-setup=…) pre-fills Settings → Sync with the project URL + key. Always stripped from the address bar.
 // An invalid link is ignored; a device already signed in to another project asks first (never switched silently).
