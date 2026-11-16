@@ -64,3 +64,46 @@ Google's own current pages were not opened; every date above comes from search s
 - Export formats: [Takeout guide for Fitbit data](https://takeoutday.org/guides/fitbit-data-export), [FME tutorial](https://support.safe.com/hc/en-us/articles/43859714941197), [export Fitbit data after Google](https://www.fitmesh.fit/en/blog/export-fitbit-data-after-google)
 - Google Fit end of life: [Sahha: Google Fit API sunset](https://sahha.ai/blog/google-fit-api-sunset-migration/), [Wikipedia](https://en.wikipedia.org/wiki/Google_Fit)
 - OAuth in browsers: [OAuth 2.0 for client-side web applications](https://developers.google.com/accounts/docs/OAuth2UserAgent), [Google Identity Services](https://developers.google.com/identity/oauth2/web/guides/how-user-authz-works)
+
+## 8. Update 2026-11-14: Google's own pages read, and a CORS check (item 20)
+
+*Written after reading Google's developer pages directly (setup, scopes, app-verification, data-types, workouts, codelab, rate-limits, migration, aggregate-data, endpoints, data-management) and sending one unauthenticated CORS preflight request from this computer. No Google Cloud project, account or token was created; no health data was read.*
+
+### What is now confirmed
+- **The API.** Base `https://health.googleapis.com/v4`, always `users/me`, `Authorization: Bearer <access token>`. The legacy Fitbit Web API and its OAuth endpoints were turned off on 2026-11-02 (Google's overview), so it is not an option.
+- **Scopes (prefix `https://www.googleapis.com/auth/googlehealth.`).** Steps and exercise: `activity_and_fitness.readonly`. Sleep: `sleep.readonly`. GPS routes (the TCX of a run): `location.readonly`. Google says most scopes are *restricted* and need verification for more than 100 users.
+- **Steps per day.** `POST .../users/me/dataTypes/steps/dataPoints:dailyRollUp` with a civil (local-clock) date range, end exclusive, `windowSizeDays: 1`; the result is `steps.countSum` as text. Daily roll-ups follow the user's local clock and handle 23 and 25 hour days, which matches the local-time days the app uses. A day with no data omits the field; a worn day with no steps returns "0" (so "no data" and 0 stay different, like the dials).
+- **Sleep.** `GET .../dataTypes/sleep/dataPoints` (every stored record, overlaps included) or `:reconcile` (overlapping records merged into one "main" record, which is what Google's own app shows). A record has start and end with UTC offsets, `summary.minutesAsleep`, `minutesAwake`, stages, `createTime`, `updateTime` and `metadata.main`. Sleep has no daily roll-up, so the app would assign a sleep to the local day it ends, as the zip import does (D55). Page size is at most 25.
+- **Workouts.** `GET .../dataTypes/exercise/dataPoints` (filter on `exercise.interval.civil_start_time`): type (for example RUNNING), start and end with offsets, `activeDuration`, `metricsSummary` (calories, distance in millimetres, steps, average heart rate, pace), `hasGps`. `GET .../exercise/dataPoints/{id}:exportExerciseTcx?alt=media` returns the TCX file of a run (needs the location scope), the same kind of file the owner exported by hand on 2026-11-14 (a 30-minute run with GPS, heart rate, distance and calories).
+- **Limits.** 300 requests per user per minute; roll-up spans up to 90 days per request for steps; no charge or API key mentioned (OAuth only).
+- **Unverified apps.** Capped at 100 users. In Testing mode refresh tokens last **7 days** (the owner already accepts a weekly sign-in). Google's pages mention no personal-use exemption. The consent screen shows an "app is not verified" warning that the owner clicks through.
+- **Before the first sign-in** the user must have the Google Health mobile app installed and signed in; a call to `users/me/identity` returns `ACCOUNT_NOT_LINKED` otherwise.
+- **No sandbox.** Everything is production data.
+
+### Can the browser call it? Yes for the API; sign-in is the open point
+- **CORS works.** An unauthenticated `OPTIONS` preflight from the origin `https://ahaselden.github.io` to the daily roll-up URL and to `https://oauth2.googleapis.com/token` both returned `200` with `Access-Control-Allow-Origin` for that origin, methods including POST, and `authorization,content-type` allowed. So a page on GitHub Pages can call both the data API and the token endpoint without a proxy (this proves the headers, not that every real request succeeds).
+- **Sign-in without a secret is not shown.** Every flow Google documents for this API (setup, codelab) uses a *Web Server* OAuth client and sends the **client secret** when exchanging the code and when refreshing. Google's pages say nothing about PKCE, the implicit or token flow, or secretless clients for this API. A secret must never be in the repository or the page.
+
+### Three designs
+1. **A small backend holds the secret (recommended for a first try).** One function in the owner's own Supabase project (the recipe import function, D29, is the model) does only two jobs: exchange the sign-in code and refresh tokens, keeping the refresh token in a Supabase table only the owner can read. The page asks the function for a fresh access token, then calls `health.googleapis.com` directly from the browser (CORS works), so health data never passes through the function. Costs: the owner deploys a function and a table, creates a Google Cloud project in Testing mode (the owner as the only test user), and signs in again every 7 days.
+2. **Browser-only with Google Identity Services.** No backend and no secret, but only 1-hour access tokens and no refresh token, so a Google popup on every visit. **Whether Google lets the Health API's scopes be used this way is not documented**; the only way to find out is to try it with a real project. A 30-minute experiment once the project exists, because if it works it is much simpler (nothing to deploy).
+3. **Health Connect (Android native).** Not needed now that the API route is documented; skip.
+
+### What would be built (each part needs its own spec, tests and review, per the workflow)
+1. **Set-up the owner does once (not code):** a Google Cloud project, enable the Google Health API, a Web Server OAuth client, the read-only scopes, the owner's email as the test user, and the Google Health app linked. A walk-through in a setup doc, like `docs/SYNC-SETUP.md`.
+2. **Backend function and table** (token exchange and refresh only; the client secret in the function's secrets). Supabase migrations are forward-only files that deploy to the real database when merged, so these need extra care.
+3. **App sign-in and refresh:** a "Connect Google Health" card in Settings (opt-in, shows the connection state and when the sign-in lapses), a pure mapper from API responses to the existing per-day `activity` records (steps, sleepMinutes, sleepStart, sleepEnd, workouts) so the dials, the activity line and sync keep working unchanged, a "refresh now" action and an automatic refresh when the Diary opens.
+4. **Workouts:** show a run's duration, distance, calories and heart rate in the Diary. Optional later: a route from `exportExerciseTcx`.
+5. **Check against the zip import** on the owner's real data (Takeout numbers 7h34 / 8h11 / 7h22 for Nov 11 to 13). The API's `reconcile` sleep should match Google's app directly, which would make the D55 overlap rules unnecessary on this route.
+
+### Decisions needed from the owner
+1. **OK to create a Google Cloud project** in the owner's own Google account (Testing mode, the owner as the only user) and to deploy a small function to the owner's Supabase project? Both are done by the owner, not by the assistant.
+2. **Try the browser-only sign-in first?** It would remove the backend if Google allows it, but needs the same Google Cloud project to test.
+3. **Which data first:** steps and sleep (small, matches the dials) before workouts, or all three together?
+4. **Weekly re-sign-in confirmed?** (7-day refresh tokens in Testing mode; the owner has said this is acceptable.)
+
+### Still not verified
+Whether a browser-only token flow is allowed for these scopes; the exact `:reconcile` response on the owner's real data; whether a personal unverified app keeps the 7-day rule and how long the "not verified" warning keeps appearing. All of these need a real Google Cloud project.
+
+### Sources for this section
+[setup](https://developers.google.com/health/setup), [scopes](https://developers.google.com/health/scopes), [app verification](https://developers.google.com/health/app-verification), [data types](https://developers.google.com/health/data-types), [workouts](https://developers.google.com/health/data-types/workouts), [aggregate data](https://developers.google.com/health/aggregate-data), [endpoints](https://developers.google.com/health/endpoints), [data management](https://developers.google.com/health/data-management), [rate limits](https://developers.google.com/health/rate-limits), [first API call codelab](https://developers.google.com/health/codelabs/make-your-first-api-call), [migration](https://developers.google.com/health/migration). CORS check: an `OPTIONS` request from this computer on 2026-11-14.
