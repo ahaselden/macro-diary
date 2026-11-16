@@ -1,5 +1,5 @@
 // Units & amount-picker logic extracted from the legacy inline script. Pure.
-import { measuresKey } from './food.js';
+import { measuresKey, isCountLabel } from './food.js';
 import { OZ } from '../core/constants.js';
 import { rd } from '../core/format.js';
 
@@ -56,8 +56,7 @@ export function parseServingText(text) {
   return { g, label: (bare ? `${Number(g.toFixed(4))} g` : clean).slice(0, 60) };
 }
 
-const NOT_COUNTABLE = /\b(?:cups?|tbsp|tsp|tablespoons?|teaspoons?|fl|fluid|ml|milliliters?|millilitres?|litres?|liters?|quarts?|pints?|gallons?|oz|ounces?|lbs?|pounds?|g|grams?|kg)\b/i;
-const countable = label => !NOT_COUNTABLE.test(label.slice(0, 200));
+const countable = isCountLabel;                                       // the rule lives in food.js so a search row and the starting amount agree
 
 /**
  * Where a NEW food amount should start, as { key, amount } (a key from `units`): the user's own saved measure for this food (the most recent), else the

@@ -186,7 +186,7 @@ test('17. enrichWithPortions: a failed lookup leaves the row untouched, is not r
 test('18. enrichWithPortions: after a rate-limit failure no further lookups are started, and it still resolves', async () => {
   for (const conc of [1, 2]) {
     const list = mk(5); let calls = 0;
-    const n = await usda.enrichWithPortions(list, { concurrency: conc, load: async x => { calls++; await sleep(5); if (calls === 1) throw new Error(RATE); await ok(x); } });
+    const n = await usda.enrichWithPortions(list, { concurrency: conc, load: async x => { const started = ++calls; await sleep(5); if (started === 1) throw new Error(RATE); await ok(x); } });
     assert.ok(calls <= conc, `concurrency ${conc}: only lookups already started may finish, got ${calls} calls`);
     assert.ok(typeof n === 'number');
     assert.ok(!('portions' in list[0]));

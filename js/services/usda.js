@@ -58,3 +58,49 @@ export async function loadPortions(food, apiKey){
   const j = await getJSON(`https://api.nal.usda.gov/fdc/v1/food/${food.fdcId}?api_key=${key}`);
   food.portions = mapPortions(j);
 }
+
+// ---- search rows: household portions for the first few generic results, loaded lazily -------------------------------
+// Generic USDA foods come back from the search without a serving, so a row could only say "per 100 g". This looks up their portions (one request each,
+// the first few only, a couple at a time) so the row can say "105 kcal per medium (118 g)". DEMO_KEY is heavily rate limited: the caps and the session
+// cache are part of the design (D63); a rate-limit answer stops the whole batch.
+const portionCache = new Map();                                  // fdcId -> Promise<portions[]> (settled values stay; failures are removed)
+const callIf = (fn, ...args) => { if (typeof fn !== 'function') return undefined; try { return fn(...args); } catch { return undefined; } };
+const posInt = (v, dflt) => { const n = Math.floor(Number(v)); return Number.isFinite(n) && n >= 0 ? n : dflt; };
+
+/**
+ * Sets `portions` on the first `limit` (5) USDA foods that have an fdcId, no serving and no portions yet, at most `concurrency` (2) lookups at once.
+ * `load(food, apiKey)` sets food.portions (default loadPortions); `onUpdate(food)` runs for each food that gained portions; `cancelled()` returning true
+ * stops new requests and further onUpdate calls. Resolves with the number of foods that gained portions. Never rejects.
+ */
+export async function enrichWithPortions(foods, opts) {
+  try {
+    const o = opts && typeof opts === 'object' ? opts : {};
+    const load = typeof o.load === 'function' ? o.load : loadPortions;
+    const limit = posInt(o.limit === undefined ? 5 : o.limit, 5), conc = Math.max(1, posInt(o.concurrency === undefined ? 2 : o.concurrency, 2));
+    const isCancelled = () => { try { return typeof o.cancelled === 'function' ? !!o.cancelled() : false; } catch { return true; } };
+    const todo = [];
+    for (const f of Array.isArray(foods) ? foods : []) {
+      if (todo.length >= limit) break;
+      try { if (f && typeof f === 'object' && !Array.isArray(f) && f.source === 'USDA' && f.fdcId && !(f.servingG > 0) && !Array.isArray(f.portions)) todo.push(f); } catch { /* skip */ }
+    }
+    let stopped = false, gained = 0, next = 0;
+    const fetchFor = async f => {
+      await load(f, o.apiKey);
+      return Array.isArray(f.portions) ? f.portions : [];
+    };
+    const one = async f => {
+      const id = String(f.fdcId);
+      let p = portionCache.get(id);
+      if (!p) { p = fetchFor(f); portionCache.set(id, p); p.catch(() => { if (portionCache.get(id) === p) portionCache.delete(id); }); }
+      let list;
+      try { list = await p; } catch (e) { if (/rate limited/i.test(String(e && e.message))) stopped = true; return; }
+      f.portions = list.map(x => ({ ...x }));
+      if (!f.portions.length) return;
+      gained++;
+      if (!isCancelled()) callIf(o.onUpdate, f);
+    };
+    const worker = async () => { while (!stopped && !isCancelled() && next < todo.length) await one(todo[next++]); };
+    await Promise.all(Array.from({ length: Math.min(conc, todo.length) }, worker));
+    return gained;
+  } catch { return 0; }
+}

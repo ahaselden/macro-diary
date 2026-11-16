@@ -47,6 +47,9 @@ No new saved-shape fields, no `SCHEMA_VERSION` change (`food.portions` already e
 22. Security: a portion label `<img src=x onerror=alert(1)>` yields no `<` in `rowServingSummary` output; and after `esc` (the UI path) the string cannot contain `<img`. A label such as `a"onmouseover="x` / `'><script>` after `esc` contains no raw `<`, `"` or `'`.
 23. Repeat search for the same food costs no new request (behaviour 16 at UI level; headless C6).
 
+## Deliberate change to an existing test
+`tests/serving-amounts.test.js` B29 ("add-food result rows append servingSummary, escaped") pinned the old row code. It now expects `rowServingSummary` in `js/ui/add-food.js` and `esc(rowServingSummary(` (same intent: the summary is escaped). Nothing else in that file changed.
+
 ## Edge cases and hostile input
 - Empty list, huge list (1000 candidates: still at most 5 requests).
 - `fdcId` as number, as string, `0` (falsy: not a candidate), duplicated.
