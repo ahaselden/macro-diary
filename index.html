@@ -112,7 +112,8 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
       <p class="muted" style="margin-top:0">Reads your steps and sleep for the last 7 days straight from Google Health, so there is no file to export. Each time you sync, Google asks you to sign in (the sign-in lasts about 1 hour and there is no refresh, so there is no background sync). The app runs in your own Google Cloud test mode, so Google shows an "app is not verified" warning. The Client ID is public, but it is kept on this device only; never paste a client secret. Setup: docs/GOOGLE-HEALTH-SETUP.md.</p>
       <label for="ghSyncClientId">Google Client ID</label>
       <input type="text" id="ghSyncClientId" autocomplete="off" spellcheck="false" placeholder="ends in .apps.googleusercontent.com">
-      <div class="row" style="margin-top:8px"><button type="button" id="ghSyncSave">Save</button><button type="button" id="ghSyncRemove">Remove</button><button type="button" id="ghSyncBtn" class="primary">Sync Google Health</button></div>
+      <div class="row" style="margin-top:8px"><button type="button" id="ghSyncSave">Save</button><button type="button" id="ghSyncRemove">Remove</button></div>
+      <div class="row" style="margin-top:8px"><button type="button" id="ghSyncBtn" class="primary">Sync Google Health</button></div>
       <p id="ghSyncStatus" class="muted" aria-live="polite"></p>
     </div>
     <div class="card" id="syncCard">

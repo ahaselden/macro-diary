@@ -5,7 +5,7 @@
 import { state, save } from '../core/store.js';
 import { $, toast } from '../core/dom.js';
 import { emit } from '../core/bus.js';
-import { createClientIdStore, createHealthSync } from '../services/google-health-api.js';
+import { createClientIdStore, createHealthSync, preloadGoogle } from '../services/google-health-api.js';
 import { applyHealthSync, healthSyncText } from '../domain/google-health-api.js';
 
 const deviceStorage = () => { try { return globalThis.localStorage; } catch { return null; } };
@@ -38,9 +38,11 @@ export function initHealthSync() {
     try {
       const res = await sync.run(id);
       if (res.ok) {
-        applyHealthSync(state, res.days, Date.now());                 // an identical second sync changes nothing (updatedAt is not bumped)
-        save();
-        emit('diary:changed');                                        // the dials, the activity line and the water card redraw without a reload
+        const r = applyHealthSync(state, res.days, Date.now());       // an identical second sync changes nothing (updatedAt is not bumped)
+        if (r.added || r.updated) {
+          save();
+          emit('diary:changed');                                      // the dials, the activity line and the water card redraw without a reload
+        }
         message = healthSyncText(res.days);
       } else message = res.message;
     } catch { message = 'Google Health sync failed.'; }
@@ -48,6 +50,9 @@ export function initHealthSync() {
     if (fromDiary) toast(message);
     busy(false);
   }
+  // The first touch of a sync button (with an ID saved) starts loading Google's script, so the sign-in popup is not blocked for opening after a wait.
+  const warm = () => { if (store.get()) preloadGoogle(); };
+  for (const b of [syncBtn, diaryBtn]) { b.addEventListener('pointerdown', warm, { once: true }); b.addEventListener('focus', warm, { once: true }); }
   syncBtn.onclick = () => run(false);
   diaryBtn.onclick = () => run(true);
   show();

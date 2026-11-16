@@ -73,7 +73,13 @@ function defaultLoadGoogle() {
   });
 }
 
-const mentions = (word, ...values) => values.some(v => str(v).includes(word));
+/**
+ * Starts loading Google's sign-in script (no sign-in, no network call to Google Health). The UI calls this on the FIRST touch of a sync button, so the
+ * script is already there when the tap completes and the sign-in popup still counts as opened by that tap (strict browsers block it otherwise).
+ */
+export function preloadGoogle() { defaultLoadGoogle().catch(() => {}); }
+
+const mentions =(word, ...values) => values.some(v => str(v).includes(word));
 
 /** The fixed message for a token response (callback) that carries an `error`, or '' when it does not. */
 function responseMessage(resp) {
