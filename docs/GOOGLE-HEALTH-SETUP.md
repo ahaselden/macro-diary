@@ -54,3 +54,8 @@ You create a free Google Cloud project that only you can use, then run a small t
 ## Delete the project and revoke access afterwards
 1. To stop the test: open https://myaccount.google.com/permissions, find `Macro Diary test` and choose **Delete all connections** to revoke access.
 2. To delete the project: in the Cloud console open **IAM & Admin**, then **Settings**, choose **Shut down** and confirm. It is removed after a short waiting period. You can also keep it for the next step; it costs nothing.
+
+## Using it in the app (Google Health sync)
+1. In the app open **Settings**, find the card **Google Health sync**, paste your Client ID and press **Save**. It stays on this device only (never in a backup or synced); enter it again on each device you use. Never paste the client secret: the app refuses it.
+2. Press **Sync Google Health** (also on the Diary once the ID is saved). Google asks you to sign in each time and shows the "not verified" screen in test mode. The last 7 days of steps and sleep fill the dials.
+3. `https://ahaselden.github.io` must be one of the **Authorized JavaScript origins** of the OAuth client (step 5), or Google answers `origin_mismatch` when the app runs from GitHub Pages.

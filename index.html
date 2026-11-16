@@ -35,6 +35,7 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
   <section class="view on" id="v-diary">
     <div class="card" id="dials"></div>
     <div class="muted" id="activityLine" hidden></div>
+    <button type="button" id="ghSyncDiary" hidden>Sync Google Health</button>
     <div class="card" id="water"></div>
     <div id="meals"></div>
     <div class="row" style="margin-top:6px">
@@ -105,6 +106,14 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
       <select id="ghScope"><option value="year" selected>Last year</option><option value="all">All years</option></select>
       <div class="row" style="margin-top:8px"><button type="button" id="ghStart" class="primary" disabled>Start import</button><button type="button" id="ghCancel" hidden>Cancel</button></div>
       <p id="ghStatus" class="muted" aria-live="polite"></p>
+    </div>
+    <div class="card" id="ghSyncCard">
+      <h2>Google Health sync</h2>
+      <p class="muted" style="margin-top:0">Reads your steps and sleep for the last 7 days straight from Google Health, so there is no file to export. Each time you sync, Google asks you to sign in (the sign-in lasts about 1 hour and there is no refresh, so there is no background sync). The app runs in your own Google Cloud test mode, so Google shows an "app is not verified" warning. The Client ID is public, but it is kept on this device only; never paste a client secret. Setup: docs/GOOGLE-HEALTH-SETUP.md.</p>
+      <label for="ghSyncClientId">Google Client ID</label>
+      <input type="text" id="ghSyncClientId" autocomplete="off" spellcheck="false" placeholder="ends in .apps.googleusercontent.com">
+      <div class="row" style="margin-top:8px"><button type="button" id="ghSyncSave">Save</button><button type="button" id="ghSyncRemove">Remove</button><button type="button" id="ghSyncBtn" class="primary">Sync Google Health</button></div>
+      <p id="ghSyncStatus" class="muted" aria-live="polite"></p>
     </div>
     <div class="card" id="syncCard">
       <h2>Sync between devices</h2>
