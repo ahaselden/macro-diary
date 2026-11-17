@@ -218,8 +218,8 @@ test('B28 UI (weak): amount-picker uses startingUnit, a touched flag, and re-run
 });
 test('B29 UI (weak): add-food result rows append servingSummary, escaped', () => {
   const s = src('js/ui/add-food.js');
-  assert.match(s, /servingSummary/);
-  assert.match(s, /esc\(\s*servingSummary\(/);
+  assert.match(s, /rowServingSummary/);   // search-serving-calories: rows use rowServingSummary (which returns servingSummary unchanged when it is non-empty)
+  assert.match(s, /esc\(\s*rowServingSummary\(/);
 });
 test('B30 sw.js CACHE bumped above v32 (the value on main)', () => {
   const m = src('sw.js').match(/const CACHE = 'macro-diary-v(\d+)'/);

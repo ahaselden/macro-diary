@@ -2,9 +2,10 @@
 import { state } from '../core/store.js';
 import { $, toast, dialog, head, canClose, setCloseGuard } from '../core/dom.js';
 import { esc, rd, r1 } from '../core/format.js';
-import { foodKey, foodIdOf, isBarcode, sameBarcode, servingSummary } from '../domain/food.js';
+import { foodKey, foodIdOf, isBarcode, sameBarcode, rowServingSummary } from '../domain/food.js';
 import { pickFoodBarcode } from '../domain/barcode.js';
 import { searchAll } from '../services/foods.js';
+import { enrichWithPortions } from '../services/usda.js';
 import { canScan, startScan, stopScan } from '../services/barcode.js';
 import { add } from './ctx.js';
 import { renderCustom, editCustomFood } from './custom-food.js';
@@ -65,7 +66,7 @@ function localMatches(q) {
 }
 
 function resHTML(list, from) {
-  return list.map((f, i) => { const ss = esc(servingSummary(f));
+  return list.map((f, i) => { const ss = esc(rowServingSummary(f));
     return `<div class="res" data-i="${i}" data-from="${esc(from)}"><div class="nm"><div>${esc(f.name)}</div>
     <div class="muted">${esc(f.brand ? f.brand + ' · ' : '')}${ss ? ss + ' · ' : ''}${rd(f.per100.k)} kcal /100g · P${r1(f.per100.p)} C${r1(f.per100.c)} F${r1(f.per100.f)}</div></div>
     <span class="badge">${esc(f.tag || f.source)}</span>${f.tag === 'My food' ? `<button class="fit" data-edit-food="${i}" aria-label="Edit ${esc(f.name)}">Edit</button>` : ''}</div>`; }).join('');
@@ -98,7 +99,13 @@ async function doSearch() {
   const { results, errors } = await searchAll(q, { useUSDA: state.useUSDA, useOFF: state.useOFF, apiKey: state.apiKey });
   if ($('#q')?.value.trim() !== q) return;   // a newer search superseded this one
   add.results = results; add.offer = isBarcode(q) && !results.length && !errors.length ? q : '';   // only a REAL "not found": a failed lookup (offline, rate limit) is not
-  renderResults(!results.length ? (errors.join(' · ') || 'No results found.') : errors.join(' · '));
+  const msg = !results.length ? (errors.join(' · ') || 'No results found.') : errors.join(' · ');
+  renderResults(msg);
+  // household portions for the first few generic rows arrive later and fill in "N kcal per medium (118 g)"; a newer search or a closed list drops them
+  if (state.useUSDA && results.length) {
+    const mine = results;
+    enrichWithPortions(mine, { apiKey: state.apiKey, cancelled: () => add.results !== mine, onUpdate: () => renderResults(msg) });
+  }
 }
 
 /* camera logic lives in services/barcode.js */

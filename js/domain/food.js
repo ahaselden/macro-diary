@@ -55,6 +55,35 @@ export function servingSummary(food) {
   } catch { return ''; }
 }
 
+const NOT_COUNTABLE = /\b(?:cups?|tbsp|tsp|tablespoons?|teaspoons?|fl|fluid|ml|milliliters?|millilitres?|litres?|liters?|quarts?|pints?|gallons?|oz|ounces?|lbs?|pounds?|g|grams?|kg)\b/i;
+/** Is this portion label a count of something ("medium", "slice", "NLEA serving"), not a volume or a weight? startingUnit (units.js) uses the same rule. Pure. */
+export const isCountLabel = label => !NOT_COUNTABLE.test(String(label).slice(0, 200));
+
+/**
+ * What a search row says about one serving: servingSummary(food) when the food has a serving (unchanged), otherwise the calories in the first count-type
+ * portion the food has ("105 kcal per medium (118 g)"; the portion startingUnit would open a new amount on), else ''. Plain text (the UI escapes it). Never throws.
+ */
+export function rowServingSummary(food) {
+  try {
+    const own = servingSummary(food);
+    if (own) return own;
+    if (!food || typeof food !== 'object' || Array.isArray(food) || !Array.isArray(food.portions)) return '';
+    const k = food.per100 && typeof food.per100 === 'object' ? Number(food.per100.k) : NaN;
+    if (!Number.isFinite(k)) return '';
+    for (const p of food.portions) {
+      try {
+        if (!p || typeof p !== 'object' || typeof p.label !== 'string' || typeof p.g !== 'number' || !Number.isFinite(p.g) || !(p.g > 0)) continue;
+        const label = p.label.slice(0, 300).replace(/<\/?[a-zA-Z!][^<>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+        if (!label || !isCountLabel(label)) continue;
+        const kcal = Math.round(k * p.g / 100), g = Math.round(p.g);
+        if (!Number.isFinite(kcal) || !Number.isFinite(g)) continue;
+        return `${kcal} kcal per ${label} (${g} g)`;
+      } catch { /* skip a hostile portion */ }
+    }
+    return '';
+  } catch { return ''; }
+}
+
 /** A food or entry name made safe to store: trimmed, whitespace collapsed, capped (default 100), '' for anything that is not a usable string. Plain text (the UI escapes it). */
 export function cleanFoodName(raw, max = 100) {
   try {
