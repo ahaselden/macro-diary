@@ -9,6 +9,7 @@ export const SCOPE = 'https://www.googleapis.com/auth/googlehealth.activity_and_
 export const CLIENT_ID_KEY = 'macrodiary.googleclient.v1';
 const BASE = 'https://health.googleapis.com/v4/users/me';
 const MAX_SLEEP_PAGES = 4;
+const QUIET_TIMEOUT_MS = 30000;
 
 const M = {
   noSave: 'Could not save the Client ID on this device.',
@@ -138,8 +139,10 @@ function popupMessage(err) {
 /** Signs in and resolves { token } or { message }. */
 function signIn(google, clientId, silent) {
   return new Promise(resolve => {
-    let done = false;
-    const finish = v => { if (!done) { done = true; resolve(v); } };
+    let done = false, timer = null;
+    const finish = v => { if (!done) { done = true; if (timer) clearTimeout(timer); resolve(v); } };
+    // A quiet attempt that Google never answers must not leave the app stuck "busy": give up after QUIET_TIMEOUT_MS. A tap has no timeout (a person may take a while).
+    if (silent) timer = setTimeout(() => finish({ message: M.failed }), QUIET_TIMEOUT_MS);
     try {
       const client = google.accounts.oauth2.initTokenClient({
         client_id: clientId, scope: SCOPE,
