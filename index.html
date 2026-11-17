@@ -109,12 +109,15 @@ if(t==='auto')t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'
     </div>
     <div class="card" id="ghSyncCard">
       <h2>Google Health sync</h2>
-      <p class="muted" style="margin-top:0">Reads your steps and sleep for the last 7 days straight from Google Health, so there is no file to export. Each time you sync, Google asks you to sign in (the sign-in lasts about 1 hour and there is no refresh, so there is no background sync). The app runs in your own Google Cloud test mode, so Google shows an "app is not verified" warning. The Client ID is public, but it is kept on this device only; never paste a client secret. Setup: docs/GOOGLE-HEALTH-SETUP.md.</p>
-      <label for="ghSyncClientId">Google Client ID</label>
-      <input type="text" id="ghSyncClientId" autocomplete="off" spellcheck="false" placeholder="ends in .apps.googleusercontent.com">
-      <div class="row" style="margin-top:8px"><button type="button" id="ghSyncSave">Save</button><button type="button" id="ghSyncRemove">Remove</button></div>
+      <p class="muted" style="margin-top:0">Reads your steps and sleep for the last 7 days straight from Google Health, so there is no file to export. The app has a built-in Google Client ID, so there is nothing to paste; you sign in with Google and accept the two Health permissions the first time. The sign-in lasts about 1 hour and there is no refresh, so there is no background sync: the app syncs when you open it (if you leave the switch on) or when you tap the button. While the Google project is not verified, Google shows an "app is not verified" warning. You can save a Client ID of your own below; it is kept on this device only, and never paste a client secret. Setup: docs/GOOGLE-HEALTH-SETUP.md.</p>
+      <p id="ghSyncUsing" class="muted"></p>
       <div class="row" style="margin-top:8px"><button type="button" id="ghSyncBtn" class="primary">Sync Google Health</button></div>
       <p id="ghSyncStatus" class="muted" aria-live="polite"></p>
+      <div class="chk"><input type="checkbox" id="ghSyncAuto"><label style="margin:0;color:inherit" for="ghSyncAuto">Sync when I open the app (if the last sync is over 3 hours old)</label></div>
+      <p id="ghSyncLast" class="muted"></p>
+      <label for="ghSyncClientId">Google Client ID</label>
+      <input type="text" id="ghSyncClientId" autocomplete="off" spellcheck="false" placeholder="optional: your own, ends in .apps.googleusercontent.com">
+      <div class="row" style="margin-top:8px"><button type="button" id="ghSyncSave">Save</button><button type="button" id="ghSyncRemove">Remove</button></div>
     </div>
     <div class="card" id="syncCard">
       <h2>Sync between devices</h2>

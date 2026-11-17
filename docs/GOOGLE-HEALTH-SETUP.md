@@ -59,3 +59,8 @@ You create a free Google Cloud project that only you can use, then run a small t
 1. In the app open **Settings**, find the card **Google Health sync**, paste your Client ID and press **Save**. It stays on this device only (never in a backup or synced); enter it again on each device you use. Never paste the client secret: the app refuses it.
 2. Press **Sync Google Health** (also on the Diary once the ID is saved). Google asks you to sign in each time and shows the "not verified" screen in test mode. The last 7 days of steps and sleep fill the dials.
 3. `https://ahaselden.github.io` must be one of the **Authorized JavaScript origins** of the OAuth client (step 5), or Google answers `origin_mismatch` when the app runs from GitHub Pages.
+
+## Using it without pasting a Client ID, and syncing when the app opens
+The app now has a built-in Client ID (yours, set in `DEFAULT_CLIENT_ID` in `js/services/google-health-api.js`), so on any device you only press **Sync Google Health**, sign in and accept the two Health permissions once. A Client ID saved under Settings still wins; **Remove** goes back to the built-in one. If **Sync when I open the app** is ticked (it is by default) and the last sync is more than 3 hours old, the app tries to sync quietly when it opens; if Google or the browser needs a tap, nothing happens until you press the button. The very first sync on a device is always a tap.
+
+To let people other than your test users sign in: Google Cloud console, **Google Auth Platform**, **Audience**, press **Publish app** (Testing becomes In production). Until Google verifies the app, up to 100 users can use it and they see the "not verified" screen (Advanced, then Continue). Keep `https://ahaselden.github.io` under Authorized JavaScript origins.

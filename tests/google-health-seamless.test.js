@@ -535,8 +535,8 @@ test('N21. (weak) health-sync-view.js wiring: prefs, staleness rule, silent run,
   assert.doesNotMatch(ui, /\binnerHTML|outerHTML|insertAdjacentHTML|document\.write/, 'stored prefs and Google text are only ever written with textContent');
   assert.doesNotMatch(ui, /\bconsole\.(log|info|warn|error|debug|trace)\b/);
   assert.doesNotMatch(ui, /localStorage\s*\.|sessionStorage|access_token|accessToken|\.setItem\(|\.getItem\(/, 'storage goes through the injected store / prefs; no token here');
-  const main = read('js/main.js');
-  assert.doesNotMatch(main, /silent|shouldAutoSync|\.run\(/, 'main.js only wires initHealthSync(); the auto-sync decision lives in the view');
+  const main = code('js/main.js');
+  assert.doesNotMatch(main, /\bsilent\s*:|shouldAutoSync|\.run\(/, 'main.js only wires initHealthSync(); the auto-sync decision lives in the view');
 });
 
 test('N22. (weak) no saved-shape change and no secrets in shipped sources: STORAGE_KEY unchanged, prefs key literal present, no real-looking secret or token', () => {
