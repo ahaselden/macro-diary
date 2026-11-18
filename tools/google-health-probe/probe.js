@@ -79,6 +79,100 @@ export function summariseSleep(json) {
   return { count: records.length, records, text };
 }
 
+// ---- workouts (backlog item 24, step 1; spec docs/specs/google-health-workouts-probe.md) ------------------------------------------------------
+
+/** The full request URL for exercise sessions that START on or after the first of those days (25 per page), percent-encoded, or ''. */
+export function buildExerciseUrl(now, days) {
+  if (!validNow(now)) return '';
+  const n = normDays(days), y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+  const filter = `exercise.interval.civil_start_time >= "${ymd(new Date(y, m, d - (n - 1)))}"`;
+  return `${BASE}/users/me/dataTypes/exercise/dataPoints?page_size=25&filter=${encodeURIComponent(filter)}`;
+}
+
+const ENUM = /^[A-Z][A-Z0-9_]{1,40}$/;                                  // an enum constant such as RUNNING: the only kind of value ever printed
+const BAD_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+const safeKey = k => (typeof k === 'string' && /^[A-Za-z0-9_]{1,40}$/.test(k) && !BAD_KEYS.has(k) ? k : '?');
+const MAX_KEY_DEPTH = 6, MAX_ARRAY_ITEMS = 10, MAX_BRACKET_DEPTH = 12, MAX_SHAPE_LINES = 200;
+const kindOf = v => (v === null ? 'null' : Array.isArray(v) ? 'array' : typeof v === 'object' ? 'object' : typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean' ? typeof v : '');
+const getKey = (o, k) => { try { return o[k]; } catch { return undefined; } };
+
+/** The first `limit` objects of `json.dataPoints` (own property only), non-objects skipped first. Never throws. */
+function firstObjects(json, limit) {
+  const out = [];
+  try {
+    if (!OBJ(json) || !own(json, 'dataPoints') || !Array.isArray(json.dataPoints)) return out;
+    const list = json.dataPoints;
+    for (let i = 0; i < list.length && out.length < limit; i++) { const v = getKey(list, i); if (OBJ(v)) out.push(v); }
+  } catch { /* nothing usable */ }
+  return out;
+}
+
+/**
+ * The STRUCTURE of the first `opts.records` (default 3, 1..5) records of a data-points answer, never their values: one line per distinct path
+ * ("exercise.metricsSummary.steps: string"), sorted, arrays collapsed to [], at most 6 keys deep and 200 lines. Keys outside [A-Za-z0-9_]{1,40}, and
+ * __proto__ / constructor / prototype, print as "?". The only value ever printed is an enum constant (RUNNING). 'no data points' when there is nothing.
+ */
+export function describeShape(json, opts) {
+  try {
+    let want = 3;
+    try { const r = OBJ(opts) ? opts.records : undefined; if (typeof r === 'number' && Number.isFinite(r)) want = Math.min(5, Math.max(1, Math.floor(r))); } catch { want = 3; }
+    const records = firstObjects(json, want);
+    if (!records.length) return 'no data points';
+    const paths = new Map();                                              // path -> { kinds, enums, records }
+    const seen = (map, path, kind, value, rec) => {
+      let e = map.get(path); if (!e) { e = { kinds: new Set(), enums: new Set(), records: new Set() }; map.set(path, e); }
+      e.kinds.add(kind); e.records.add(rec);
+      if (kind === 'string' && ENUM.test(value)) e.enums.add(value);
+    };
+    const walk = (value, path, keyDepth, bracketDepth, rec) => {
+      const kind = kindOf(value);
+      if (!kind || !path) return;
+      seen(paths, path, kind, value, rec);
+      if (kind === 'object' && keyDepth < MAX_KEY_DEPTH) {
+        let keys = []; try { keys = Object.keys(value); } catch { keys = []; }
+        for (const k of keys) walk(getKey(value, k), path + '.' + safeKey(k), keyDepth + 1, bracketDepth, rec);
+      } else if (kind === 'array' && bracketDepth < MAX_BRACKET_DEPTH) {
+        let n = 0; try { n = Math.min(value.length, MAX_ARRAY_ITEMS); } catch { n = 0; }
+        for (let i = 0; i < n; i++) walk(getKey(value, i), path + '[]', keyDepth, bracketDepth + 1, rec);
+      }
+    };
+    records.forEach((r, i) => {
+      let keys = []; try { keys = Object.keys(r); } catch { keys = []; }
+      for (const k of keys) walk(getKey(r, k), safeKey(k), 1, 0, i);
+    });
+    const total = records.length;
+    const lines = [...paths.keys()].sort().map(path => {
+      const e = paths.get(path);
+      const enums = [...e.enums].sort();
+      return `${path}: ${[...e.kinds].sort().join('|')}${enums.length ? ' = ' + enums.join(', ') : ''}${e.records.size < total ? ` (${e.records.size} of ${total})` : ''}`;
+    });
+    if (!lines.length) return 'no fields';
+    return (lines.length > MAX_SHAPE_LINES ? [...lines.slice(0, MAX_SHAPE_LINES), '... more paths'] : lines).join('\n');
+  } catch { return 'no data points'; }
+}
+
+/**
+ * Exercise sessions from a dataPoints answer, best effort (the exact field names are not known yet): per record the type (the first enum-shaped string in a
+ * field of `exercise` whose name contains "type", else ?), the local start and end (UTC time + UTC offset, like sleep) and the local day it starts on.
+ */
+export function summariseExercise(json) {
+  const empty = { count: 0, records: [], text: 'no exercise records' };
+  try {
+    const list = firstObjects(json, 25);
+    if (!list.length) return empty;
+    const records = list.map(item => {
+      const ex = getKey(item, 'exercise'), exo = OBJ(ex) ? ex : {}, ivRaw = getKey(exo, 'interval'), iv = OBJ(ivRaw) ? ivRaw : {};
+      let type = '?';
+      try {
+        for (const k of Object.keys(exo)) { const v = getKey(exo, k); if (k.toLowerCase().includes('type') && typeof v === 'string' && ENUM.test(v)) { type = v; break; } }
+      } catch { type = '?'; }
+      const localStart = localOf(getKey(iv, 'startTime'), getKey(iv, 'startUtcOffset')), localEnd = localOf(getKey(iv, 'endTime'), getKey(iv, 'endUtcOffset'));
+      return { type, localStart, localEnd, startDay: localStart === '?' ? '?' : localStart.slice(0, 10) };
+    });
+    return { count: records.length, records, text: records.map(r => `${r.type}: ${r.localStart} -> ${r.localEnd}`).join('; ') };
+  } catch { return empty; }
+}
+
 /** Make any text safe to show: no control characters, tokens and email addresses removed, whitespace collapsed, clipped to `max` characters. */
 function clean(s, max = 200) {
   let t = String(s).replace(/ya29\.[\w.-]*/g, '[token removed]').replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, '[email removed]').replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -130,6 +224,11 @@ export function resultSummary(results, showNumbers) {
     let line = `${name}: ${status} - ${c.ok === true ? 'ok' : 'failed'}`;
     if (c.ok !== true && str(c.message)) line += ': ' + describeError(c.message);
     lines.push(line);
+    // a check may carry a SHAPE (field names and kinds, no values): always printed, each line indented so it cannot pass for a top-level line
+    if (typeof c.shape === 'string' && c.shape.trim()) {
+      const shapeLines = c.shape.split(new RegExp('\\r\\n|[\\r\\n' + String.fromCharCode(0x2028, 0x2029) + ']')).slice(0, 300).map(l => clean(l.slice(0, 400))).filter(Boolean);
+      if (shapeLines.length) lines.push(`${name} shape:`, ...shapeLines.map(l => '  ' + l));
+    }
     if (showNumbers === true && str(c.numbers)) numbers.push(`${name} numbers: ${clean(c.numbers, 1000)}`);
   }
   return [...lines, ...numbers].join('\n');

@@ -25,6 +25,8 @@
 <div class="box">
   <label for="clientId">OAuth Client ID (the public one that ends in .apps.googleusercontent.com; never a secret)</label>
   <input id="clientId" type="text" autocomplete="off" spellcheck="false" placeholder="paste your Client ID here">
+  <label for="days">Days to read</label>
+  <select id="days"><option value="3" selected>3</option><option value="7">7</option><option value="14">14</option><option value="31">31</option></select>
   <button id="signIn" type="button">Sign in with Google</button>
   <label style="font-weight:400"><input id="showNumbers" type="checkbox"> show the numbers (steps and sleep) in the results and in the copied summary</label>
   <div id="status" class="muted" role="status" aria-live="polite"></div>
@@ -41,6 +43,7 @@
   <div id="check-identity" class="check muted">Account link: not run yet.</div>
   <div id="check-steps" class="check muted">Steps, last 3 days: not run yet.</div>
   <div id="check-sleep" class="check muted">Sleep, last 3 days: not run yet.</div>
+  <div id="check-exercise" class="check muted">Exercise: not run yet.</div>
 </div>
 
 <div class="box">
@@ -50,14 +53,13 @@
 </div>
 
 <script type="module">
-import { buildDailyRollUpBody, buildSleepUrl, summariseDailyRollUp, summariseSleep, resultSummary, describeError } from './probe.js';
+import { buildDailyRollUpBody, buildSleepUrl, buildExerciseUrl, summariseDailyRollUp, summariseSleep, summariseExercise, describeShape, resultSummary, describeError } from './probe.js';
 
 const BASE = 'https://health.googleapis.com/v4';
 const SCOPES = 'https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly https://www.googleapis.com/auth/googlehealth.sleep.readonly';
-const DAYS = 3;
 const $ = id => document.getElementById(id);
 const results = { token: { ok: false }, gisError: null, checks: [] };
-const LABELS = { identity: 'Account link', steps: 'Steps, last 3 days', sleep: 'Sleep, last 3 days' };
+let days = 3;                                                          // the choice in "Days to read", read when the button is clicked
 
 function show() {
   const numbers = $('showNumbers').checked, text = resultSummary(results, numbers), lines = text.split('\n');
@@ -69,6 +71,8 @@ function show() {
     const mine = lines.filter(l => l.startsWith(name + ': ') || l.startsWith(name + ' numbers: '));
     $('check-' + name).textContent = mine.length ? mine.join('\n') : name + ': not run yet';
   }
+  const ex = lines.filter(l => l.startsWith('Exercise: ') || l.startsWith('Exercise numbers: ') || l.startsWith('Exercise shape:') || l.startsWith('  '));   // the shape lines are indented
+  $('check-exercise').textContent = ex.length ? ex.join('\n') : 'Exercise: not run yet';
   $('summary').textContent = text;
 }
 
@@ -84,10 +88,13 @@ async function runChecks(token) {
   const now = new Date();
   results.checks = [];
   const id = await call('identity', 'GET', BASE + '/users/me/identity', null, token); results.checks.push({ ...id, numbers: '' }); show();
-  const st = await call('steps', 'POST', BASE + '/users/me/dataTypes/steps/dataPoints:dailyRollUp', buildDailyRollUpBody(now, DAYS), token);
+  const st = await call('steps', 'POST', BASE + '/users/me/dataTypes/steps/dataPoints:dailyRollUp', buildDailyRollUpBody(now, days), token);
   results.checks.push({ ...st, numbers: st.ok ? summariseDailyRollUp(st.json).text : '' }); show();
-  const sl = await call('sleep', 'GET', buildSleepUrl(now, DAYS), null, token);
+  const sl = await call('sleep', 'GET', buildSleepUrl(now, days), null, token);
   results.checks.push({ ...sl, numbers: sl.ok ? summariseSleep(sl.json).text : '' }); show();
+  // workouts: the numbers (type and times) stay hidden unless "show the numbers" is ticked; the SHAPE (field names and kinds, never values) is always shown
+  const ex = await call('Exercise', 'GET', buildExerciseUrl(now, days), null, token);
+  results.checks.push({ ...ex, numbers: ex.ok ? summariseExercise(ex.json).text : '', shape: ex.ok ? describeShape(ex.json) : '' }); show();
   for (const c of results.checks) delete c.json;      // the answers are not kept; only the short text above
 }
 
@@ -107,6 +114,7 @@ $('signIn').addEventListener('click', () => {
   const clientId = $('clientId').value.trim();
   if (!clientId) { $('status').textContent = 'Enter a Client ID first.'; return; }
   if (!(window.google && window.google.accounts && window.google.accounts.oauth2)) { $('status').textContent = 'The Google sign-in script did not load. Check the network and try again.'; return; }
+  days = Number($('days').value) || 3;
   results.token = { ok: false }; results.gisError = null; results.checks = []; $('signIn').disabled = true; show();
   const client = window.google.accounts.oauth2.initTokenClient({ client_id: clientId, scope: SCOPES, callback: onToken, error_callback: onError });
   client.requestAccessToken();

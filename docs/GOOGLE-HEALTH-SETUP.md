@@ -64,3 +64,10 @@ You create a free Google Cloud project that only you can use, then run a small t
 The app now has a built-in Client ID (yours, set in `DEFAULT_CLIENT_ID` in `js/services/google-health-api.js`), so on any device you only press **Sync Google Health**, sign in and accept the two Health permissions once. A Client ID saved under Settings still wins; **Remove** goes back to the built-in one. If **Sync when I open the app** is ticked (it is by default) and the last sync is more than 3 hours old, the app tries to sync quietly when it opens; if Google or the browser needs a tap, nothing happens until you press the button. The very first sync on a device is always a tap.
 
 To let people other than your test users sign in: Google Cloud console, **Google Auth Platform**, **Audience**, press **Publish app** (Testing becomes In production). Until Google verifies the app, up to 100 users can use it and they see the "not verified" screen (Advanced, then Continue). Keep `https://ahaselden.github.io` under Authorized JavaScript origins.
+
+## Workouts check
+The probe page now also reads your workouts, so the next feature (workouts in the Diary) can be built from what Google really sends. There is no new permission: workouts are covered by the activity permission the probe already asks for, so Google shows the same two ticks.
+1. Open the probe as before (section 7) and paste your Client ID.
+2. Under **Days to read** choose **31** so a workout from the last month is included (the default 3 would miss older ones).
+3. Tick "show the numbers" only if you are happy to show the type and start and end times of your workouts; the field layout is shown either way.
+4. Press **Sign in with Google**, wait for "Done", then press **Copy result summary** and paste it back to me. The **Exercise shape** lines list the field names Google uses and the kind of value in each (text, number, true/false). Before you paste, read them once: they must contain no names, times, calories, distances or ids (only words like RUNNING for the kind of workout are expected).
