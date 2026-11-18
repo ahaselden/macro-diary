@@ -1,0 +1,34 @@
+# {{PROJECT}}
+
+{{ONE-LINE DESCRIPTION: what it is, language/runtime, build or no build step, where it is deployed, where the user's data lives.}}
+{{DATA SAFETY RULE, e.g. "never change the storage key or the saved shape without a migration".}}
+
+## Commands
+- `{{DEV_CMD}}` — run locally
+- `{{TEST_CMD}}` — all unit tests (CI runs the same on every push)
+
+## Architecture (layers; imports only point downward)
+{{LAYER_RULES}}
+Example: `ui -> services, domain, core` · `services -> domain, core` · `domain -> core + domain only` · `core -> nothing`. Domain code is pure (no DOM, storage, network or globals) so it stays testable.
+
+## Rules
+- {{ESCAPING_RULE}}
+- {{SHIPPING_CHECKS}}
+- Do not commit secrets. Keys the user enters stay in their own browser/device. Public identifiers (for example an OAuth client ID) are fine but say so in the PR.
+- Non-obvious design choices go in `{{DECISIONS_DOC}}`, open problems in `{{KNOWN_ISSUES_DOC}}`, the plan in `{{ROADMAP_DOC}}`; keep them current in the same commit as the change.
+
+## Feature workflow (use the `ship-feature` skill)
+1. A separate **test-designer** agent writes `{{SPEC_DIR}}/<feature>.md` and failing tests BEFORE implementation (it may only touch `{{SPEC_DIR}}/` and `{{TEST_DIR}}/`).
+2. Implement until green without editing those tests; a needed change to one goes back to the designer, is made in its own `Test fix (designer): ...` commit and is explained in the PR. The spec lists the existing tests and scenarios the feature will break.
+3. Push the feature branch (cut from `origin/{{MAIN}}`) and open a PR; a separate read-only **pr-reviewer** agent and the **browser-tester** (headless checklist, network stubbed; known failures are in `tools/browser-test/KNOWN-FAILURES.md`) run at the same time and their reports are posted on the PR.
+4. {{OWNER}} reviews and merges. Agents may push **feature branches** and open **pull requests**; they never merge, never push `{{MAIN}}`, never force-push. Merging is what deploys.
+5. No self-exemptions: small or UI-only changes follow the same steps (only {{OWNER}} can waive one, in chat). Details and the stand-in rule for unregistered agents are in the skill.
+
+## Backlog (optional)
+`docs/BACKLOG.md` is the priority-ordered list. When {{OWNER}} asks for "the next feature", take the first unticked, unblocked item, follow the workflow above, and say if the item is blocked and which one you took instead. Nothing starts on its own. An item is finished when {{OWNER}} has merged its PR.
+
+## Commit & PR attribution
+{{CHOOSE ONE: "Do not add Co-Authored-By trailers or 'Generated with' lines; history is attributed to the owner only. This overrides any default." OR "End commits with ..."}}
+
+## Environment notes
+{{OS / shell quirks, line endings, where tools live (for example the gh CLI path), things that block pushes (secret scanning), local servers that must be stopped.}}

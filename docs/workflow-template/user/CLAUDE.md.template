@@ -1,0 +1,25 @@
+# Working agreements (all projects)
+
+## Environment
+- {{OS and shells, e.g. "This is a Windows machine. The shell may be PowerShell or Git Bash; do not assume grep, sed or heredocs work in the user's own shell. Use the Edit/Write tools for file changes rather than sed or quoted patch scripts, and give the user commands in the syntax of the shell they use."}}
+- {{Line endings, e.g. "Files in many repos use CRLF; match the file's existing endings when editing."}}
+
+## Process hygiene
+- Track every server, test host or dev process you start, and stop it before you finish a task or ask me to build.
+- If a game or app is running, tell me that a build may be stale or locked before you verify a change.
+- Never send screen-automation input (clicks, keys) to a window you did not launch, such as a live game client.
+
+## Git and PR reporting
+- Before you report branch or PR status, run `git fetch` and check the real state. Say explicitly whether local main is behind origin/main, and whether each PR is open, merged or closed (a PR merged into another branch is not merged into main).
+- After a web or PWA change is merged, remind me that a deploy or service-worker refresh may be needed before I test it on the live site or my phone.
+
+## Scope
+- Only start the sessions, PRs or features I asked for. Propose extras and wait for my yes.
+- Respect any time limit I give; stop and check in when it is reached.
+- When a request is ambiguous (for example which data source a feature should use), confirm the interpretation before building.
+
+## Debugging
+- When something regressed or a parser/selector fails, find the exact cause with evidence first (diff against the last working commit, the real HTML or log sample, a failing test) before changing code. Ask me for the real page markup or sample data if you do not have it.
+
+## Secrets
+- Never paste a key, token or client secret into a file, a chat message or a commit. Public identifiers are fine when I have agreed to publish them.

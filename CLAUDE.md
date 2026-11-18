@@ -35,8 +35,8 @@ Live on GitHub Pages (`ahaselden/macro-diary`). Data lives in the browser (`loca
 
 ## Feature workflow (use the `ship-feature` skill)
 1. A separate **test-designer** agent writes `docs/specs/<feature>.md` and failing tests BEFORE implementation (it may only touch `docs/specs/` and `tests/`).
-2. Implement until green without editing those tests; changes to them must be explained in the PR.
-3. Push the feature branch and open a PR; a separate read-only **pr-reviewer** agent reviews it and its report is posted on the PR.
+2. Implement until green without editing those tests; a needed change to one goes back to the designer, is made in its own `Test fix (designer): ...` commit and is explained in the PR. The spec lists the existing tests and headless scenarios the feature will break.
+3. Push the feature branch (cut from `origin/main`) and open a PR; a separate read-only **pr-reviewer** agent and the **browser-tester** (headless checklist, network stubbed; known failures are in `tools/browser-test/KNOWN-FAILURES.md`) run at the same time and their reports are posted on the PR.
 4. The owner reviews and merges.
 5. No self-exemptions: small or UI-only changes follow the same steps (only the owner can waive one). Details and the stand-in rule for unregistered agents are in the skill.
 
