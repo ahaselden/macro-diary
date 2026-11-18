@@ -24,7 +24,7 @@ const STEPS_OK = { rollupDataPoints: [{ ...d(2026, 11, 14), steps: { countSum: '
 const sl = (s, e, m) => ({ sleep: { interval: { startTime: s, startUtcOffset: '-18000s', endTime: e, endUtcOffset: '-18000s' }, summary: { minutesAsleep: m } } });
 const SLEEP_OK = { dataPoints: [sl('2026-11-16T09:00:00Z', '2026-11-16T13:00:00Z', '239'), sl('2026-11-16T05:30:00Z', '2026-11-16T08:09:00Z', '159'), sl('2026-11-15T06:00:00Z', '2026-11-15T11:00:00Z', '268'),
   sl('2026-11-15T04:00:00Z', '2026-11-15T05:10:00Z', '68'), sl('2026-11-14T03:30:00Z', '2026-11-14T11:30:00Z', '435')], nextPageToken: '' };
-const HAPPY = () => ({ steps: json(200, STEPS_OK), sleep: json(200, SLEEP_OK) });
+const HAPPY = () => ({ steps: json(200, STEPS_OK), sleep: json(200, SLEEP_OK), exercise: json(200, { dataPoints: [] }) });   // CHANGED for docs/specs/google-health-workouts.md: the third (exercise) request
 const SYNCED = 'Synced 3 days: steps for 3, sleep for 3';
 const TODAY_LINE = 'From Google Health: Steps 1,226 · Sleep 6 h 38 min';
 const stale = (ms = NOW - 4 * H, auto = true) => JSON.stringify({ lastSyncAt: ms, auto });
@@ -50,7 +50,7 @@ export default async function ({ page, url, screenshot }) {
   await page.route('https://health.googleapis.com/v4/**', async route => {
     const r = route.request(), u = r.url();
     seen.push({ method: r.method(), url: u, headers: r.headers(), body: r.postData() });
-    const h = health[u.includes('dailyRollUp') ? 'steps' : u.includes('reconcile') ? 'sleep' : 'other'];
+    const h = health[u.includes('dailyRollUp') ? 'steps' : u.includes('reconcile') ? 'sleep' : u.includes('dataTypes/exercise') ? 'exercise' : 'other'];
     if (!h) return route.fulfill({ status: 404, body: '{}' });
     if (h === 'abort') return route.abort();
     return route.fulfill(h);
@@ -169,8 +169,8 @@ export default async function ({ page, url, screenshot }) {
   const staleLoad = async (extra = {}) => start({ prefs: stale(), ...extra });
   const c10Outcomes = async () => {
     eq(await reqs(), 1, 'requestAccessToken calls'); eq((await args())[0].prompt, 'none', 'prompt');
-    eq(seen.length, 2, 'health requests'); ok(seen.every(r => r.headers.authorization === 'Bearer stub-token-123'), 'bearer');
-    eq(seen[0].method, 'POST', 'steps POST'); eq(seen[1].method, 'GET', 'sleep GET');
+    eq(seen.length, 3, 'health requests'); ok(seen.every(r => r.headers.authorization === 'Bearer stub-token-123'), 'bearer');
+    eq(seen[0].method, 'POST', 'steps POST'); eq(seen[1].method, 'GET', 'sleep GET'); eq(seen[2].method + ' ' + seen[2].url, 'GET https://health.googleapis.com/v4/users/me/dataTypes/exercise/dataPoints?page_size=25&filter=exercise.interval.civil_start_time%20%3E%3D%20%222026-11-10%22', 'exercise GET');
   };
   await item('C10 [D]', async () => {
     await staleLoad(); await waitReqs(1); await page.waitForSelector('#activityLine', { state: 'visible', timeout: 4000 });
@@ -244,7 +244,7 @@ export default async function ({ page, url, screenshot }) {
     await page.waitForTimeout(150); eq(await reqs(), 1, 'one request while the first runs');
     ok(await page.locator('#ghSyncBtn').isDisabled(), 'button disabled while running');
     await page.waitForFunction(() => /^Synced/.test(document.getElementById('ghSyncStatus').textContent), null, { timeout: 5000 }); await settle();
-    eq(await status(), SYNCED, 'status'); eq(await reqs(), 1, 'still one request'); eq(seen.length, 2, 'two Health requests in total');
+    eq(await status(), SYNCED, 'status'); eq(await reqs(), 1, 'still one request'); eq(seen.length, 3, 'three Health requests in total');
   });
   await item('C20 [D]', async () => {
     await staleLoad({ delay: 1500 }); await page.click('#prev'); const lbl = (await page.locator('#dateLbl').textContent()).trim();
