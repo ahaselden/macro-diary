@@ -28,6 +28,9 @@ const SEED15 = { '2026-11-15': { updatedAt: 1000, source: 'google-health', steps
 export default async function ({ page, url, check, screenshot }) {
   mkdirSync(SHOTS, { recursive: true });
   const fails = [];
+  // These items assume NO built-in Client ID (docs/specs/google-health-seamless.md C24: run them as [N]). The app now ships one, so the browser is handed
+  // js/services/google-health-api.js with DEFAULT_CLIENT_ID = '' (nothing on disk changes).
+  await page.route('**/js/services/google-health-api.js', async route => { const resp = await route.fetch(); const t = await resp.text(); return route.fulfill({ response: resp, body: t.replace(/export const DEFAULT_CLIENT_ID = '[^']*';/, "export const DEFAULT_CLIENT_ID = '';") }); });
   let health = HAPPY(), seen = [], hosts = [], gsiHits = 0, consoleAll = [];
   const item = async (id, fn) => {
     try { await fn(); console.log('PASS ' + id); }

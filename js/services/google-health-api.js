@@ -9,6 +9,7 @@ export const SCOPE = 'https://www.googleapis.com/auth/googlehealth.activity_and_
 export const CLIENT_ID_KEY = 'macrodiary.googleclient.v1';
 const BASE = 'https://health.googleapis.com/v4/users/me';
 const MAX_SLEEP_PAGES = 4;
+const QUIET_TIMEOUT_MS = 30000;
 
 const M = {
   noSave: 'Could not save the Client ID on this device.',
@@ -31,16 +32,26 @@ const http = n => `Google Health answered with an error (HTTP ${n}). Try again l
 const OBJ = v => !!v && typeof v === 'object' && !Array.isArray(v);
 const str = v => (typeof v === 'string' ? v : '');
 
-/** The Client ID on THIS device only (its own localStorage key, outside the saved diary data, so it is in no backup and no sync record). */
-export function createClientIdStore(storage) {
+/**
+ * The Client ID the app signs in with. It is a PUBLIC value (not a secret). The built-in default below is shipped with the app so nobody has to paste one;
+ * a Client ID saved on THIS device (its own localStorage key, outside the saved diary data, so it is in no backup and no sync record) wins over it.
+ */
+export const DEFAULT_CLIENT_ID = '1094978660996-lntit6oh8sch8qslv9uk38td9sujppug.apps.googleusercontent.com';
+
+/** The Client ID store. `defaultId` (checked like any ID; a bad one is ignored) is used when no valid ID is saved. The default is never written to storage. */
+export function createClientIdStore(storage, defaultId = '') {
+  const dr = typeof defaultId === 'string' ? checkClientId(defaultId) : null;
+  const fallback = dr && dr.ok ? dr.id : '';
+  const saved = () => {
+    try {
+      const v = storage && storage.getItem(CLIENT_ID_KEY);
+      const r = typeof v === 'string' ? checkClientId(v) : null;
+      return r && r.ok ? r.id : '';
+    } catch { return ''; }
+  };
   return {
-    get() {
-      try {
-        const v = storage && storage.getItem(CLIENT_ID_KEY);
-        const r = typeof v === 'string' ? checkClientId(v) : null;
-        return r && r.ok ? r.id : '';
-      } catch { return ''; }
-    },
+    get() { return saved() || fallback; },
+    usingDefault() { return !saved() && !!fallback; },
     set(text) {
       const r = checkClientId(text);
       if (!r.ok) return r;
@@ -57,6 +68,30 @@ export function createClientIdStore(storage) {
         else storage.setItem(CLIENT_ID_KEY, '');
       } catch { /* nothing to clear */ }
     },
+  };
+}
+
+export const SYNC_PREFS_KEY = 'macrodiary.googlesync.v1';
+
+/**
+ * Device-only sync state: when the last successful sync finished (ms, 0 = never) and whether to sync when the app opens (default ON). One JSON object
+ * { lastSyncAt, auto } under its own key, outside the saved diary data (in no backup or sync record). No token, no Client ID, nothing else is stored.
+ */
+export function createSyncPrefs(storage) {
+  const read = () => {
+    try {
+      const o = JSON.parse(storage.getItem(SYNC_PREFS_KEY));
+      if (!OBJ(o)) return { lastSyncAt: 0, auto: true };
+      const at = Object.hasOwn(o, 'lastSyncAt') ? o.lastSyncAt : 0, auto = Object.hasOwn(o, 'auto') ? o.auto : true;
+      return { lastSyncAt: typeof at === 'number' && Number.isFinite(at) && at > 0 ? at : 0, auto: auto !== false };
+    } catch { return { lastSyncAt: 0, auto: true }; }
+  };
+  const write = v => { try { storage.setItem(SYNC_PREFS_KEY, JSON.stringify({ lastSyncAt: v.lastSyncAt, auto: v.auto })); } catch { /* not saved */ } };
+  return {
+    getLastSyncAt: () => read().lastSyncAt,
+    getAuto: () => read().auto,
+    setLastSyncAt(ms) { if (typeof ms === 'number' && Number.isFinite(ms) && ms > 0) write({ ...read(), lastSyncAt: ms }); },
+    setAuto(on) { if (typeof on === 'boolean') write({ ...read(), auto: on }); },
   };
 }
 
@@ -102,17 +137,20 @@ function popupMessage(err) {
 }
 
 /** Signs in and resolves { token } or { message }. */
-function signIn(google, clientId) {
+function signIn(google, clientId, silent) {
   return new Promise(resolve => {
-    let done = false;
-    const finish = v => { if (!done) { done = true; resolve(v); } };
+    let done = false, timer = null;
+    const finish = v => { if (!done) { done = true; if (timer) clearTimeout(timer); resolve(v); } };
+    // A quiet attempt that Google never answers must not leave the app stuck "busy": give up after QUIET_TIMEOUT_MS. A tap has no timeout (a person may take a while).
+    if (silent) timer = setTimeout(() => finish({ message: M.failed }), QUIET_TIMEOUT_MS);
     try {
       const client = google.accounts.oauth2.initTokenClient({
         client_id: clientId, scope: SCOPE,
         callback: resp => { const m = responseMessage(resp); finish(m ? { message: m } : { token: resp.access_token }); },
         error_callback: err => finish({ message: popupMessage(err) }),
       });
-      client.requestAccessToken();
+      if (silent) client.requestAccessToken({ prompt: 'none' });     // a quiet attempt: Google must not show a sign-in or consent screen
+      else client.requestAccessToken();
     } catch { finish({ message: M.failed }); }
   });
 }
@@ -142,7 +180,9 @@ async function call(fetchFn, url, init, token) {
 export function createHealthSync({ fetch: fetchFn = (...a) => globalThis.fetch(...a), loadGoogle = defaultLoadGoogle, now = () => new Date() } = {}) {
   let running = false;
   return {
-    async run(clientId) {
+    async run(clientId, opts) {
+      const silent = !!opts && typeof opts === 'object' && opts.silent === true;
+      const fail = message => (silent ? { ok: false, silent: true, message } : { ok: false, message });   // `silent` marks failures BEFORE a token: the UI may ignore those
       const id = checkClientId(clientId);
       if (!id.ok) return { ok: false, message: id.message };
       if (running) return { ok: false, busy: true, message: M.busy };
@@ -150,9 +190,9 @@ export function createHealthSync({ fetch: fetchFn = (...a) => globalThis.fetch(.
       try {
         let google;
         try { google = await loadGoogle(); } catch { google = null; }
-        if (!google || !google.accounts || !google.accounts.oauth2 || typeof google.accounts.oauth2.initTokenClient !== 'function') return { ok: false, message: M.script };
-        const t = await signIn(google, id.id);
-        if (t.message) return { ok: false, message: t.message };
+        if (!google || !google.accounts || !google.accounts.oauth2 || typeof google.accounts.oauth2.initTokenClient !== 'function') return fail(M.script);
+        const t = await signIn(google, id.id, silent);
+        if (t.message) return fail(t.message);
         const today = now();
         const steps = await call(fetchFn, `${BASE}/dataTypes/steps/dataPoints:dailyRollUp`, { method: 'POST', body: JSON.stringify(buildDailyRollUpBody(today, SYNC_DAYS)) }, t.token);
         if (steps.message) return { ok: false, message: steps.message };

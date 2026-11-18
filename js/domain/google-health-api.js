@@ -174,3 +174,34 @@ export function checkClientId(text) {
   if (!/^[A-Za-z0-9_-]{10,100}\.apps\.googleusercontent\.com$/.test(t)) return { ok: false, message: MSG.shape };
   return { ok: true, id: t };
 }
+
+// ---- when to sync by itself, and how to say how long ago -----------------------------------------------------------------------------------
+const HOUR_MS = 3600000;
+const posNum = v => typeof v === 'number' && Number.isFinite(v) && v > 0;
+
+/**
+ * Should the app try a quiet sync now? Only when the switch is on, a Client ID is available, a PREVIOUS sync succeeded on this device (the first sync is
+ * always an explicit tap, because Google asks for consent then), and at least `minHours` (default 3) have passed. Pure: `now` is an argument. Never throws.
+ */
+export function shouldAutoSync(o) {
+  try {
+    if (!OBJ(o)) return false;
+    const { enabled, hasClientId, lastSyncAt, now } = o, mh = o.minHours;
+    if (!enabled || !hasClientId || !posNum(lastSyncAt) || !posNum(now)) return false;
+    const hours = posNum(mh) ? mh : 3;
+    return now - lastSyncAt >= hours * HOUR_MS;
+  } catch { return false; }
+}
+
+/** 'Last synced just now' / 'a minute' / '5 minutes' / 'an hour' / '3 hours' / 'a day' / '2 days' ago (units floored), or '' when unknown, in the future or junk. Plain text. */
+export function syncAgoText(lastSyncAt, now) {
+  try {
+    if (!posNum(lastSyncAt) || !posNum(now) || lastSyncAt > now) return '';
+    const ms = now - lastSyncAt, min = Math.floor(ms / 60000), hr = Math.floor(ms / HOUR_MS), day = Math.floor(ms / (24 * HOUR_MS));
+    const unit = (n, one, many) => `Last synced ${n === 1 ? one : n + ' ' + many} ago`;
+    if (min < 1) return 'Last synced just now';
+    if (hr < 1) return unit(min, 'a minute', 'minutes');
+    if (day < 1) return unit(hr, 'an hour', 'hours');
+    return unit(day, 'a day', 'days');
+  } catch { return ''; }
+}
