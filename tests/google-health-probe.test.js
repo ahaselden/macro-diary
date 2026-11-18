@@ -299,7 +299,7 @@ test('P22. source: page has the contract ids, exact labels, the three endpoints 
     assert.match(html, new RegExp('\\bid\\s*=\\s*["\']' + id + '["\']'), 'id ' + id);
   assert.match(html, />\s*Sign in with Google\s*</); assert.match(html, />\s*Copy result summary\s*</); assert.match(html, /show the numbers/);
   assert.match(html, /<input\b[^>]*\bid\s*=\s*["']clientId["'][^>]*>/); assert.match(html, /<input\b[^>]*\btype\s*=\s*["']checkbox["'][^>]*\bid\s*=\s*["']showNumbers["']|<input\b[^>]*\bid\s*=\s*["']showNumbers["'][^>]*\btype\s*=\s*["']checkbox["']/);
-  for (const s of ['https://health.googleapis.com/v4', '/users/me/identity', '/users/me/dataTypes/steps/dataPoints:dailyRollUp', '/users/me/dataTypes/sleep/dataPoints:reconcile', 'windowSizeDays', 'page_size', 'Bearer', 'buildDailyRollUpBody', 'buildSleepUrl', 'summariseDailyRollUp', 'summariseSleep', 'resultSummary', 'describeError', 'Enter a Client ID first'])
+  for (const s of ['https://health.googleapis.com/v4', '/users/me/identity', '/users/me/dataTypes/steps/dataPoints:dailyRollUp', '/users/me/dataTypes/sleep/dataPoints:reconcile', 'windowSizeDays', 'page_size', 'Bearer', 'buildDailyRollUpBody', 'buildSleepUrl', 'summariseDailyRollUp', 'summariseSleep', 'resultSummary', 'describeError'])   // 'Enter a Client ID first' dropped by the test designer for docs/specs/probe-remember-client-id.md: the page now gets that text from checkClientId (R3 in tests/google-health-probe-client-id.test.js pins it)
     assert.ok(all.includes(s), 'missing ' + s);
   assert.match(all, /25/); assert.match(all, /navigator\.clipboard\.writeText/);
 });
