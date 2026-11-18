@@ -663,3 +663,27 @@ test('Z3. (weak) docs: DECISIONS.md has an entry for the workouts SYNC (not the 
   assert.ok(entries.some(b => /replace/i.test(b) && /workoutsError|fail/i.test(b) && /activity_and_fitness|same permission|no new (scope|consent)/i.test(b) && /per day|each day|a day/i.test(b)),
     'a "## D<n>. Google Health ..." entry must say that the API workouts REPLACE the stored ones of a day, what happens when the workouts request fails, and that no new permission is needed');
 });
+
+// ================================================================ added after the PR review (spec "Decided here": zero duration, zero distance)
+test('X7b. an activeDuration that rounds to 0 minutes ("0s", "20s", "29s") is UNUSABLE: minutes fall back to the interval length (33 here), or 0 with no usable end; 30 s rounds to 1 and is used', async () => {
+  const mins = async over => (await w1(over)).minutes;
+  for (const d of ['0s', '0.0s', '20s', '29s', '29.9s']) assert.equal(await mins(set('exercise.activeDuration', d)), 33, 'duration ' + d + ' -> interval');
+  const sixty = over => set('exercise.interval.endTime', '2026-11-14T19:07:37Z', over);   // exactly 60 min after the start
+  assert.equal(await mins(sixty(set('exercise.activeDuration', '0s'))), 60, 'a 60 minute interval with "0s" gives 60 min');
+  for (const d of ['0s', '20s']) assert.equal(await mins(set('exercise.interval.endTime', undefined, set('exercise.activeDuration', d))), 0, d + ' with no usable end -> 0');
+  assert.equal(await mins(set('exercise.activeDuration', '30s')), 1, '30 s = 0.5 min rounds up to 1 and is a usable duration');
+  assert.equal(await mins(set('exercise.activeDuration', '90s')), 2, '1.5 min -> 2');
+  assert.equal(await mins(base()), 31, 'a normal duration is unchanged');
+});
+
+test('V2b. workoutLine leaves out a distance that rounds to 0.0 in the chosen unit; 40 m and 60 m in km, 70 m and 100 m in miles (rule: nearest tenth, half up; the exact 50 m / 80.47 m boundaries are not pinned)', async () => {
+  const { workoutLine } = await A();
+  const dist = (m, unit) => workoutLine({ id: 'a', name: 'R', start: '2026-11-14T18:07:37Z', minutes: 1, distanceM: m }, unit);
+  assert.equal(dist(40, 'g'), 'R · 1 min');             // 0.04 km -> 0.0 -> left out
+  assert.equal(dist(60, 'g'), 'R · 1 min · 0.1 km');    // 0.06 km -> 0.1
+  assert.equal(dist(0, 'g'), 'R · 1 min');              // 0 m -> 0.0 -> left out
+  assert.equal(dist(70, 'oz'), 'R · 1 min');            // 70 / 1609.344 = 0.0435 mi -> 0.0 -> left out
+  assert.equal(dist(100, 'oz'), 'R · 1 min · 0.1 mi');  // 100 / 1609.344 = 0.0621 mi -> 0.1
+  assert.equal(dist(40, 'oz'), 'R · 1 min');
+  assert.equal(workoutLine({ id: 'a', name: 'R', start: '2026-11-14T18:07:37Z', minutes: 5, kcal: 9, avgHr: 99, distanceM: 40 }, 'g'), 'R · 5 min · 9 kcal · avg 99 bpm', 'the other parts stay');
+});
