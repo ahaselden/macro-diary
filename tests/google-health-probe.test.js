@@ -250,10 +250,10 @@ test('P17. resultSummary: never leaks the token, an email or hidden numbers; hos
   assert.equal(resultSummary({ checks: [{ name: 'a', status: 99, ok: true }, { name: 5, status: 200, ok: true }] }, false), 'Google Health probe result\nSign-in: failed\na: no response - ok\n?: HTTP 200 - ok');
 });
 
-test('P18. probe.js imports in Node with no DOM and exports the eight helpers', async () => {
+test('P18. probe.js imports in Node with no DOM and exports the eleven helpers', async () => {   // updated by the test designer for docs/specs/google-health-workouts-probe.md (B16): was eight
   assert.equal(typeof globalThis.document, 'undefined'); assert.equal(typeof globalThis.window, 'undefined');
   const P = await load();
-  assert.deepEqual(Object.keys(P).sort(), ['buildDailyRollUpBody', 'buildSleepFilter', 'buildSleepUrl', 'civilRange', 'describeError', 'resultSummary', 'summariseDailyRollUp', 'summariseSleep']);
+  assert.deepEqual(Object.keys(P).sort(), ['buildDailyRollUpBody', 'buildExerciseUrl', 'buildSleepFilter', 'buildSleepUrl', 'civilRange', 'describeError', 'describeShape', 'resultSummary', 'summariseDailyRollUp', 'summariseExercise', 'summariseSleep']);
   for (const k of Object.keys(P)) assert.equal(typeof P[k], 'function', k);
 });
 
