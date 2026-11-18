@@ -59,7 +59,7 @@ export function initHealthSync() {
           emit('diary:changed');                                      // the dials, the activity line and the water card redraw without a reload
         }
         prefs.setLastSyncAt(Date.now());                              // a no-change sync counts too
-        message = healthSyncText(res.days);
+        message = healthSyncText(res.days, res.workoutsError);        // a failed workouts request adds one fixed sentence; steps and sleep are still applied
       } else if (!res.silent) message = res.message;                  // a quiet attempt that could not sign in says nothing; anything after the token is shown
     } catch { message = quiet ? '' : 'Google Health sync failed.'; }
     if (message) { status.textContent = message; if (mode !== 'settings') toast(message); }
