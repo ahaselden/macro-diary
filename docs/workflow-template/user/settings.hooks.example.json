@@ -1,0 +1,15 @@
+{
+  "_comment": "Merge the \"hooks\" part into ~/.claude/settings.json. This Stop hook kills leftover .NET test hosts that lock build files; replace the process names with whatever your stack leaves behind. Never kill anything you did not start.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -Command \"Get-Process testhost,vstest.console -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue\""
+          }
+        ]
+      }
+    ]
+  }
+}

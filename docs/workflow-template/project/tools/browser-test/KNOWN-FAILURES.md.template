@@ -1,0 +1,7 @@
+# Known headless failures on {{MAIN}}
+
+Scenarios that fail on `{{MAIN}}` WITHOUT any change under test. The browser-tester reports them as "known, not caused by this change" and does not investigate them. When one is fixed, delete its line in the same PR. Last confirmed: {{DATE}} (origin/{{MAIN}} {{SHA}}).
+
+| Scenario | Check | What happens |
+|---|---|---|
+| (none yet) | | |
