@@ -29,7 +29,7 @@ export default async function ({ page, url, check, screenshot }) {
   await page.route('https://health.googleapis.com/v4/**', async route => {
     const r = route.request(); const u = r.url();
     seen.push({ method: r.method(), url: u, headers: r.headers(), body: r.postData() });
-    const key = u.includes('/identity') ? 'identity' : u.includes('dailyRollUp') ? 'steps' : u.includes('reconcile') ? 'sleep' : 'other';
+    const key = u.includes('/identity') ? 'identity' : u.includes('dailyRollUp') ? 'steps' : u.includes('reconcile') ? 'sleep' : u.includes('dataTypes/exercise') ? 'exercise' : 'other';
     const h = health[key];
     if (!h) return route.fulfill({ status: 404, body: '{}' });
     if (h === 'abort') return route.abort();
@@ -44,7 +44,7 @@ export default async function ({ page, url, check, screenshot }) {
     await page.waitForTimeout(600);
   };
   const TOKEN_CB = `window.__cfg.callback({access_token:'ya29.stub-token', expires_in:3599, scope:'s1 s2', token_type:'Bearer'})`;
-  const okHealth = () => { health = { identity: json(200, { name: 'users/me/identity' }), steps: json(200, ROLLUP), sleep: json(200, SLEEP_OK) }; };
+  const okHealth = () => { health = { identity: json(200, { name: 'users/me/identity' }), steps: json(200, ROLLUP), sleep: json(200, SLEEP_OK), exercise: json(200, {}) }; };
 
   // H1
   await open();
@@ -84,8 +84,8 @@ export default async function ({ page, url, check, screenshot }) {
   soft(t.ti.includes('expires_in: 3599') && t.ti.includes('refresh_token present: no') && t.ti.includes('scope granted: s1 s2'), 'H4: #tokenInfo lines, got "' + t.ti + '"');
   soft(!t.sum.includes('stub-token'), 'H4: summary has no token');
   soft(t.sum.includes('sleep: HTTP 403 - failed: PERMISSION_DENIED') && t.sum.includes('steps: HTTP 200 - ok'), 'H4: summary has verdict lines, got "' + t.sum + '"');
-  const [rid, rst, rsl] = seen;
-  soft(seen.length === 3, 'H4: exactly 3 health requests, got ' + seen.length);
+  const [rid, rst, rsl] = seen;   // the fourth request is the Exercise GET
+  soft(seen.length === 4, 'H4: exactly 4 health requests, got ' + seen.length);
   soft(rid && rid.method === 'GET' && rid.url === BASE + '/identity' && rid.headers.authorization === 'Bearer ya29.stub-token', 'H4: identity GET with Bearer');
   const wantBody = { range: { start: { date: { year: 2026, month: 11, day: 12 }, time: { hours: 0, minutes: 0, seconds: 0, nanos: 0 } }, end: { date: { year: 2026, month: 11, day: 15 }, time: { hours: 0, minutes: 0, seconds: 0, nanos: 0 } } }, windowSizeDays: 1 };
   soft(rst && rst.method === 'POST' && rst.url === BASE + '/dataTypes/steps/dataPoints:dailyRollUp' && rst.headers.authorization === 'Bearer ya29.stub-token', 'H4: dailyRollUp POST with Bearer, got ' + (rst && rst.url));
@@ -134,14 +134,14 @@ export default async function ({ page, url, check, screenshot }) {
   await shot('probe-H7-popup-closed');
 
   // H8
-  await open(); health = { identity: 'abort', steps: { status: 500, contentType: 'text/html', body: '<h1>oops</h1>' }, sleep: json(200, {}) };
+  await open(); health = { identity: 'abort', steps: { status: 500, contentType: 'text/html', body: '<h1>oops</h1>' }, sleep: json(200, {}), exercise: json(200, {}) };
   await signInAndCall(TOKEN_CB);
   const a = await text('#check-identity'), b = await text('#check-steps'), c = await text('#check-sleep');
   soft(a.startsWith('identity: no response - failed:'), 'H8: identity line, got "' + a + '"');
   soft(b.startsWith('steps: HTTP 500 - failed:'), 'H8: steps line, got "' + b + '"');
   soft(await page.evaluate(() => document.querySelector('h1:not(:first-of-type)') === null && document.querySelectorAll('h1').length === 1), 'H8: no h1 created from the body');
   soft(c.trim() === 'sleep: HTTP 200 - ok', 'H8: sleep line, got "' + c + '"');
-  soft(seen.length === 3, 'H8: all three checks were attempted, got ' + seen.length);
+  soft(seen.length === 4, 'H8: all four checks were attempted, got ' + seen.length);
   await shot('probe-H8-network-failure');
 
   // Extra 1: token response without access_token is a failed sign-in
@@ -162,7 +162,7 @@ export default async function ({ page, url, check, screenshot }) {
   soft(dis === true, 'X2: #signIn disabled right after click');
   const reqs = await page.evaluate(() => window.__requests);
   soft(reqs === 1, 'X2: two quick clicks requested one token, got ' + reqs);
-  soft(seen.length === 3, 'X2: exactly one run of 3 health requests, got ' + seen.length);
+  soft(seen.length === 4, 'X2: exactly one run of 4 health requests, got ' + seen.length);
   soft((await text('#summary')).split('\n').filter(l => l.startsWith('identity:')).length === 1, 'X2: one identity line in summary');
   soft(await page.$eval('#signIn', e => !e.disabled), 'X2: #signIn re-enabled after run');
 
