@@ -65,7 +65,7 @@ export function workoutLine(w, weightUnit) {
     const minutes = inRange(read(w, 'minutes'), 0, 1440), dist = inRange(read(w, 'distanceM'), 0, 1000000);
     const kcal = inRange(read(w, 'kcal'), 0, 20000), hr = inRange(read(w, 'avgHr'), 20, 300);
     const parts = [shown, `${minutes === null ? 0 : Math.round(minutes)} min`];
-    if (dist !== null && dist > 0) parts.push(weightUnit === 'oz' ? `${(dist / 1609.344).toFixed(1)} mi` : `${(dist / 1000).toFixed(1)} km`);
+    if (dist !== null) { const oz = weightUnit === 'oz', shown1 = (oz ? dist / 1609.344 : dist / 1000).toFixed(1); if (shown1 !== '0.0') parts.push(`${shown1} ${oz ? 'mi' : 'km'}`); }   // a distance that rounds to 0.0 is left out
     if (kcal !== null) parts.push(`${Math.round(kcal)} kcal`);
     if (hr !== null) parts.push(`avg ${Math.round(hr)} bpm`);
     return parts.join(' · ');

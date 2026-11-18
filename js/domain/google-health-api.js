@@ -132,13 +132,13 @@ function oneWorkout(item) {
   if (!OBJ(item)) return null;
   const ex = ownGet(item, 'exercise'), iv = ownGet(ex, 'interval');
   if (!OBJ(ex) || !OBJ(iv)) return null;
-  const startMs = utcMs(iv.startTime), off = offsetSec(iv.startUtcOffset);
+  const startMs = utcMs(ownGet(iv, 'startTime')), off = offsetSec(ownGet(iv, 'startUtcOffset'));
   if (startMs === null || off === null) return null;
   let minutes = 0;
   const dur = ownGet(ex, 'activeDuration'), secs = typeof dur === 'string' && /^\d+(\.\d+)?s$/.test(dur) ? Number(dur.slice(0, -1)) : null;
   const fromDur = secs === null ? undefined : rangeRound(secs / 60, 0, 1440);
-  if (fromDur !== undefined) minutes = fromDur;
-  else { const endMs = utcMs(iv.endTime), m = endMs !== null && endMs >= startMs ? rangeRound((endMs - startMs) / 60000, 0, 1440) : undefined; if (m !== undefined) minutes = m; }
+  if (fromDur !== undefined && fromDur > 0) minutes = fromDur;   // a duration that rounds to 0 minutes is unusable: the interval is used
+  else { const endMs = utcMs(ownGet(iv, 'endTime')), m = endMs !== null && endMs >= startMs ? rangeRound((endMs - startMs) / 60000, 0, 1440) : undefined; if (m !== undefined) minutes = m; }
   const shown = ownGet(ex, 'displayName');
   const cleaned = typeof shown === 'string' ? shown.replace(CONTROL, '').trim().slice(0, 60) : '';
   const w = { id: workoutId(ownGet(item, 'name'), startMs), name: cleaned || typeLabel(ownGet(ex, 'exerciseType')), start: utcText(startMs), minutes };
@@ -191,7 +191,7 @@ const withoutStamp = r => { const { updatedAt, ...rest } = r; return sortedJson(
 
 /**
  * Merge the API's steps and sleep into state.activity: steps and the sleep trio (minutes, start, end) are replaced by the API's when it has them (a day
- * without steps data keeps its steps; the API replaces a stored total even when lower, see the spec), the stored workouts are ALWAYS kept, and a record that
+ * without steps data keeps its steps; the API replaces a stored total even when lower, see the spec), the API's workouts REPLACE a day's stored ones when it has any for that day (a day without API workouts keeps its own), and a record that
  * is equal to the stored one ignoring `updatedAt` writes nothing so sync pushes nothing. Returns { added, updated, unchanged }.
  */
 export function applyHealthSync(state, days, now) {
