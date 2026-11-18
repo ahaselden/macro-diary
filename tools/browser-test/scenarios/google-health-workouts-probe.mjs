@@ -8,7 +8,7 @@ export const allowConsoleErrors = true;   // stubbed 403/500 answers make Chromi
 export const stubs = [{ match: 'https://accounts.google.com/gsi/client', body: GSI, contentType: 'application/javascript' }];
 
 const SHOTS = process.env.PROBE_SHOTS || 'C:/Users/Adam/AppData/Local/Temp/claude/f5883c2306ec2df6/f7b5aca2-91d1-4005-9166-4eb7f6af5f70/scratchpad/shots';
-const ID = 'stub-client.example';
+const ID = 'stub-client-id.apps.googleusercontent.com';
 const BASE = 'https://health.googleapis.com/v4/users/me';
 const TOKEN = 'TEST-TOKEN-NOT-REAL';
 const WORKOUT = { dataPoints: [{ name: 'users/me/dataTypes/exercise/dataPoints/TEST-ID-0001', exercise: { interval: { startTime: '2026-11-14T07:15:00Z', startUtcOffset: '0s', endTime: '2026-11-14T07:45:00Z', endUtcOffset: '0s' }, exerciseType: 'RUNNING', displayName: 'Morning run with Pat Example', activeDuration: '1800s', hasGps: true, metricsSummary: { caloriesKcal: 412.5, distanceMillimeters: '5234000', steps: '5120', averageHeartRateBeatsPerMinute: '151' } } }], nextPageToken: '' };
