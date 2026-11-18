@@ -59,7 +59,7 @@ export default async function ({ page, url, check, screenshot }) {
 
   // H2
   await open();
-  await page.click('#signIn');
+  await page.fill('#clientId', ''); await page.click('#signIn');
   soft((await text('#status')).includes('Enter a Client ID first'), 'H2: #status says Enter a Client ID first, got "' + await text('#status') + '"');
   soft(await page.evaluate(() => window.__cfg === undefined), 'H2: window.__cfg undefined');
 
