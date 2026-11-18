@@ -60,7 +60,7 @@ import { checkClientId } from '../../js/domain/google-health-api.js';
 const BASE = 'https://health.googleapis.com/v4';
 const SCOPES = 'https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly https://www.googleapis.com/auth/googlehealth.sleep.readonly';
 const $ = id => document.getElementById(id);
-$('clientId').value = DEFAULT_CLIENT_ID;   // the public built-in ID; change it in js/services/google-health-api.js (see BACKLOG 24). Nothing is stored.
+$('clientId').value = DEFAULT_CLIENT_ID;   // the public built-in ID; change it in js/services/google-health-api.js (see BACKLOG 28). Nothing is stored.
 const results = { token: { ok: false }, gisError: null, checks: [] };
 let days = 3;                                                          // the choice in "Days to read", read when the button is clicked
 

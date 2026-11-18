@@ -286,5 +286,5 @@ Open Food Facts answers a barcode it does not know with HTTP 404 and a "product 
 
 ## D66. Google Health probe: the Client ID box is pre-filled from the app's built-in ID
 **What.** The developer probe imports `DEFAULT_CLIENT_ID` and pre-fills `#clientId` with it; sign-in runs the box through `checkClientId`, so an empty, malformed or `GOCSPX-` (client secret) value is refused with a fixed message that never echoes it, and a secret also clears the box. The owner no longer retypes the ID on every visit.
-**Why.** The owner was retyping a public ID each visit. Option (a) (one constant, no storage) over (b) (a new localStorage key): the probe keeps its "no storage" rule, and at go-public time there is one place to change (BACKLOG 24).
+**Why.** The owner was retyping a public ID each visit. Option (a) (one constant, no storage) over (b) (a new localStorage key): the probe keeps its "no storage" rule, and at go-public time there is one place to change (BACKLOG 28).
 **Limits.** A different ID typed over the default is not remembered, and the saved device ID (`macrodiary.googleclient.v1`) is deliberately not read. Nothing under js/ or css/ changed and sw.js is untouched.
