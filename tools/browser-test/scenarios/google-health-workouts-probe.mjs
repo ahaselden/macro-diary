@@ -61,7 +61,7 @@ export default async function ({ page, url, check, screenshot }) {
   await open();
   await page.fill('#clientId', ID); await page.click('#signIn');
   const ex1 = await text('#check-exercise');
-  soft(ex1.startsWith('Exercise') && ex1.endsWith('not run yet.'), 'C1: #check-exercise starts "Exercise" and ends "not run yet.", got "' + ex1 + '"');
+  soft(ex1.startsWith('Exercise') && ex1 === 'Exercise: not run yet', 'C1: #check-exercise is exactly "Exercise: not run yet", got "' + ex1 + '"');
   soft((await text('#signIn')) === 'Sign in with Google', 'C1: #signIn text');
   soft((await text('#copySummary')) === 'Copy result summary', 'C1: #copySummary text');
   soft((await text('#status')) === 'The Google sign-in script did not load. Check the network and try again.', 'C1: #status text, got "' + await text('#status') + '"');
