@@ -23,8 +23,8 @@
 <p class="muted">A developer test page, not part of the app. It asks whether Google lets a browser sign in to the Google Health API with no backend and no client secret. Nothing is saved: the sign-in token stays in this page's memory only and is dropped after the checks. Follow docs/GOOGLE-HEALTH-SETUP.md first.</p>
 
 <div class="box">
-  <label for="clientId">OAuth Client ID (the public one that ends in .apps.googleusercontent.com; never a secret)</label>
-  <input id="clientId" type="text" autocomplete="off" spellcheck="false" placeholder="paste your Client ID here">
+  <label for="clientId">OAuth Client ID (pre-filled with the app's built-in ID; replace it only to test another project. The public one that ends in .apps.googleusercontent.com, never a secret)</label>
+  <input id="clientId" type="text" autocomplete="off" spellcheck="false" placeholder="Client ID">
   <label for="days">Days to read</label>
   <select id="days"><option value="3" selected>3</option><option value="7">7</option><option value="14">14</option><option value="31">31</option></select>
   <button id="signIn" type="button">Sign in with Google</button>
@@ -54,10 +54,13 @@
 
 <script type="module">
 import { buildDailyRollUpBody, buildSleepUrl, buildExerciseUrl, summariseDailyRollUp, summariseSleep, summariseExercise, describeShape, resultSummary, describeError } from './probe.js';
+import { DEFAULT_CLIENT_ID } from '../../js/services/google-health-api.js';
+import { checkClientId } from '../../js/domain/google-health-api.js';
 
 const BASE = 'https://health.googleapis.com/v4';
 const SCOPES = 'https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly https://www.googleapis.com/auth/googlehealth.sleep.readonly';
 const $ = id => document.getElementById(id);
+$('clientId').value = DEFAULT_CLIENT_ID;   // the public built-in ID; change it in js/services/google-health-api.js (see BACKLOG 24). Nothing is stored.
 const results = { token: { ok: false }, gisError: null, checks: [] };
 let days = 3;                                                          // the choice in "Days to read", read when the button is clicked
 
@@ -111,8 +114,9 @@ function onToken(resp) {
 function onError(err) { $('signIn').disabled = false; results.token = { ok: false }; results.gisError = err || { type: 'unknown' }; $('status').textContent = 'The sign-in window did not finish. The error is shown below.'; show(); }
 
 $('signIn').addEventListener('click', () => {
-  const clientId = $('clientId').value.trim();
-  if (!clientId) { $('status').textContent = 'Enter a Client ID first.'; return; }
+  const checked = checkClientId($('clientId').value);
+  if (!checked.ok) { if (/secret/.test(checked.message)) $('clientId').value = ''; $('status').textContent = checked.message; return; }
+  const clientId = checked.id;
   if (!(window.google && window.google.accounts && window.google.accounts.oauth2)) { $('status').textContent = 'The Google sign-in script did not load. Check the network and try again.'; return; }
   days = Number($('days').value) || 3;
   results.token = { ok: false }; results.gisError = null; results.checks = []; $('signIn').disabled = true; show();
