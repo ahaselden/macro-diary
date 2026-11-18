@@ -143,7 +143,7 @@ export default async ({ page, url, check, screenshot }) => {
     await page.click('#dialsOpen'); await page.waitForSelector('#dlg[open]');
     const txt = await page.locator('#dBody').innerText();
     check(await page.locator('#dBody h2', { hasText: /^Workouts$/ }).count() === 1, 'C6: Workouts heading');
-    check(txt.includes('Walk · 45 min · 210 kcal'), 'C6: Walk row; dialog text ' + JSON.stringify(txt));
+    check(txt.includes('Walk · 45 min · 3.5 km · 210 kcal · avg 113 bpm'), 'C6: Walk row; dialog text ' + JSON.stringify(txt));
     check(txt.split('\n').some(l => l.trim() === '<img src=x onerror=alert(1)> · 30 min'), 'C6: hostile row exact; dialog text ' + JSON.stringify(txt));
     check(await page.locator('#dlg img').count() === 0, 'C6: no img element');
     await page.waitForTimeout(300);

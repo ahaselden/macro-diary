@@ -48,3 +48,26 @@ export function activityLine(rec) {
   if (Array.isArray(rec.workouts) && rec.workouts.length) parts.push(count(rec.workouts.length, 'workout', 'workouts'));
   return parts.join(' · ');
 }
+
+// ---- the Diary line of one workout (backlog item 24, D67) ---------------------------------------------------------------------------------------
+const read = (o, k) => { try { return Object.prototype.hasOwnProperty.call(o, k) ? o[k] : undefined; } catch { return undefined; } };
+const inRange = (v, lo, hi) => (typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi ? v : null);
+
+/**
+ * "Run · 31 min · 4.2 km · 312 kcal · avg 148 bpm": plain TEXT (the caller escapes it). Parts that are not recorded are left out; distance follows the
+ * units setting ('oz' -> miles, anything else -> kilometres, one decimal); numbers outside the saved-shape ranges count as not recorded. '' for a
+ * value that is not a workout. Own properties only; never throws.
+ */
+export function workoutLine(w, weightUnit) {
+  try {
+    if (!isPlain(w)) return '';
+    const name = read(w, 'name'), shown = typeof name === 'string' && name.trim() ? name.trim() : 'Workout';
+    const minutes = inRange(read(w, 'minutes'), 0, 1440), dist = inRange(read(w, 'distanceM'), 0, 1000000);
+    const kcal = inRange(read(w, 'kcal'), 0, 20000), hr = inRange(read(w, 'avgHr'), 20, 300);
+    const parts = [shown, `${minutes === null ? 0 : Math.round(minutes)} min`];
+    if (dist !== null) { const oz = weightUnit === 'oz', shown1 = (oz ? dist / 1609.344 : dist / 1000).toFixed(1); if (shown1 !== '0.0') parts.push(`${shown1} ${oz ? 'mi' : 'km'}`); }   // a distance that rounds to 0.0 is left out
+    if (kcal !== null) parts.push(`${Math.round(kcal)} kcal`);
+    if (hr !== null) parts.push(`avg ${Math.round(hr)} bpm`);
+    return parts.join(' · ');
+  } catch { return ''; }
+}

@@ -306,12 +306,13 @@ const sleepAns = { dataPoints: [
 const GOLD = { '2026-11-16': { steps: 1226 }, '2026-11-15': { steps: 2919 }, '2026-11-14': { steps: 12921, sleepMinutes: 435, sleepStart: '2026-11-14T03:30:00Z', sleepEnd: '2026-11-14T11:30:00Z' } };
 const jsonRes = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const R = (body, status = 200) => () => jsonRes(body, status);
-const kindOf = url => (url.includes('dailyRollUp') ? 'steps' : url.includes('dataTypes/sleep') ? 'sleep' : 'other');
+// CHANGED for docs/specs/google-health-workouts.md: a third (exercise) request exists now; routes without an `exercise` entry answer with an empty list.
+const kindOf = url => (url.includes('dailyRollUp') ? 'steps' : url.includes('dataTypes/sleep') ? 'sleep' : url.includes('dataTypes/exercise') ? 'exercise' : 'other');
 function fakeFetch(routes) {
   const calls = [];
   const f = async (url, init = {}) => {
     calls.push({ url: String(url), method: String(init.method || 'GET').toUpperCase(), body: init.body, headers: init.headers });
-    const r = routes[kindOf(String(url))];
+    const kind = kindOf(String(url)), r = routes[kind] !== undefined ? routes[kind] : kind === 'exercise' ? () => jsonRes({ dataPoints: [] }) : undefined;
     const out = typeof r === 'function' ? r() : r;
     if (out instanceof Error) throw out;
     if (out === undefined) throw new Error('no route');
@@ -379,7 +380,7 @@ test('N14. a normal run never asks for prompt "none": run(id), run(id, undefined
     const a = h.google.reqArgs[0][0];
     assert.notEqual(a && a.prompt, 'none', 'a tap must be allowed to show the sign-in: ' + JSON.stringify(args));
     assert.notEqual(h.google.inits[0].prompt, 'none');
-    assert.equal(h.f.calls.length, 2);
+    assert.equal(h.f.calls.length, 3);   // CHANGED for docs/specs/google-health-workouts.md: three requests per run now
     const g2 = capGoogle({ callback: { error: 'access_denied' } });
     const h2 = await harness({ google: g2 });
     assert.deepEqual(await h2.sync.run(...args), { ok: false, message: M.denied }, 'no silent key on a normal failure');
@@ -452,7 +453,7 @@ test('N17. a silent run that gets its token makes exactly the same two requests 
   const rs = await hs.sync.run(ID, { silent: true }), rn = await hn.sync.run(ID);
   assert.deepEqual(rs, { ok: true, days: GOLD }); assert.deepEqual(rn, rs);
   assert.deepEqual(hs.f.calls.map(c => [c.method, c.url, c.body]), hn.f.calls.map(c => [c.method, c.url, c.body]));
-  assert.equal(hs.f.calls.length, 2);
+  assert.equal(hs.f.calls.length, 3);   // CHANGED for docs/specs/google-health-workouts.md: three requests per run now
   assert.deepEqual(JSON.parse(hs.f.calls[0].body), { range: { start: cdt(2026, 11, 10), end: cdt(2026, 11, 17) }, windowSizeDays: 1 });
   for (const c of hs.f.calls) { const h = c.headers; assert.equal(new Headers(h).get('authorization'), 'Bearer ' + TOKEN); }
 });
@@ -466,7 +467,7 @@ test('N18. silent runs share the one-at-a-time rule and release it after success
   for (const second of [await h.sync.run(ID, { silent: true }), await h.sync.run(ID)]) { assert.equal(second.ok, false); assert.equal(second.busy, true); }
   assert.equal(g.inits.length, 1, 'no second sign-in was started'); assert.equal(g.reqArgs.length, 1); assert.equal(h.f.calls.length, 0);
   g.release(); assert.equal((await first).ok, true);
-  assert.equal(h.f.calls.length, 2);
+  assert.equal(h.f.calls.length, 3);   // CHANGED for docs/specs/google-health-workouts.md: three requests per run now
   // released after a silent failure
   const g2 = capGoogle({ callback: { error: 'interaction_required' } }), h2 = await harness({ google: g2 });
   assert.equal((await h2.sync.run(ID, { silent: true })).silent, true);

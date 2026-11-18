@@ -2,7 +2,7 @@
 // Browser-only sign-in with Google Identity Services (a 1-hour access token, no client secret, no refresh token), then two reads from health.googleapis.com.
 // The token lives only inside run(): never stored, never put in a message, a URL or a console. Every message below is fixed text; nothing from Google's
 // answers is copied into one. Storage, fetch, the Google script and the clock are injected so tests can fake them.
-import { SYNC_DAYS, buildDailyRollUpBody, buildSleepUrl, parseHealthAnswers, checkClientId } from '../domain/google-health-api.js';
+import { SYNC_DAYS, buildDailyRollUpBody, buildSleepUrl, buildExerciseUrl, parseHealthAnswers, checkClientId, WORKOUTS_FAILED_TEXT } from '../domain/google-health-api.js';
 
 export const GIS_URL = 'https://accounts.google.com/gsi/client';
 export const SCOPE = 'https://www.googleapis.com/auth/googlehealth.activity_and_fitness.readonly https://www.googleapis.com/auth/googlehealth.sleep.readonly';
@@ -205,7 +205,18 @@ export function createHealthSync({ fetch: fetchFn = (...a) => globalThis.fetch(.
           pageToken = OBJ(r.json) && typeof r.json.nextPageToken === 'string' ? r.json.nextPageToken : '';
           if (!pageToken) break;
         }
-        return { ok: true, days: parseHealthAnswers(steps.json, { dataPoints: records }) };
+        // Workouts are best effort: a failed exercise request (any page) drops the workouts of this run and says so, but steps and sleep are still applied.
+        const sessions = [];
+        let workoutsFailed = false, exToken = '';
+        for (let page = 0; page < MAX_SLEEP_PAGES; page++) {
+          const r = await call(fetchFn, buildExerciseUrl(today, SYNC_DAYS, exToken), { method: 'GET' }, t.token);
+          if (r.message) { workoutsFailed = true; break; }
+          if (OBJ(r.json) && Array.isArray(r.json.dataPoints)) sessions.push(...r.json.dataPoints);
+          exToken = OBJ(r.json) && typeof r.json.nextPageToken === 'string' ? r.json.nextPageToken : '';
+          if (!exToken) break;
+        }
+        const days = parseHealthAnswers(steps.json, { dataPoints: records }, workoutsFailed ? null : { dataPoints: sessions });
+        return workoutsFailed ? { ok: true, days, workoutsError: WORKOUTS_FAILED_TEXT } : { ok: true, days };
       } catch { return { ok: false, message: M.failed }; }
       finally { running = false; }
     },

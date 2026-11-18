@@ -19,7 +19,7 @@ const STEPS_OK = { rollupDataPoints: [{ ...d(2026, 11, 14), steps: { countSum: '
 const sl = (s, e, m) => ({ sleep: { interval: { startTime: s, startUtcOffset: '-18000s', endTime: e, endUtcOffset: '-18000s' }, summary: { minutesAsleep: m } } });
 const SLEEP_OK = { dataPoints: [sl('2026-11-16T09:00:00Z', '2026-11-16T13:00:00Z', '239'), sl('2026-11-16T05:30:00Z', '2026-11-16T08:09:00Z', '159'), sl('2026-11-15T06:00:00Z', '2026-11-15T11:00:00Z', '268'),
   sl('2026-11-15T04:00:00Z', '2026-11-15T05:10:00Z', '68'), sl('2026-11-14T03:30:00Z', '2026-11-14T11:30:00Z', '435')], nextPageToken: '' };
-const HAPPY = () => ({ steps: json(200, STEPS_OK), sleep: json(200, SLEEP_OK) });
+const HAPPY = () => ({ steps: json(200, STEPS_OK), sleep: json(200, SLEEP_OK), exercise: json(200, { dataPoints: [] }) });   // CHANGED for docs/specs/google-health-workouts.md: the third (exercise) request
 const SYNCED = 'Synced 3 days: steps for 3, sleep for 3';
 const seed = (extra = {}) => ({ schemaVersion: 9, theme: 'auto', weightUnit: 'g', measures: {}, goals: { k: 2000, p: 150, c: 200, f: 65 }, apiKey: '', syncApiKey: false, useUSDA: false, useOFF: false,
   recent: [], custom: [], tombstones: {}, settingsUpdatedAt: 1000, recipes: {}, plan: {}, shopping: { checks: {}, extras: {} }, days: {}, ...extra });
@@ -49,7 +49,7 @@ export default async function ({ page, url, check, screenshot }) {
   await page.route('https://health.googleapis.com/v4/**', async route => {
     const r = route.request(), u = r.url();
     seen.push({ method: r.method(), url: u, headers: r.headers(), body: r.postData() });
-    const h = health[u.includes('dailyRollUp') ? 'steps' : u.includes('reconcile') ? 'sleep' : 'other'];
+    const h = health[u.includes('dailyRollUp') ? 'steps' : u.includes('reconcile') ? 'sleep' : u.includes('dataTypes/exercise') ? 'exercise' : 'other'];
     if (!h) return route.fulfill({ status: 404, body: '{}' });
     if (h === 'abort') return route.abort();
     return route.fulfill(h);
@@ -136,14 +136,16 @@ export default async function ({ page, url, check, screenshot }) {
     eq(await page.evaluate(() => window.__requests), 1, '__requests');
     const cfg = await page.evaluate(() => ({ id: window.__cfg.client_id, scope: window.__cfg.scope }));
     eq(cfg.id, ID, 'client_id'); eq(cfg.scope, SCOPE, 'scope');
-    eq(seen.length, 2, 'health request count');
-    const [a, b] = seen;
+    eq(seen.length, 3, 'health request count');   // CHANGED: steps, sleep, exercise
+    const [a, b, c3] = seen;
     eq(a.method + ' ' + a.url, 'POST ' + BASE + '/dataTypes/steps/dataPoints:dailyRollUp', 'steps request');
     eq(a.headers.authorization, 'Bearer stub-token-123', 'steps auth');
     const T0 = { hours: 0, minutes: 0, seconds: 0, nanos: 0 };
     eq(JSON.stringify(JSON.parse(a.body)), JSON.stringify({ range: { start: { date: { year: 2026, month: 11, day: 10 }, time: T0 }, end: { date: { year: 2026, month: 11, day: 17 }, time: T0 } }, windowSizeDays: 1 }), 'steps body');
     eq(b.method + ' ' + b.url, 'GET ' + BASE + '/dataTypes/sleep/dataPoints:reconcile?page_size=25&filter=sleep.interval.civil_end_time%20%3E%3D%20%222026-11-10%22', 'sleep request');
     eq(b.headers.authorization, 'Bearer stub-token-123', 'sleep auth');
+    eq(c3.method + ' ' + c3.url, 'GET ' + BASE + '/dataTypes/exercise/dataPoints?page_size=25&filter=exercise.interval.civil_start_time%20%3E%3D%20%222026-11-10%22', 'exercise request');
+    eq(c3.headers.authorization, 'Bearer stub-token-123', 'exercise auth');
     const bad = hosts.filter(h => h !== 'accounts.google.com' && h !== 'health.googleapis.com'); ok(!bad.length, 'other hosts: ' + bad.join(','));
     ok(await page.locator('#ghSyncBtn').isEnabled() && await page.locator('#ghSyncDiary').isEnabled(), 'buttons enabled again');
     ok(!(await pageText()).includes('stub-token-123') && !(await storageDump()).includes('stub-token-123') && !consoleAll.join('\n').includes('stub-token-123'), 'token leaked');
@@ -217,6 +219,7 @@ export default async function ({ page, url, check, screenshot }) {
     await clickSync();
     eq(await status(), 'Google rejected the sign-in. Tap Sync Google Health to sign in again.', 'status');
     ok(!seen.some(r => r.url.includes('reconcile')), 'sleep request was made');
+    ok(!seen.some(r => r.url.includes('dataTypes/exercise')), 'exercise request was made');
     const a = (await stored()).activity['2026-11-15']; ok(a.steps === 5000 && a.updatedAt === 1000, '15th changed: ' + JSON.stringify(a));
     const t = await pageText(); ok(!t.includes('ya29.fake') && !t.includes('me@example.com'), 'secret text on page');
   });

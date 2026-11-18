@@ -49,7 +49,7 @@ test('45. diary.js shows the line (textContent, "From Google Health: ") and list
   assert.match(src, /#activityLine/); assert.match(src, /From Google Health: /);
   assert.match(src, /activityLine['"]\)[\s\S]{0,400}textContent|textContent[\s\S]{0,200}From Google Health/, 'the line is set with textContent');
   assert.match(src, /Workouts/); assert.match(src, /Workouts[\s\S]{0,900}esc\(/, 'workout names go through esc()');
-  assert.match(src, /\bmin\b/); assert.match(src, /\bkcal\b/);
+  assert.match(src, /\bkcal\b/);   // CHANGED for docs/specs/google-health-workouts.md: the "min" check is gone, the line text now lives in domain/activity.js workoutLine (pinned by V1-V4 of tests/google-health-workouts.test.js)
   assert.match(src, /renderDials\(\)/, 'the card is drawn by dials.js (was #summary)');
 });
 

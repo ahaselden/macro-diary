@@ -350,14 +350,14 @@ test('G16. idempotent: the same days twice write nothing the second time; a chan
   assert.equal(state.activity['2026-11-16'].updatedAt, 5000);
 });
 
-test('G17. applyHealthSync reads only steps and sleep from days: nothing else is smuggled in; garbage fields write nothing and do not create state.activity', async () => {
+test('G17. applyHealthSync reads only steps, sleep and workouts from days: nothing else is smuggled in (source, updatedAt, unknown keys); garbage fields write nothing and do not create state.activity', async () => {
   const { applyHealthSync } = await D();
   const state = { activity: {} };
-  applyHealthSync(state, { '2026-11-16': { steps: 100, workouts: [{ id: 'evil', start: '2026-11-16T10:00:00Z', name: 'x', minutes: 1 }], source: 'evil', updatedAt: 1, junk: 1, name: 'x' } }, 5000);
+  applyHealthSync(state, { '2026-11-16': { steps: 100, source: 'evil', updatedAt: 1, junk: 1, name: 'x' } }, 5000);   // CHANGED for docs/specs/google-health-workouts.md: `workouts` in days is now applied (X12/X13 of tests/google-health-workouts.test.js), so it is no longer a smuggling example
   assert.deepEqual(state.activity['2026-11-16'], { updatedAt: 5000, source: 'google-health', steps: 100 });
   for (const fields of [{ steps: '5000' }, { steps: -1 }, { steps: 200001 }, { steps: NaN }, { steps: Infinity }, { steps: null }, { steps: true }, { steps: [5] },
     { sleepMinutes: 0 }, { sleepMinutes: 1441 }, { sleepMinutes: '400', sleepStart: SLEEP_GOLD['2026-11-14'].sleepStart, sleepEnd: SLEEP_GOLD['2026-11-14'].sleepEnd }, { sleepMinutes: NaN },
-    { sleepStart: '2026-11-14T03:30:00Z', sleepEnd: '2026-11-14T11:30:00Z' }, {}, { workouts: [W] }, { source: 'x' }, null, [], 5, 'x', undefined]) {
+    { sleepStart: '2026-11-14T03:30:00Z', sleepEnd: '2026-11-14T11:30:00Z' }, {}, { source: 'x' }, null, [], 5, 'x', undefined]) {   // CHANGED for docs/specs/google-health-workouts.md: { workouts: [W] } removed from this garbage list: a valid workouts list is data now
     const st = {}; const res = applyHealthSync(st, { '2026-11-16': fields }, 5000);
     assert.deepEqual(res, { added: 0, updated: 0, unchanged: 0 }, JSON.stringify(fields)); assert.deepEqual(st, {}, JSON.stringify(fields));
     const st2 = { activity: { '2026-11-16': stored15() } }; applyHealthSync(st2, { '2026-11-16': fields }, 5000);
@@ -450,13 +450,14 @@ const fakeStorage = (initial = {}) => {
 const jsonRes = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const R = (body, status = 200) => () => jsonRes(body, status);
 const lowerHeaders = h => { const out = {}; if (!h) return out; if (typeof h.forEach === 'function' && !Array.isArray(h)) h.forEach((v, k) => { out[k.toLowerCase()] = v; }); else for (const [k, v] of Array.isArray(h) ? h : Object.entries(h)) out[String(k).toLowerCase()] = v; return out; };
-const kindOf = url => (url.includes('dailyRollUp') ? 'steps' : url.includes('dataTypes/sleep') ? 'sleep' : 'other');
+// CHANGED for docs/specs/google-health-workouts.md: a third (exercise) request exists now; routes without an `exercise` entry answer with an empty list so the old tests still describe steps and sleep.
+const kindOf = url => (url.includes('dailyRollUp') ? 'steps' : url.includes('dataTypes/sleep') ? 'sleep' : url.includes('dataTypes/exercise') ? 'exercise' : 'other');
 function fakeFetch(routes) {
   const calls = [];
   const f = async (url, init = {}) => {
     const call = { url: String(url), method: String(init.method || 'GET').toUpperCase(), headers: lowerHeaders(init.headers), body: init.body, init };
     calls.push(call);
-    const kind = kindOf(call.url), r = routes[kind], n = calls.filter(c => kindOf(c.url) === kind).length;
+    const kind = kindOf(call.url), r = routes[kind] !== undefined ? routes[kind] : kind === 'exercise' ? () => jsonRes({ dataPoints: [] }) : undefined, n = calls.filter(c => kindOf(c.url) === kind).length;
     const out = typeof r === 'function' ? r(call, n) : r;
     if (out instanceof Error) throw out;
     if (out === undefined) throw new Error('no route for ' + call.url);
@@ -576,7 +577,7 @@ test('S4. success flow: initTokenClient gets the client id, the exact scope, cal
   const cfg = h.google.inits[0];
   assert.equal(cfg.client_id, ID); assert.equal(cfg.scope, SCOPE);
   assert.equal(typeof cfg.callback, 'function'); assert.equal(typeof cfg.error_callback, 'function');
-  assert.equal(h.f.calls.length, 2);
+  assert.equal(h.f.calls.length, 3);   // CHANGED for docs/specs/google-health-workouts.md: steps, sleep and (new) exercise
   const steps = h.f.calls.find(c => kindOf(c.url) === 'steps'), sleep = h.f.calls.find(c => kindOf(c.url) === 'sleep');
   assert.equal(steps.method, 'POST'); assert.equal(steps.url, HEALTH + '/dataTypes/steps/dataPoints:dailyRollUp');
   assert.deepEqual(JSON.parse(steps.body), { range: { start: cdt(2026, 11, 10), end: cdt(2026, 11, 17) }, windowSizeDays: 1 });
@@ -722,7 +723,7 @@ test('S9. concurrent taps: a second run while one is pending is ignored (busy re
   assert.equal(h.loads(), 1); assert.equal(g.inits.length, 1); assert.equal(g.requests, 1); assert.equal(h.f.calls.length, 0);
   g.release();
   assert.equal((await first).ok, true);
-  assert.equal(h.f.calls.length, 2, 'only the first run fetched');
+  assert.equal(h.f.calls.length, 3, 'only the first run fetched');   // CHANGED for docs/specs/google-health-workouts.md: three requests per run now
   // released after success
   g.release = null;
   const again = h.sync.run(ID);
@@ -746,7 +747,7 @@ test('S10. edge: 200 answers of {} or null are a successful empty sync; a token 
   }
   const h = await harness({ google: fakeGoogle({ twice: true }) });
   assert.deepEqual(await h.sync.run(ID), { ok: true, days: BOTH_GOLD });
-  assert.equal(h.f.calls.length, 2, 'the second callback does not start a second round of requests');
+  assert.equal(h.f.calls.length, 3, 'the second callback does not start a second round of requests');   // CHANGED for docs/specs/google-health-workouts.md: three requests per run now
   // the real run keeps working with the clock injected: another "today" gives another range
   const h2 = await harness({ now: () => L(2026, 12, 3, 9) });
   await h2.sync.run(ID);
