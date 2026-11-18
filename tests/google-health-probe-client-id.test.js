@@ -138,14 +138,14 @@ test('R11. (weak) the label for #clientId says it is pre-filled with the built-i
 });
 
 // ---------------------------------------------------------------- docs deliverables (WEAK)
-test('R12. docs/BACKLOG.md has an unticked item 24 about replacing the built-in Client ID before going public', () => {
+test('R12. docs/BACKLOG.md has an unticked item 28 about replacing the built-in Client ID before going public', () => {
   const lines = read('docs/BACKLOG.md').split('\n');
-  const line = lines.find(l => /^- \[ \] \*\*24\./.test(l));
-  assert.ok(line, 'an unticked "- [ ] **24." line');
+  const line = lines.find(l => /^- \[ \] \*\*28\./.test(l));
+  assert.ok(line, 'an unticked "- [ ] **28." line');
   assert.match(line, /Before making the app public: replace the built-in Google Client ID and finish Google's requirements/);
-  for (const k of ['DEFAULT_CLIENT_ID', '100 users', 'verification', 'privacy policy', 'Authorized JavaScript origins']) assert.ok(line.includes(k), 'item 24 mentions ' + k);
+  for (const k of ['DEFAULT_CLIENT_ID', '100 users', 'verification', 'privacy policy', 'Authorized JavaScript origins']) assert.ok(line.includes(k), 'item 28 mentions ' + k);
   assert.match(line, /google-health-probe/); assert.match(line, /(change|replace|update)/i);
-  assert.equal(lines.filter(l => /^- \[.\] \*\*24\./.test(l)).length, 1, 'only one item numbered 24');
+  assert.equal(lines.filter(l => /^- \[.\] \*\*28\./.test(l)).length, 1, 'only one item numbered 28');
 });
 
 test('R13. KNOWN-ISSUES has a row for the probe Client ID, and DECISIONS has a D66 heading about it', () => {

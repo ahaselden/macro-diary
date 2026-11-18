@@ -36,14 +36,14 @@ No new exported function. Layers: this is a dev page under `tools/`, outside the
 9. [R9] (weak) Exactly the three imports above; the only `<script src>` is Google Identity Services.
 10. [R10] (weak) The page has no `value=` on `#clientId`, no `*.apps.googleusercontent.com` literal, not the real default's text, no `GOCSPX-`, `client_secret` or `ya29.`; the script assigns `#clientId.value`.
 11. [R11] (weak) The label wording above; every id in the page contract stays (`clientId`, `days`, `signIn`, `showNumbers`, `copySummary`, `status`, `tokenInfo`, `gisError`, `check-identity`, `check-steps`, `check-sleep`, `check-exercise`, `summary`).
-12. [R12] `docs/BACKLOG.md` has exactly one item numbered 24, unticked, titled `Before making the app public: replace the built-in Google Client ID and finish Google's requirements`, mentioning `DEFAULT_CLIENT_ID`, `100 users`, `verification`, `privacy policy`, `Authorized JavaScript origins`, and that the default in the probe page (`tools/google-health-probe`) must change with it.
+12. [R12] `docs/BACKLOG.md` has exactly one item numbered 28, unticked, titled `Before making the app public: replace the built-in Google Client ID and finish Google's requirements`, mentioning `DEFAULT_CLIENT_ID`, `100 users`, `verification`, `privacy policy`, `Authorized JavaScript origins`, and that the default in the probe page (`tools/google-health-probe`) must change with it.
 13. [R13] `docs/KNOWN-ISSUES.md` has a row about the probe Client ID (pre-filled, typed one not remembered); `docs/DECISIONS.md` has a `## D66.` heading about the probe Client ID.
 
 ## Edge cases and hostile input
 Empty, spaces, tabs and newlines; a secret in upper or lower case, padded, or following a valid-looking ID; a 5000-character string (the domain check caps the length at 100 before the suffix); markup (`<img onerror>`) and `__proto__` (shown only through `textContent`, and never echoed anyway); a URL; a legacy ID such as `stub-client.example` (now refused: shape); a valid ID with surrounding spaces (trimmed). Pasting a secret must leave nothing of it in the box or on the page.
 
 ## Docs deliverables (the implementer adds them; the designer does not write them)
-- `docs/BACKLOG.md` item 24, in the item list before "Small follow-ups": **Before making the app public: replace the built-in Google Client ID and finish Google's requirements.** It must say: change `DEFAULT_CLIENT_ID` (services/google-health-api.js) and, with it, the page default in `tools/google-health-probe` (it follows by import; confirm); the 100 users cap for an unverified client; Google's verification; a privacy policy page; the Authorized JavaScript origins list of the OAuth client.
+- `docs/BACKLOG.md` item 28, after item 27 (workouts items 24-27 come from another PR): **Before making the app public: replace the built-in Google Client ID and finish Google's requirements.** It must say: change `DEFAULT_CLIENT_ID` (services/google-health-api.js) and, with it, the page default in `tools/google-health-probe` (it follows by import; confirm); the 100 users cap for an unverified client; Google's verification; a privacy policy page; the Authorized JavaScript origins list of the OAuth client.
 - A `docs/KNOWN-ISSUES.md` row (next number, 76): the probe is pre-filled with the built-in ID and does not remember a different one (no storage by design); unit tests with a fake DOM and the headless scenarios only.
 - `D66` in `docs/DECISIONS.md` (`## D66. Google Health probe: pre-fill the built-in Client ID, store nothing`): what, why (one place to change; keep "nothing is saved"), limits.
 - A project memory file (owner's memory, outside the repo; not tested).
@@ -78,6 +78,6 @@ The fake-DOM tests (R1-R8) run the page's real script with a tiny fake `document
 - **O3.** Paste a `GOCSPX-` value (made up is fine): it is refused and the box is emptied.
 
 ## Open questions
-1. **Item number 24 clash.** `docs/DECISIONS.md` D65 and `docs/KNOWN-ISSUES.md` row 75 refer to "backlog item 24" as the future workouts feature, but no item 24 exists in `docs/BACKLOG.md` and the owner now wants item 24 to be the go-public task. The implementer should confirm with the owner and, if so, fix the D65/KNOWN-ISSUES 75 wording (workouts becomes the next free number). R12 assumes 24 is the go-public item.
+1. **Numbering (resolved).** Item 24 is the workouts feature (items 24-27, in another PR), so the go-public item is number 28, placed after item 27. R12 assumes 28. If that PR is not yet merged, item 28 may sit after item 23 until it is.
 2. Whether the page default should be visible to the owner as "built-in" only in the label, or also in `#status` on load (the plan does not say; the tests require no new status text on load).
 3. Exact label wording is open; R11 pins only keywords.
