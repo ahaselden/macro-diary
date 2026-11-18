@@ -113,7 +113,7 @@ Unit tests, ALREADY EDITED (they fail until the feature exists, for the reason g
 2. `tests/google-health-seamless.test.js`: `kindOf` and `fakeFetch` as above; `N14` (`assert.equal(h.f.calls.length, 2)` -> `3`), `N17` (`assert.equal(hs.f.calls.length, 2)` -> `3`; its title still says "two requests", cosmetic), `N18` (`assert.equal(h.f.calls.length, 2)` -> `3`). They fail now for that reason. `N13`, `N15`, `N16`, `N19`, `N20-N22` unchanged.
 
 Unit tests that pin code this change edits but need NO change (checked, the implementer must keep them green):
-- `tests/google-health-ui.test.js` test `45`: source-text checks of `js/ui/diary.js`: `/\bmin\b/`, `/\bkcal\b/` and `/Workouts[\s\S]{0,900}esc\(/`. If moving the line text into `activity.js` removes the words `min` / `kcal` from `diary.js` this test fails and must be sent back for an edit (the `esc(` within 900 characters of `Workouts` is required by V4 as well). Not known to fail.
+- `tests/google-health-ui.test.js` test `45` (EDITED, marked CHANGED): the assertion `/\bmin\b/` on `js/ui/diary.js` is removed, because the line text (`min`) now lives in `workoutLine` in `domain/activity.js` (pinned by V1-V4). The `/\bkcal\b/` and `/Workouts[\s\S]{0,900}esc\(/` assertions stay.
 - `tests/google-health-activity.test.js` (`activityLine`: `'... · 1 workout'` / `'2 workouts'` counts): unchanged, `activityLine` is not touched.
 - `tests/google-health-import.test.js`, `google-health-zip.test.js` (`workoutsByDay`, `combineActivity`, `applyActivityImport`): unchanged, the import code is not touched.
 - `tests/sw.test.js` family: no new shipped file, so no SHELL entry; the usual CACHE bump is only checked as "above N".
